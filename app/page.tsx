@@ -14,12 +14,18 @@ import {
 import { addRecord, listRecords, clearRecords, deleteRecord, type Rec } from "@/lib/db";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
-const MODEL_URL = `${BASE_PATH}/models/model.onnx`;
 const ORT_WASM_PATH = `${BASE_PATH}/ort/`;
+
+/** 内置两个模型：快速版（yolo11n，小/快）/ 精确版（yolo11s，大/准） */
+const MODELS = {
+  fast: { label: "快速版", model: "yolo11n", file: "model-fast.onnx", size: "10MB" },
+  accurate: { label: "精确版", model: "yolo11s", file: "model-accurate.onnx", size: "36MB" },
+} as const;
+type ModelKey = keyof typeof MODELS;
 
 type Ort = any;
 let ortPromise: Promise<Ort> | null = null;
-let sessionPromise: Promise<any> | null = null;
+const sessionCache: Record<string, Promise<any>> = {};
 
 async function getOrt(): Promise<Ort> {
   if (!ortPromise) {
@@ -34,14 +40,15 @@ async function getOrt(): Promise<Ort> {
   return ortPromise;
 }
 
-async function getSession(): Promise<any> {
-  if (!sessionPromise) {
-    sessionPromise = (async () => {
+async function getSession(key: ModelKey): Promise<any> {
+  if (!sessionCache[key]) {
+    sessionCache[key] = (async () => {
       const ort = await getOrt();
-      return ort.InferenceSession.create(MODEL_URL, { executionProviders: ["wasm"] });
+      const url = `${BASE_PATH}/models/${MODELS[key].file}`;
+      return ort.InferenceSession.create(url, { executionProviders: ["wasm"] });
     })();
   }
-  return sessionPromise;
+  return sessionCache[key];
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -68,11 +75,12 @@ type ResultState = {
   ms: number;
   filename: string;
   thumb: string;
-  modelSize: string;
+  model: string;
 };
 
 export default function Home() {
   const [conf, setConf] = useState(0.1);
+  const [modelKey, setModelKey] = useState<ModelKey>("fast");
   const [status, setStatus] = useState<"idle" | "running">("idle");
   const [error, setError] = useState("");
   const [result, setResult] = useState<ResultState | null>(null);
@@ -93,8 +101,8 @@ export default function Home() {
     refreshHistory();
     if (typeof window !== "undefined" && (window as any).__warm) return;
     (window as any).__warm = true;
-    // 提前预热模型，避免第一次上传等太久
-    getSession().catch(() => {});
+    // 提前预热默认（快速）模型，避免第一次上传等太久
+    getSession("fast").catch(() => {});
   }, []);
 
   const run = async (file: File) => {
@@ -108,7 +116,7 @@ export default function Home() {
 
       const img = await loadImage(dataUrl);
       const ort = await getOrt();
-      const session = await getSession();
+      const session = await getSession(modelKey);
 
       const lb = letterbox(img, INPUT_SIZE);
       const tensor = new ort.Tensor("float32", lb.chw, [1, 3, INPUT_SIZE, INPUT_SIZE]);
@@ -132,7 +140,7 @@ export default function Home() {
       const url = canvas.toDataURL("image/jpeg", 0.92);
       const thumb = toThumb(canvas);
 
-      setResult({ url, boxes: dets, ms, filename: file.name, thumb, modelSize: "10.2MB" });
+      setResult({ url, boxes: dets, ms, filename: file.name, thumb, model: MODELS[modelKey].label });
 
       await addRecord({
         created_at: new Date().toLocaleString("zh-CN", { hour12: false }),
@@ -171,7 +179,27 @@ export default function Home() {
         <section className="card">
           <h1>上传一张 X 光片</h1>
           <p className="hint">
-            支持 jpg / png / bmp / webp，单张不超过 16MB。首次使用需加载约 10MB 模型。
+            支持 jpg / png / bmp / webp，单张不超过 16MB。首次使用需加载 {MODELS[modelKey].size} 模型。
+          </p>
+
+          <div className="model-switch">
+            {(Object.keys(MODELS) as ModelKey[]).map((k) => (
+              <button
+                key={k}
+                type="button"
+                className={`model-btn ${modelKey === k ? "active" : ""}`}
+                onClick={() => setModelKey(k)}
+                disabled={status === "running"}
+              >
+                {k === "fast" ? "⚡" : "🎯"} {MODELS[k].label}
+                <small>
+                  {MODELS[k].model} · {MODELS[k].size}
+                </small>
+              </button>
+            ))}
+          </div>
+          <p className="hint">
+            快速版加载快、适合日常试用；精确版更大更准，首次加载约 {MODELS["accurate"].size}。
           </p>
 
           {error && <p className="err">⚠️ {error}</p>}
@@ -353,7 +381,7 @@ export default function Home() {
       </main>
 
       <footer>
-        纯前端 · ONNX Runtime Web · 模型 {result?.modelSize || "10.2MB"} · 数据存于本机 IndexedDB
+        纯前端 · ONNX Runtime Web · 模型 {result?.model || MODELS[modelKey].label} · 数据存于本机 IndexedDB
       </footer>
     </>
   );

@@ -42,6 +42,8 @@ IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 def parse_args():
     p = argparse.ArgumentParser(description="CVAT YOLO 标注集 -> train/val/test 拆分")
     p.add_argument("--images", required=True, help="原始图片目录")
+    p.add_argument("--negative-images", nargs="*", default=[],
+                   help="额外的负样本（健康/无病变）图片目录，可多个。这些图会生成空 label（背景）")
     p.add_argument("--labels", required=True, help="原始 label 目录（labels/train）")
     p.add_argument("--out", required=True, help="输出数据集根目录")
     p.add_argument("--ratio", nargs=3, type=float, default=[0.7, 0.15, 0.15],
@@ -55,6 +57,8 @@ def parse_args():
     p.add_argument("--mode", choices=["filename-heuristic", "all-negatives", "positives-only"],
                    default="filename-heuristic",
                    help="无 class0 框的图片如何处理（见文档）")
+    p.add_argument("--exclude-stems", nargs="*", default=[],
+                   help="要跳过的图片名（不含扩展名），如重复副本")
     p.add_argument("--fracture-keywords", nargs="+", default=["骨折"],
                    help="文件名包含这些关键词的图片视为骨折病例")
     p.add_argument("--link", action="store_true",
@@ -121,11 +125,24 @@ def main():
     fracture_kw = args.fracture_keywords
     rng = random.Random(args.seed)
 
-    # 1. 收集所有图片
-    all_images = sorted(
-        os.path.join(images_dir, f) for f in os.listdir(images_dir)
-        if os.path.splitext(f)[1].lower() in IMG_EXTS
-    )
+    # 1. 收集所有图片（主目录 + 负样本目录）
+    sources = [(images_dir, "main")] + [(d, "neg") for d in args.negative_images]
+    all_images = []  # [(path, kind)]
+    seen = {}
+    for d, kind in sources:
+        if not os.path.isdir(d):
+            sys.exit(f"错误：图片目录不存在 -> {d}")
+        for f in sorted(os.listdir(d)):
+            if os.path.splitext(f)[1].lower() not in IMG_EXTS:
+                continue
+            p = os.path.join(d, f)
+            st = stem_of(p)
+            if st in set(args.exclude_stems):
+                continue
+            if st in seen:
+                sys.exit(f"错误：文件名重复 -> {st}（{kind} 目录）；请先重命名")
+            seen[st] = p
+            all_images.append((p, kind))
     if not all_images:
         sys.exit(f"错误：{images_dir} 里没有图片")
 
@@ -139,7 +156,7 @@ def main():
     # 3. 逐图归类
     positives, negatives, excluded = [], [], []
     meta = {}  # stem -> dict
-    for img in all_images:
+    for img, kind in all_images:
         stem = stem_of(img)
         label_path = label_index.get(stem)
         boxes = read_boxes(label_path) if label_path else []
@@ -152,7 +169,17 @@ def main():
             "boxes": boxes,
             "has_pos": has_pos,
             "fracture_name": name_has_fracture,
+            "source": kind,
         }
+
+        if kind == "neg":
+            # 负样本目录：默认当背景（空 label）；若意外带了 class0 框则按正样本处理
+            if has_pos:
+                print(f"  ⚠️  负样本目录里的 {stem} 含 class0 框，已按正样本处理")
+                positives.append(stem)
+            else:
+                negatives.append(stem)
+            continue
 
         if has_pos:
             positives.append(stem)

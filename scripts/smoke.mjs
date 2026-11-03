@@ -35,6 +35,17 @@ try {
   await page.goto(URL, { waitUntil: "networkidle2", timeout: 60000 });
   await new Promise((r) => setTimeout(r, 1500));
 
+  // 可选：切换到「精确版」模型
+  const wanted = process.env.TEST_MODEL || "fast";
+  if (wanted === "accurate") {
+    await page.evaluate(() => {
+      const btns = [...document.querySelectorAll("button")];
+      btns.find((b) => b.textContent && b.textContent.includes("精确版"))?.click();
+    });
+    console.log("已切换到精确版模型");
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+
   const input = await page.$('input[type="file"]');
   if (!input) throw new Error("找不到上传控件");
   await input.uploadFile(IMG);

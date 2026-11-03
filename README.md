@@ -84,22 +84,24 @@ NEXT_TEST_WASM_DIR="$PWD/node_modules/@next/swc-wasm-nodejs" \
 
 ---
 
-## 3. 换模型
+## 3. 模型（两个，页面可切换）
 
-模型文件在 `public/models/model.onnx`（当前是 yolo11n，10.2MB）。替换步骤：
+| 文件 | 模型 | 大小 | 说明 |
+|---|---|---|---|
+| `public/models/model-fast.onnx` | yolo11n（v2，含负样本） | 10MB | 默认「快速版」 |
+| `public/models/model-accurate.onnx` | yolo11s（v2） | 36MB | 可选「精确版」，更准但首载慢 |
+
+页面顶部有切换按钮；两个模型按需懒加载，选了才下载。
+
+换模型步骤：
 
 ```bash
-cd ../../   # 回 stu_train
+cd ../   # 回 stu_train
 export YOLO_CONFIG_DIR="$PWD/.ultralytics" MPLCONFIGDIR="$PWD/.mplconfig"
-.venv/bin/yolo export model=runs/horse/lesion_yolo11s_freeze10/weights/best.pt format=onnx imgsz=640 opset=12
-
-cp runs/horse/lesion_yolo11s_freeze10/weights/best.onnx web-next/public/models/model.onnx
+.venv/bin/yolo export model=runs/horse/lesion_v2_yolo11s_fresh/weights/best.pt format=onnx imgsz=640 opset=12
+cp runs/horse/lesion_v2_yolo11s_fresh/weights/best.onnx web-next/public/models/model-accurate.onnx
+# 然后 pnpm build / git push 即可
 ```
-
-> 注意：yolo11s 的 ONNX 是 38MB，网页首屏下载会明显变慢；更推荐 yolo11n（10MB）。
-> int8 动态量化虽然能压到 10MB，但实测会明显掉精度，不建议。
-
----
 
 ## 4. 工作方式
 
@@ -134,7 +136,7 @@ web-next/
 │   ├── yolo.ts           # letterbox / 解码 / NMS / 画框
 │   └── db.ts             # IndexedDB 历史记录
 ├── public/
-│   ├── models/model.onnx # 模型
+│   ├── models/*.onnx      # 两个模型：model-fast / model-accurate
 │   ├── ort/*.wasm|.mjs   # ONNX Runtime Web 运行时
 │   └── .nojekyll         # GitHub Pages 必需
 ├── scripts/smoke.mjs     # 无头浏览器端到端测试
