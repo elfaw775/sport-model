@@ -1,0 +1,69 @@
+image	category	split	class0_boxes	class1_boxes	reason
+22-LF-正位	pos	train	1	0	
+12-LF-侧位	pos	train	1	0	
+45-正位	pos	train	1	0	
+4-RH-侧位 	pos	train	1	0	
+37-侧位	pos	train	1	0	
+17-正位	pos	train	1	0	
+59-侧位+正位	pos	train	3	0	
+15-正位	pos	train	1	0	
+55-正位	pos	train	1	0	
+72-侧位 p1近端背内侧软骨碎片骨折	pos	train	1	0	
+69-侧位 籽骨基底部骨折	pos	train	1	0	
+44-正位	pos	train	1	0	
+14-LH-侧位+正位	pos	train	1	0	
+48-正位	pos	train	1	0	
+36-RH-正+侧，P1骨折	pos	train	2	0	
+11-LF-正位	pos	train	1	0	
+10-LF-侧位	pos	train	1	0	
+67-正位 p1骨折	pos	train	1	0	
+21-RF-正位	pos	train	2	0	
+79-正位 外侧籽骨粉碎性横骨折	pos	train	1	0	
+40-正位	pos	train	1	0	
+5-LH-正位	pos	train	1	0	
+63-LH-正位+斜位	pos	train	2	0	
+76-正位  p1骨折	pos	train	1	0	
+20-侧位	pos	train	1	0	
+52-正位	pos	train	1	0	
+68-侧位 籽骨基底部骨折	pos	train	1	0	
+35-正位	pos	train	1	0	
+6-正位	pos	train	1	0	
+74-正位 外侧髁骨折	pos	train	1	0	
+66-侧位 p1骨折	pos	train	2	0	
+25-前肢-正位	pos	train	1	0	
+1-RF-正位	pos	train	1	0	
+19-正位	pos	train	1	0	
+65-LF-正位+斜位	pos	train	2	0	
+30-LF-正位	pos	train	1	0	
+47-正位	pos	train	1	0	
+13-RF-侧位	pos	train	1	0	
+71-侧位 P1近端跖外侧撕脱骨折	pos	train	1	0	
+33-正位	pos	train	1	0	
+54-正+侧，P1 复杂骨折	pos	train	2	0	
+78-侧位	pos	train	1	0	
+64-RF-正位+斜位	pos	train	2	0	
+70-侧位 p1骨折	pos	train	1	0	
+51-正位	pos	train	1	0	
+2-LF-侧位	pos	train	1	0	
+31-LF-正位	pos	train	1	0	
+28-LF-正位	pos	train	1	0	
+73-侧位 p1骨折	pos	val	2	0	
+57-LF-正+侧，近端籽骨顶端骨折	pos	val	2	0	
+50-正位	pos	val	1	0	
+32-RF-正位	pos	val	1	0	
+58-正位	pos	val	1	0	
+26-LF-正位	pos	val	1	0	
+29-RF-正位	pos	val	1	0	
+39-正位	pos	val	1	0	
+41-侧位	pos	val	1	0	
+18-正位	pos	val	1	0	
+62-RF-正位+侧位	pos	test	1	0	
+24-LH-侧位	pos	test	1	0	
+75-正位 p1骨折	pos	test	2	0	
+56-正位	pos	test	1	0	
+7-LF-正位	pos	test	1	0	
+16-侧位	pos	test	1	0	
+34-LF-正+侧，P1骨折	pos	test	2	0	
+38-正位	pos	test	1	0	
+61-LF-正位+斜位	pos	test	1	0	
+23-LF-正位	pos	test	1	0	

@@ -1,0 +1,5 @@
+names:
+  0: "\u75C5\u53D8"
+  1: annotation mark
+path: .
+train: train.txt

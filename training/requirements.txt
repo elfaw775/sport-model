@@ -1,0 +1,6 @@
+# 训练环境依赖
+ultralytics>=8.4.200
+onnx>=1.16
+onnxruntime>=1.18
+opencv-python>=4.7
+numpy>=1.23,<2          # ultralytics 在 macOS 上要求 numpy<2

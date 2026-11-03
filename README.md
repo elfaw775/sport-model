@@ -3,6 +3,16 @@
 **完全没有后端**：模型在浏览器里用 ONNX Runtime Web 推理，图片不上传服务器。
 构建产物是纯静态文件，可直接部署到 **GitHub Pages**。
 
+## 仓库结构
+
+| 目录 | 内容 |
+|---|---|
+| `app/` `lib/` `public/` | 网页本体（Next.js 静态站 + 浏览器端 ONNX 推理） |
+| `training/` | **模型训练全过程**：数据、转换/拆分/评估脚本、训练权重、实验指标 |
+| `.github/workflows/` | GitHub Pages 自动构建部署 |
+
+训练部分详见 [training/README.md](training/README.md)。
+
 > 为什么不能用原来的 Flask + PyTorch？GitHub Pages 只托管静态文件，跑不了 Python/PyTorch。
 > 所以把模型导出成 ONNX，推理搬到浏览器。
 
