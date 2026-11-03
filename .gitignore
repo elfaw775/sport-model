@@ -1,0 +1,14 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# next
+.next/
+out/
+next-env.d.ts
+
+# 测试产物
+scripts/smoke.png
+
+# os
+.DS_Store
