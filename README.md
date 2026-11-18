@@ -12,7 +12,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m uvicorn backend.app:app --host 127.0.0.1 --port 8765
 ```
 
-打开 <http://127.0.0.1:8765/>，本地试用账号 `demo`、密码 `EquiDemo2026!`，默认复核人王一伊。
+打开 <http://127.0.0.1:8765/>，选择成员或输入全小写拼音账号：王一伊 `wangyiyi`、朱诗嘉 `zhushijia`、阿里米热 `alimire`、李其杭 `liqihang`。本地演示密码为账号紧接 `sportsHorse`（大写 H），例如 `wangyiyisportsHorse`。每人只访问自己的病例；复核记录自动使用实际登录者的姓名。旧演示账号的病例迁入王一伊名下。
 登录后进入[就诊记录看板](http://127.0.0.1:8765/#dashboard)。点「新建就诊」填写马匹和就诊备注即可取得独立 EV 编号，不用先有 X 线片。纸面就诊、复查预约等记录也能手动归档。之后可按编号、马名或备注查找，按状态筛选，修改马名与备注，或确认后删除单条、批量选中的记录。删除就诊会一并删除该条记录的影像和报告。
 
 同一次就诊可以在新建时或之后补充多张 PNG、JPEG 或 WebP。第一张为主图，后续为附图；需要 AI 分析时手动确认主图是合适的球节 X 线片。只有主图用于当前 YOLO11s 检测，附图供对照阅片，不覆盖已有的模型结果和复核意见。可用仓库中的[侧位示例](training/data/sporthorse_v2/images/test/16-侧位.jpg)试用。
@@ -20,14 +20,14 @@ python3.12 -m venv .venv
 报告保留候选框在原图上的位置、模型置信分数、权重标识、阈值和推理时间；即使未检出也可以复核。提交意见后从「病例档案」按名称或编号搜索，复看原图、模型结果、复核人和时间。原始文件和记录均保存在默认的 `var/cases.sqlite3`（不进 Git）；重启时使用同一数据目录。模型故障会明确失败并保留待分析病例。
 
 - `backend/app.py`：FastAPI 会话和病例接口；`backend/detector.py`：校验权重、真实 ONNX 推理及坐标还原；`backend/static/`：工作台界面。
-- 本地账号可用 `SPORT_MODEL_USERNAME`、`SPORT_MODEL_PASSWORD`、`SPORT_MODEL_DISPLAY_NAME` 替换。若另行托管，使用持久化的 `SPORT_MODEL_DATA_DIR`、HTTPS、非演示凭据和 `SPORT_MODEL_SECURE_COOKIE=1`；GitHub Pages 本身不能运行此服务。
+- 需要自定义单账户时可使用 `SPORT_MODEL_USERNAME`、`SPORT_MODEL_PASSWORD`、`SPORT_MODEL_DISPLAY_NAME`；它与默认四人演示模式分开。若另行托管，使用持久化的 `SPORT_MODEL_DATA_DIR`、HTTPS、非演示凭据和 `SPORT_MODEL_SECURE_COOKIE=1`；GitHub Pages 本身不能运行此服务。
 - 验证：安装运行依赖后执行 `.venv/bin/python -m pip install pytest httpx` 和 `.venv/bin/python -m pytest -q backend/tests`。测试包含仓库权重在两张影像上的输出回归、登录与跨用户隔离、病例状态和重启持久化。输出回归不能证明诊断准确性。
 - Chrome 流程验收：`pnpm install --frozen-lockfile` 后运行 `node scripts/smoke-visits.mjs`。脚本启动隔离的临时数据库，测试建档、编辑、多图、模型推理、人工复核、查询及批量删除，不会删除实际病例。非 macOS 环境用 `CHROME_BIN` 指定 Chrome、用 `PYTHON` 指定装有后端依赖的 Python。
 - 更新时自动迁移旧病例库，保留编号、原图及复核历史。现有人工复核过的旧记录沿用原复核时间作为归档时间；手动归档不会标记为已复核。
 
-**下一轮训练选型：** [候选模型、真实验证集基线与对照试验](training/docs/候选模型与对照试验.md)。工作台内的个人病例不自动加入训练集。
+**模型对照：** [实际训练结果、候选权重和复现说明](training/results/comparison-2026-11-18/README.md)；[架构选型依据](training/docs/候选模型与对照试验.md)。两种方案均已训练，候选权重不自动上线，工作台内的个人病例不自动加入训练集。
 
-一期真实模型只支持马球节疑似骨折定位。0.15 是候选框筛选阈值，分数不是患病概率；未检出不能排除骨折。项目保留原 v2 权重，修正了供下轮训练使用的旋转框转换，没有重新训练或宣称准确率提升。[训练归档](training/README.md) 记录了版本和已知限制。[Qwen3‑VL](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct) 与 [DeepSeek‑VL2](https://github.com/deepseek-ai/DeepSeek-VL2) 均有视觉定位能力，官方资料未提供本任务的独立评估；本版不使用它们判片或生成结论。
+一期真实模型只支持马球节疑似骨折定位。0.15 是在用模型的候选框筛选阈值，分数不是患病概率；未检出不能排除骨折。工作台保留原 v2 权重，本轮候选在修正标签上另行训练和评估。[训练归档](training/README.md) 记录了版本和已知限制。
 
 以下是原静态演示的开发与发布说明：
 

@@ -25,6 +25,7 @@ COOKIE = "equivision_session"
 SESSION_TTL = 8 * 3600
 MAX_BYTES = 10 * 1024 * 1024
 MIMES = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
+TEAM = {"wangyiyi": "王一伊", "zhushijia": "朱诗嘉", "alimire": "阿里米热", "liqihang": "李其杭"}
 CASE_FIELDS = """number, horse_name, comment, created_at, archived_at, status,
     detections, model, threshold, analyzed_at, reviewer, review_note, reviewed_at"""
 CASE_SCHEMA = """CREATE TABLE IF NOT EXISTS cases (
@@ -42,7 +43,7 @@ IMAGES_SCHEMA = """CREATE TABLE IF NOT EXISTS case_images (
 Projection = Literal["正位", "侧位", "斜位", "其他"]
 
 
-def prepare_database(database):
+def prepare_database(database, team_mode):
     database.execute("BEGIN IMMEDIATE")
     database.execute("""CREATE TABLE IF NOT EXISTS sessions (
         token_hash TEXT PRIMARY KEY, username TEXT NOT NULL, expires INTEGER NOT NULL)""")
@@ -64,6 +65,12 @@ def prepare_database(database):
         if high_water:
             database.execute("UPDATE sqlite_sequence SET seq = max(seq, ?) WHERE name='cases'", (high_water["seq"],))
     database.execute("CREATE INDEX IF NOT EXISTS cases_owner ON cases(owner, number)")
+    if team_mode and database.execute("PRAGMA user_version").fetchone()[0] == 0:
+        database.execute("UPDATE cases SET owner='wangyiyi' WHERE owner='demo'")
+        for username, name in TEAM.items():
+            database.execute("UPDATE cases SET owner=? WHERE owner=?", (username, name))
+        database.execute("DELETE FROM sessions")
+        database.execute("PRAGMA user_version=1")
 
 
 class Credentials(BaseModel):
@@ -190,12 +197,18 @@ def create_case(database, owner, horse_name, comment):
 
 def create_app(data_dir=None):
     directory = Path(data_dir or os.environ.get("SPORT_MODEL_DATA_DIR", ROOT / "var"))
-    username = os.environ.get("SPORT_MODEL_USERNAME", "demo")
-    password = os.environ.get("SPORT_MODEL_PASSWORD", "EquiDemo2026!")
-    display_name = os.environ.get("SPORT_MODEL_DISPLAY_NAME", "王一伊")
+    team_mode = not any(key in os.environ for key in
+                        ("SPORT_MODEL_USERNAME", "SPORT_MODEL_PASSWORD", "SPORT_MODEL_DISPLAY_NAME"))
+    if team_mode:
+        accounts = {username: (username + "sportsHorse", name) for username, name in TEAM.items()}
+    else:
+        username = os.environ.get("SPORT_MODEL_USERNAME", "demo")
+        password = os.environ.get("SPORT_MODEL_PASSWORD", "")
+        display_name = os.environ.get("SPORT_MODEL_DISPLAY_NAME", "王一伊")
+        if username in TEAM or username in TEAM.values() or not all((username, password, display_name)):
+            raise ValueError("自定义账号名不能使用团队保留账号，且账号、密码和显示名不能为空")
+        accounts = {username: (password, display_name)}
     secure_cookie = os.environ.get("SPORT_MODEL_SECURE_COOKIE") == "1"
-    if not all((username, password, display_name)):
-        raise ValueError("账号、密码与显示名不能为空")
 
     @contextmanager
     def connect():
@@ -213,7 +226,7 @@ def create_app(data_dir=None):
         directory.mkdir(parents=True, exist_ok=True)
         with connect() as database:
             database.execute("PRAGMA journal_mode = WAL")
-            prepare_database(database)
+            prepare_database(database, team_mode)
         yield
 
     api = FastAPI(title="EQUIVISION 运动马影像工作台", lifespan=lifespan)
@@ -241,14 +254,19 @@ def create_app(data_dir=None):
                     "SELECT username FROM sessions WHERE token_hash = ? AND expires > ?",
                     (token_hash(token), int(time.time())),
                 ).fetchone()
-            if session and session["username"] == username:
-                return username
+            if session and session["username"] in accounts:
+                return session["username"]
         raise HTTPException(401, "请先登录工作台")
+
+    @api.get("/api/login-options")
+    def login_options():
+        return TEAM if team_mode else {}
 
     @api.post("/api/login")
     def login(credentials: Credentials, request: Request, response: Response):
-        if not (secrets.compare_digest(username.encode(), credentials.username.encode())
-                and secrets.compare_digest(password.encode(), credentials.password.encode())):
+        username = credentials.username
+        account = accounts.get(username)
+        if not account or not secrets.compare_digest(account[0].encode(), credentials.password.encode()):
             raise HTTPException(401, "账号或密码不正确")
         now = int(time.time())
         token = secrets.token_urlsafe(32)
@@ -257,11 +275,11 @@ def create_app(data_dir=None):
                              (now, token_hash(request.cookies.get(COOKIE, ""))))
             database.execute("INSERT INTO sessions VALUES (?, ?, ?)", (token_hash(token), username, now + SESSION_TTL))
         response.set_cookie(COOKIE, token, httponly=True, secure=secure_cookie, samesite="strict", max_age=SESSION_TTL)
-        return {"username": username, "display_name": display_name}
+        return {"username": username, "display_name": account[1]}
 
     @api.get("/api/me")
     def me(owner: str = Depends(current_user)):
-        return {"username": owner, "display_name": display_name}
+        return {"username": owner, "display_name": accounts[owner][1]}
 
     @api.post("/api/logout", status_code=204)
     def logout(request: Request):
@@ -387,7 +405,7 @@ def create_app(data_dir=None):
             changed = database.execute("""
                 UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?, archived_at=COALESCE(archived_at, ?)
                 WHERE number=? AND owner=? AND status='analyzed'
-            """, (display_name, review.note.strip(), now, now, number, owner))
+            """, (accounts[owner][1], review.note.strip(), now, now, number, owner))
             case = read_case(database, number, owner)
             if not changed.rowcount:
                 raise HTTPException(409, "仅待复核病例可以提交复核")

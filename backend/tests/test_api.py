@@ -25,6 +25,20 @@ def login(client, username="demo"):
     return result
 
 
+@pytest.fixture
+def team(tmp_path, monkeypatch):
+    for key in ("SPORT_MODEL_USERNAME", "SPORT_MODEL_PASSWORD", "SPORT_MODEL_DISPLAY_NAME", "SPORT_MODEL_SECURE_COOKIE"):
+        monkeypatch.delenv(key, raising=False)
+    with TestClient(create_app(tmp_path)) as session:
+        yield session
+
+
+def sign_in_member(client, username):
+    result = client.post("/api/login", json={"username": username, "password": username + "sportsHorse"})
+    assert result.status_code == 200
+    return result.json()
+
+
 def picture(width=32, height=48):
     stream = io.BytesIO()
     Image.new("L", (width, height), 17).save(stream, "PNG")
@@ -49,6 +63,62 @@ def test_auth_validation_and_revocation(client):
     assert client.post("/api/logout", headers={"origin": "https://other.example"}).status_code == 403
     assert client.post("/api/logout").status_code == 204
     assert client.get("/api/cases", headers={"cookie": f"equivision_session={token}"}).status_code == 401
+
+
+def test_members_have_separate_records_and_review_as_themselves(team, monkeypatch):
+    members = {"wangyiyi": "王一伊", "zhushijia": "朱诗嘉", "alimire": "阿里米热", "liqihang": "李其杭"}
+    assert team.get("/api/login-options").json() == members
+    for username, password in (("demo", "EquiDemo2026!"), ("wangyiyi", "wangyiyisportshorse"),
+                               ("Wangyiyi", "wangyiyisportsHorse"), ("liqihang", "zhushijiasportsHorse")):
+        assert team.post("/api/login", json={"username": username, "password": password}).status_code == 401
+    monkeypatch.setattr(detector, "detect", lambda _image: [])
+    records = {}
+    for username, name in members.items():
+        identity = sign_in_member(team, username)
+        assert identity == team.get("/api/me").json() == {"username": username, "display_name": name}
+        assert team.get("/api/cases").json() == []
+        for other in records.values():
+            assert team.get(other + "/image").status_code == 404
+            assert team.patch(other, json={"comment": "修改"}).status_code == 404
+            assert team.delete(other).status_code == 404
+        path = "/api/cases/" + upload(team).json()["id"]
+        assert team.post(path + "/analyze").status_code == 200
+        assert team.post(path + "/review", json={"note": "已核对"}).json()["reviewer"] == name
+        records[username] = path
+        assert team.post("/api/logout").status_code == 204
+        assert team.get(path).status_code == 401
+    for username, path in records.items():
+        sign_in_member(team, username)
+        assert ["/api/cases/" + case["id"] for case in team.get("/api/cases").json()] == [path]
+
+
+def test_default_team_migrates_only_legacy_owners_once_and_revokes_old_sessions(client, tmp_path, monkeypatch):
+    assert client.get("/api/login-options").json() == {}
+    legacy_token = login(client).cookies["equivision_session"]
+    payload = picture()
+    legacy = upload(client, payload).json()
+    path = "/api/cases/" + legacy["id"]
+    monkeypatch.setattr(detector, "detect", lambda _image: [])
+    assert client.post(path + "/analyze").status_code == 200
+    prior = client.post(path + "/review", json={"note": "原复核意见"}).json()
+    with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
+        database.execute("INSERT INTO cases(owner, horse_name, created_at) VALUES ('阿里米热','另一匹马','2026-10-01')")
+        database.execute("INSERT INTO cases(owner, horse_name, created_at) VALUES ('other','不明归属','2026-10-01')")
+    for key in ("SPORT_MODEL_USERNAME", "SPORT_MODEL_PASSWORD", "SPORT_MODEL_DISPLAY_NAME"):
+        monkeypatch.delenv(key)
+    with TestClient(create_app(tmp_path)) as upgraded:
+        assert upgraded.get("/api/me", headers={"cookie": f"equivision_session={legacy_token}"}).status_code == 401
+        sign_in_member(upgraded, "alimire")
+        assert [case["horse_name"] for case in upgraded.get("/api/cases").json()] == ["另一匹马"]
+        assert upgraded.get(path).status_code == 404
+        sign_in_member(upgraded, "wangyiyi")
+        assert upgraded.get("/api/cases").json() == [prior]
+        assert upgraded.get(path + "/image").content == payload
+    with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
+        database.execute("INSERT INTO cases(owner, horse_name, created_at) VALUES ('demo','后来新增','2026-11-18')")
+    with TestClient(create_app(tmp_path)) as restarted:
+        sign_in_member(restarted, "wangyiyi")
+        assert restarted.get("/api/cases").json() == [prior]
 
 
 def test_rejects_invalid_images_without_archiving(client):

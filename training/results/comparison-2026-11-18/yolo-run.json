@@ -1,0 +1,16 @@
+{
+  "initial_weights": "yolo11s.pt",
+  "initial_sha256": "85a76fe86dd8afe384648546b56a7a78580c7cb7b404fc595f97969322d502d5",
+  "checkpoint": "fit/weights/last.pt",
+  "epochs": 12,
+  "batch": 4,
+  "seed": 42,
+  "training_seconds": 160.0669646669994,
+  "image_counts": {
+    "val": 13,
+    "test": 12
+  },
+  "torch": "2.15.0",
+  "ultralytics": "8.4.215",
+  "device": "mps"
+}

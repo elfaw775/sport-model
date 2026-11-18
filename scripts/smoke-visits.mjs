@@ -16,10 +16,11 @@ await new Promise(resolve => reserve.listen(0, "127.0.0.1", resolve));
 const port = reserve.address().port;
 await new Promise(resolve => reserve.close(resolve));
 const base = "http://127.0.0.1:" + port;
+const env = {...process.env, SPORT_MODEL_DATA_DIR: db, SPORT_MODEL_SECURE_COOKIE: "0"};
+for (const key of ["SPORT_MODEL_USERNAME", "SPORT_MODEL_PASSWORD", "SPORT_MODEL_DISPLAY_NAME"]) delete env[key];
 const service = spawn(process.env.PYTHON || path.join(root, ".venv/bin/python"),
   ["-m", "uvicorn", "backend.app:app", "--host", "127.0.0.1", "--port", String(port)], {
-    cwd: root, stdio: "inherit", env: {...process.env, SPORT_MODEL_DATA_DIR: db,
-      SPORT_MODEL_USERNAME: "smoke", SPORT_MODEL_PASSWORD: "local-test-only", SPORT_MODEL_SECURE_COOKIE: "0"}
+    cwd: root, stdio: "inherit", env
   });
 const closed = new Promise(resolve => { service.once("close", resolve); service.once("error", resolve); });
 let browser;
@@ -50,8 +51,12 @@ try {
     return (await records()).find(record => record.horse_name === name).id;
   };
   await page.goto(base);
-  await visible("[name=username]"); await page.type("[name=username]", "smoke");
-  await page.type("[name=password]", "local-test-only"); await formSubmit("#login-form");
+  const loginMember = async username => {
+    await visible("select[name=username]"); await page.select("[name=username]", username);
+    await page.type("[name=password]", username + "sportsHorse"); await formSubmit("#login-form");
+    await visible("#new-visit");
+  };
+  await loginMember("wangyiyi");
   await visible("#new-visit");
   const first = await create("归档用马", "初诊备注");
   await click("#edit-visit"); await visible('#edit-form [name="comment"]');
@@ -79,6 +84,11 @@ try {
   assert.equal(entry.images.length, 2);
   await page.type("#review-note", "测试复核完毕"); await formSubmit("#review-form");
   await findText("测试复核完毕"); await page.reload(); await findText("测试复核完毕");
+  assert.equal((await records()).find(record => record.id === second).reviewer, "王一伊");
+  await click("#logout"); await loginMember("zhushijia");
+  assert.equal(await page.$eval("#display-name", el => el.textContent), "朱诗嘉");
+  assert.deepEqual(await records(), []);
+  await click("#logout"); await loginMember("wangyiyi");
   await home(); await page.type("#case-search", "复查备注"); await visible(".row-select");
   await page.waitForFunction(() => document.querySelectorAll(".row-select").length === 1);
   await page.locator("#case-search").fill("");

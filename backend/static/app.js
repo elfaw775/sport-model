@@ -12,6 +12,7 @@ const json = (data) => ({method:"POST",headers:{"Content-Type":"application/json
 let user = null;
 let revision = 0;
 let noticeTimer;
+let loginOptions = {};
 
 function notify(message) {
   clearTimeout(noticeTimer);
@@ -70,13 +71,18 @@ function action(form, pending, run) {
 
 function login() {
   byId("crumb").textContent = "登录";
+  const members = Object.entries(loginOptions);
+  const usernameField = members.length
+    ? '<select name="username" autocomplete="username" required><option value="">请选择成员账号</option>' +
+      members.map(([account,name]) => '<option value="' + escapeHTML(account) + '">' + escapeHTML(name) + ' · ' + escapeHTML(account) + '</option>').join("") + '</select>'
+    : '<input name="username" autocomplete="username" required placeholder="请输入账号">';
   page.innerHTML = `<div class="login-grid">
     <section class="intro"><p class="eyebrow">EQUINE IMAGING &nbsp; / &nbsp; 01</p><h1>运动马<br><span>影像工作台</span></h1><p>从首次就诊登记，<br>到每一张影像与每一份归档。</p>
       <div class="intro-steps"><span><b>01</b>就诊建档</span><span><b>02</b>模型检测</span><span><b>03</b>复核归档</span></div>
     </section>
     <section class="card login-card"><span class="tile-icon">${icon("mark")}</span><p class="eyebrow">WORKSPACE ACCESS</p><h2>登录工作台</h2><p class="sub">使用分配的账号进入影像诊疗与病例档案。</p>
-      <form id="login-form"><label>账号<input name="username" autocomplete="username" required placeholder="请输入账号"></label><label>密码<input name="password" type="password" autocomplete="current-password" required placeholder="请输入密码"></label><p class="error" role="alert" hidden></p><button class="primary wide" type="submit">登录工作台 ${icon("arrow")}</button></form>
-      <p class="credentials">本地示例账号 <code>demo</code><br>示例密码 <code>EquiDemo2026!</code></p>
+      <form id="login-form"><label>账号${usernameField}</label><label>密码<input name="password" type="password" autocomplete="current-password" required placeholder="请输入密码"></label><p class="error" role="alert" hidden></p><button class="primary wide" type="submit">登录工作台 ${icon("arrow")}</button></form>
+      ${members.length ? '<p class="credentials">团队试用密码：小写拼音账号后加 <code>sportsHorse</code>，注意大写 H。<br>登录后仅显示该账号的就诊记录。</p>' : ''}
     </section></div>`;
   const form = byId("login-form");
   action(form,"正在登录…",async (active) => {
@@ -84,6 +90,8 @@ function login() {
     const identity = await api("/api/me");
     if (active()) {
       user = identity;
+      Object.assign(dashboardState, {query:"", filter:"all", page:1});
+      uploadMessage = null;
       if (!location.hash) history.replaceState(null, "", "#dashboard");
       render();
     }
@@ -348,6 +356,8 @@ byId("logout").addEventListener("click",async () => {
   finally { button.disabled = false; }
 });
 
+try { loginOptions = await api("/api/login-options"); }
+catch { loginOptions = {}; }
 try { user = await api("/api/me"); }
 catch (error) { if (error instanceof TypeError) notify(formatError(error)); }
 render();
