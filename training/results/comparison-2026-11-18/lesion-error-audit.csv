@@ -1,0 +1,49 @@
+split,model,image,lesion_index,status,x1,y1,x2,y2,short_edge_at_640_px,max_iou,matched_score,image_candidates_0.01,image_candidates_0.15
+val,shipped,training/data/sporthorse_v2/images/val/18-正位.jpg,1,partial_overlap,9.7,47.79,248.47,422.03,330.8,0.49772,,25,7
+val,shipped,training/data/sporthorse_v2/images/val/26-LF-正位.jpg,1,partial_overlap,87.4,64.81,104.11,161.2,36.5,0.46984,,29,1
+val,shipped,training/data/sporthorse_v2/images/val/29-RF-正位.jpg,1,low_score,147.4,183.0,163.68,209.08,35.6,0.66044,0.10237917304039001,50,1
+val,shipped,training/data/sporthorse_v2/images/val/32-RF-正位.jpg,1,detected,54.12,100.0,106.43,357.89,79.9,0.70341,0.4004570543766022,17,2
+val,shipped,training/data/sporthorse_v2/images/val/39-正位.jpg,1,detected,92.11,117.15,127.61,258.5,56.7,0.81685,0.4737706482410431,30,3
+val,shipped,training/data/sporthorse_v2/images/val/41-侧位.jpg,1,partial_overlap,73.67,90.73,144.04,193.95,123.7,0.20388,,18,0
+val,shipped,training/data/sporthorse_v2/images/val/50-正位.jpg,1,partial_overlap,45.24,120.73,85.02,285.02,73.1,0.21124,,47,1
+val,shipped,training/data/sporthorse_v2/images/val/57-LF-正+侧，近端籽骨顶端骨折.jpg,1,partial_overlap,363.19,408.34,488.11,813.09,45.4,0.24095,,6,1
+val,shipped,training/data/sporthorse_v2/images/val/57-LF-正+侧，近端籽骨顶端骨折.jpg,2,no_overlap,1333.9,234.38,1490.57,414.88,56.9,0.0,,6,1
+val,shipped,training/data/sporthorse_v2/images/val/58-正位.jpg,1,detected,147.74,112.16,209.26,333.11,96.5,0.80787,0.31278008222579956,39,1
+val,shipped,training/data/sporthorse_v2/images/val/73-侧位 p1骨折.jpg,1,partial_overlap,345.66,203.8,540.1,298.49,64.1,0.22547,,23,1
+val,shipped,training/data/sporthorse_v2/images/val/73-侧位 p1骨折.jpg,2,low_score,176.39,378.46,412.19,762.32,159.5,0.59486,0.01770627498626709,23,1
+val,yolo,training/data/sporthorse_v2/images/val/18-正位.jpg,1,detected,9.7,47.79,248.47,422.03,330.8,0.83134,0.20359362661838531,17,2
+val,yolo,training/data/sporthorse_v2/images/val/26-LF-正位.jpg,1,no_overlap,87.4,64.81,104.11,161.2,36.5,0.0,,10,1
+val,yolo,training/data/sporthorse_v2/images/val/29-RF-正位.jpg,1,no_overlap,147.4,183.0,163.68,209.08,35.6,0.0,,0,0
+val,yolo,training/data/sporthorse_v2/images/val/32-RF-正位.jpg,1,detected,54.12,100.0,106.43,357.89,79.9,0.68001,0.5662739872932434,8,4
+val,yolo,training/data/sporthorse_v2/images/val/39-正位.jpg,1,low_score,92.11,117.15,127.61,258.5,56.7,0.74283,0.09393003582954407,9,1
+val,yolo,training/data/sporthorse_v2/images/val/41-侧位.jpg,1,partial_overlap,73.67,90.73,144.04,193.95,123.7,0.49795,,11,3
+val,yolo,training/data/sporthorse_v2/images/val/50-正位.jpg,1,detected,45.24,120.73,85.02,285.02,73.1,0.66171,0.29692941904067993,5,1
+val,yolo,training/data/sporthorse_v2/images/val/57-LF-正+侧，近端籽骨顶端骨折.jpg,1,partial_overlap,363.19,408.34,488.11,813.09,45.4,0.24604,,5,0
+val,yolo,training/data/sporthorse_v2/images/val/57-LF-正+侧，近端籽骨顶端骨折.jpg,2,no_overlap,1333.9,234.38,1490.57,414.88,56.9,0.0,,5,0
+val,yolo,training/data/sporthorse_v2/images/val/58-正位.jpg,1,detected,147.74,112.16,209.26,333.11,96.5,0.82728,0.39077720046043396,8,2
+val,yolo,training/data/sporthorse_v2/images/val/73-侧位 p1骨折.jpg,1,no_overlap,345.66,203.8,540.1,298.49,64.1,0.0,,3,2
+val,yolo,training/data/sporthorse_v2/images/val/73-侧位 p1骨折.jpg,2,detected,176.39,378.46,412.19,762.32,159.5,0.56345,0.26906800270080566,3,2
+test,shipped,training/data/sporthorse_v2/images/test/16-侧位.jpg,1,partial_overlap,54.88,118.05,205.17,386.86,214.2,0.47577,,9,1
+test,shipped,training/data/sporthorse_v2/images/test/23-LF-正位.jpg,1,partial_overlap,864.66,720.4,927.0,969.77,28.5,0.25221,,18,0
+test,shipped,training/data/sporthorse_v2/images/test/24-LH-侧位.jpg,1,low_score,358.78,394.56,414.79,450.93,48.5,0.6334,0.013576090335845947,34,0
+test,shipped,training/data/sporthorse_v2/images/test/34-LF-正+侧，P1骨折.jpg,1,detected,1163.5,277.2,1441.54,765.07,97.1,0.69523,0.5530303120613098,9,2
+test,shipped,training/data/sporthorse_v2/images/test/34-LF-正+侧，P1骨折.jpg,2,partial_overlap,279.3,180.65,657.8,787.14,132.2,0.43146,,9,2
+test,shipped,training/data/sporthorse_v2/images/test/38-正位.jpg,1,low_score,89.63,100.11,117.84,203.56,52.9,0.59339,0.013175249099731445,37,1
+test,shipped,training/data/sporthorse_v2/images/test/56-正位.jpg,1,detected,127.03,77.16,151.92,228.43,55.1,0.64889,0.17169493436813354,34,2
+test,shipped,training/data/sporthorse_v2/images/test/61-LF-正位+斜位.jpg,1,detected,955.74,411.75,1047.6,482.86,37.3,0.70612,0.314596563577652,5,2
+test,shipped,training/data/sporthorse_v2/images/test/62-RF-正位+侧位.jpg,1,low_score,630.6,434.77,745.17,528.74,53.3,0.59276,0.13171011209487915,24,4
+test,shipped,training/data/sporthorse_v2/images/test/7-LF-正位.jpg,1,partial_overlap,54.45,178.24,271.69,252.79,94.8,0.47244,,18,0
+test,shipped,training/data/sporthorse_v2/images/test/75-正位 p1骨折.jpg,1,partial_overlap,132.03,154.74,222.43,335.6,61.2,0.07973,,6,0
+test,shipped,training/data/sporthorse_v2/images/test/75-正位 p1骨折.jpg,2,low_score,256.0,300.73,380.27,707.53,84.1,0.75563,0.06840315461158752,6,0
+test,yolo,training/data/sporthorse_v2/images/test/16-侧位.jpg,1,detected,54.88,118.05,205.17,386.86,214.2,0.77581,0.4338834583759308,13,3
+test,yolo,training/data/sporthorse_v2/images/test/23-LF-正位.jpg,1,no_overlap,864.66,720.4,927.0,969.77,28.5,0.0,,0,0
+test,yolo,training/data/sporthorse_v2/images/test/24-LH-侧位.jpg,1,no_overlap,358.78,394.56,414.79,450.93,48.5,0.0,,4,0
+test,yolo,training/data/sporthorse_v2/images/test/34-LF-正+侧，P1骨折.jpg,1,no_overlap,1163.5,277.2,1441.54,765.07,97.1,0.0,,3,0
+test,yolo,training/data/sporthorse_v2/images/test/34-LF-正+侧，P1骨折.jpg,2,partial_overlap,279.3,180.65,657.8,787.14,132.2,0.17224,,3,0
+test,yolo,training/data/sporthorse_v2/images/test/38-正位.jpg,1,no_overlap,89.63,100.11,117.84,203.56,52.9,0.0,,2,0
+test,yolo,training/data/sporthorse_v2/images/test/56-正位.jpg,1,detected,127.03,77.16,151.92,228.43,55.1,0.59407,0.3820537328720093,4,2
+test,yolo,training/data/sporthorse_v2/images/test/61-LF-正位+斜位.jpg,1,detected,955.74,411.75,1047.6,482.86,37.3,0.81951,0.3216891586780548,8,2
+test,yolo,training/data/sporthorse_v2/images/test/62-RF-正位+侧位.jpg,1,partial_overlap,630.6,434.77,745.17,528.74,53.3,0.36199,,14,1
+test,yolo,training/data/sporthorse_v2/images/test/7-LF-正位.jpg,1,partial_overlap,54.45,178.24,271.69,252.79,94.8,0.25929,,2,0
+test,yolo,training/data/sporthorse_v2/images/test/75-正位 p1骨折.jpg,1,no_overlap,132.03,154.74,222.43,335.6,61.2,0.0,,0,0
+test,yolo,training/data/sporthorse_v2/images/test/75-正位 p1骨折.jpg,2,no_overlap,256.0,300.73,380.27,707.53,84.1,0.0,,0,0

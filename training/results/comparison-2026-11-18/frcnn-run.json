@@ -1,0 +1,80 @@
+{
+  "torch": "2.15.0",
+  "torchvision": "0.29.2",
+  "pretrained_sha256": "dd69338a24b8d7381807e247652bdc356325bcbaf1cd3e092e00e0a1a58706bf",
+  "epochs": 12,
+  "seed": 42,
+  "config": {
+    "min_size": 640,
+    "max_size": 640,
+    "rpn_post_nms_top_n_test": 200,
+    "box_batch_size_per_image": 64,
+    "box_score_thresh": 0.01,
+    "box_nms_thresh": 0.7
+  },
+  "trainable": "roi_heads.box_predictor only",
+  "trainable_parameters": 10250,
+  "hist": [
+    {
+      "epoch": 1,
+      "classifier_loss": 0.4860684139243627,
+      "box_loss": 0.3136266313366971
+    },
+    {
+      "epoch": 2,
+      "classifier_loss": 0.3222637737201432,
+      "box_loss": 0.2864825735657902
+    },
+    {
+      "epoch": 3,
+      "classifier_loss": 0.2539632423954495,
+      "box_loss": 0.27023135504480134
+    },
+    {
+      "epoch": 4,
+      "classifier_loss": 0.21617624820288966,
+      "box_loss": 0.26018386776164426
+    },
+    {
+      "epoch": 5,
+      "classifier_loss": 0.19319173062251785,
+      "box_loss": 0.2487770116935342
+    },
+    {
+      "epoch": 6,
+      "classifier_loss": 0.17762748897075653,
+      "box_loss": 0.2370048006207256
+    },
+    {
+      "epoch": 7,
+      "classifier_loss": 0.16564193342701863,
+      "box_loss": 0.23219638431476333
+    },
+    {
+      "epoch": 8,
+      "classifier_loss": 0.15353915423659956,
+      "box_loss": 0.2186611751883717
+    },
+    {
+      "epoch": 9,
+      "classifier_loss": 0.14282592524916438,
+      "box_loss": 0.21238311493800857
+    },
+    {
+      "epoch": 10,
+      "classifier_loss": 0.1342244015659316,
+      "box_loss": 0.2103621565689475
+    },
+    {
+      "epoch": 11,
+      "classifier_loss": 0.12732403864294795,
+      "box_loss": 0.20459142201027627
+    },
+    {
+      "epoch": 12,
+      "classifier_loss": 0.12064768373966217,
+      "box_loss": 0.19957493018295805
+    }
+  ],
+  "elapsed_seconds": 81.29012729198439
+}
