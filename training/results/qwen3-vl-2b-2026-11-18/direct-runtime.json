@@ -1,0 +1,22 @@
+{
+  "model": "mlx-community/Qwen3-VL-2B-Instruct-4bit",
+  "revision": "9c4f5209e57b31f4b9dfba735de3fb983739c9cc",
+  "model_sha256": "4750d95a2162829e127a94e83ac350d498d02070aab216c4687da48804a06ffb",
+  "prompt": "Examine this equine fetlock radiograph for visible evidence of a fracture, including fracture lines or detached fracture fragments. Some images contain multiple views. Return JSON only, with fields \"status\" and \"boxes\". Use \"positive\" if you see a suspected fracture, \"negative\" if you see none, or \"uncertain\" if you cannot judge. For each suspected fracture, put one tight bounding box around the visible lesion, not the whole joint. Coordinates must be [xmin,ymin,xmax,ymax], integers on a 0 to 1000 scale relative to the full image, origin at the top left. With no localized fracture return an empty list for \"boxes\".",
+  "method": "zero-shot; independent greedy generation for each full-frame input",
+  "temperature": 0.0,
+  "seed": 42,
+  "max_tokens": 256,
+  "processor_min_pixels": 65536,
+  "processor_max_pixels": 1048576,
+  "versions": {
+    "mlx-vlm": "0.8.0",
+    "mlx": "0.32.4",
+    "mlx-metal": "0.32.4",
+    "transformers": "5.23.0",
+    "Pillow": "13.0.0"
+  },
+  "python": "3.12.13",
+  "platform": "macOS-27.2.1-arm64-arm-64bit",
+  "chip": "Apple M5"
+}

@@ -1,0 +1,336 @@
+{
+  "base_revision": "9c4f5209e57b31f4b9dfba735de3fb983739c9cc",
+  "base_sha256": "4750d95a2162829e127a94e83ac350d498d02070aab216c4687da48804a06ffb",
+  "rank": 8,
+  "alpha": 16,
+  "modules": [
+    "language_model.model.layers.24.self_attn.q_proj",
+    "language_model.model.layers.24.self_attn.v_proj",
+    "language_model.model.layers.25.self_attn.q_proj",
+    "language_model.model.layers.25.self_attn.v_proj",
+    "language_model.model.layers.26.self_attn.q_proj",
+    "language_model.model.layers.26.self_attn.v_proj",
+    "language_model.model.layers.27.self_attn.q_proj",
+    "language_model.model.layers.27.self_attn.v_proj"
+  ],
+  "trainable_parameters": 229376,
+  "epochs": 1,
+  "batch_size": 1,
+  "optimizer": "AdamW",
+  "learning_rate": 0.00015,
+  "weight_decay": 0,
+  "seed": 42,
+  "loss": "mean cross-entropy over assistant JSON and end token only",
+  "max_pixels": 1048576,
+  "prompt": "Examine this equine fetlock radiograph for visible evidence of a fracture, including fracture lines or detached fracture fragments. Some images contain multiple views. Return JSON only, with fields \"status\" and \"boxes\". Use \"positive\" if you see a suspected fracture, \"negative\" if you see none, or \"uncertain\" if you cannot judge. For each suspected fracture, put one tight bounding box around the visible lesion, not the whole joint. Coordinates must be [xmin,ymin,xmax,ymax], integers on a 0 to 1000 scale relative to the full image, origin at the top left. With no localized fracture return an empty list for \"boxes\".",
+  "inputs": [
+    {
+      "filename": "63-LH-正位+斜位.jpg",
+      "image_sha256": "d2e3c23271dd2ff9f64b60f49fc45a37b0f1cc9fb81e043239f032d18894f45e",
+      "label_sha256": "a59d790725f140d4345819154b16338f663faed7b84191ca403cea19ff34cad3"
+    },
+    {
+      "filename": "30-LF-正位.jpg",
+      "image_sha256": "0b06bb17925a1ad97f37ed579a8c5e7d194dd0c5b7c0ad0c661f204c862a6eb7",
+      "label_sha256": "d2ec24b27d515d0abe09066d5d4ccd5ba6da29773f2e57359e578f23cb39403a"
+    },
+    {
+      "filename": "72-侧位 p1近端背内侧软骨碎片骨折.jpg",
+      "image_sha256": "04c13903c55e371771692a0c4baf644e9ee79bc0c5cb66d14a34bce1f28f8421",
+      "label_sha256": "a73f184db5568876e2cad9cb52f330a9b418f2760c7b244c0d73acb302ff4524"
+    },
+    {
+      "filename": "17-正位.jpg",
+      "image_sha256": "ba34b900108bea92e80dfdf878893caa9cb3c0155de4fe23e1e357f0e8af755f",
+      "label_sha256": "6edad5a7a963fa9ab242583b77e30e72e40a3b1719ad0bcb385cfc6afa6a6816"
+    },
+    {
+      "filename": "2-正位.png",
+      "image_sha256": "84f6a3a78ffe68bcc7043454c4a46b71e7b78b7d2805e54fe75d57948c87f8f9",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "22-LF-正位.jpg",
+      "image_sha256": "02b90664fd29a64b6f1c47572a0c1e3ddb05bec76ed8c5f8dfda6d5dc270a69d",
+      "label_sha256": "b95acb274129863bbc00b730cc42aacb9908218eccc725d28558d1e0f465d4b6"
+    },
+    {
+      "filename": "74-正位 外侧髁骨折.jpg",
+      "image_sha256": "bbbb6ae982442af8fd07a5b701aeeebf165c495703c906468bd0d247a73c16fa",
+      "label_sha256": "133786256f2cd3f13782de7be4c7b3b72ea52ed401e353e78870064b290a6851"
+    },
+    {
+      "filename": "79-正位 外侧籽骨粉碎性横骨折.jpg",
+      "image_sha256": "5147ee37e7e9c6a826eb4cd1019b59b2c24447062e6931670c42749f0a4341b1",
+      "label_sha256": "667a836aa89caadc41b150c4a351fded75797765fec152f2aba720a82cddb49d"
+    },
+    {
+      "filename": "47-正位.jpg",
+      "image_sha256": "fe0974017c5ce2ddf95b53ffde16aa854f88bb72a8039a1b23d151b16f3d72b5",
+      "label_sha256": "76c26543148aee1a01ed81056f3a38d46ec3541689832c2cb4a9cce4eeb6278d"
+    },
+    {
+      "filename": "21-RF-正位.jpg",
+      "image_sha256": "4bba96b961fdf6d3698ea0dcfc4a6dcd148214b53042b1df731ada25a5418575",
+      "label_sha256": "e64affb75752a15b076fb5c8f785d5bd56ba56670bdcf66ae165bd5c7a543f39"
+    },
+    {
+      "filename": "15-RF-侧位.jpg",
+      "image_sha256": "178f20a15b228159d2c33a7c24c32f51ec1ebac24aa7d106521484a71578fb1f",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "65-LF-正位+斜位.jpg",
+      "image_sha256": "968ffa6ca1b32d3553212a0695cc943ba53c975efb40751d126e756dea37922a",
+      "label_sha256": "93e76b3dc17fda273ef556931c673760a400e60264fecbc7d9172d3e9fe0644b"
+    },
+    {
+      "filename": "44-正位.jpg",
+      "image_sha256": "5632fc35715e8d9ea610ff891b5f9a6ae6dcc6f3bddbd58137dc37dc58396b7b",
+      "label_sha256": "abf6290d9e25f0205f8c40a2ae52826a140c423bcc3dad5c2815cc921b6594f4"
+    },
+    {
+      "filename": "5-LH-正位.jpg",
+      "image_sha256": "f913a859877a52499726cbeb943543a645512e206b2f0b79c7f53e7bd641936c",
+      "label_sha256": "391e3bfa7bed9065324a88775a4717ab90b7052c8bb3d51fbc1323102f15b637"
+    },
+    {
+      "filename": "40-正位.jpg",
+      "image_sha256": "ba5f3d307d30d8ff99513801e6a2f8aa2e09b9916cc247023821d1db67babffa",
+      "label_sha256": "0f7db8533b975c334568d1395879069483e155453c4c9d9df40646493a9a7a34"
+    },
+    {
+      "filename": "6-LF-侧位.jpg",
+      "image_sha256": "3ad02df60b1812677915e0a7dc989b354685e47507da6b7ec62f0623fd9ceb2c",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "11-RH-正位.jpg",
+      "image_sha256": "535ec78415c0e325456095e5bd45d6daa2cfd290f97a6a8bab34d2c43d38096f",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "25-前肢-正位.jpg",
+      "image_sha256": "e9e64854b5ec489186d1bd853470024e2218eaa982c0514e974bb4c1a7b90f99",
+      "label_sha256": "112c41239768ab2dcde9e240e288c9664985fd4dfdde205c33e05b2099738b06"
+    },
+    {
+      "filename": "68-侧位 籽骨基底部骨折.jpg",
+      "image_sha256": "bd36dfa0013d8bbcced8b75f2c71e865b32291c52b8bc4090d0c115f321e2c1a",
+      "label_sha256": "1a36549e83b2a3ba6055bbdd76746eaa1696150fa87735ed2e1e4df9ae50d337"
+    },
+    {
+      "filename": "12-LF-侧位.jpg",
+      "image_sha256": "e8974cd945fba2c6cc1ad70f0d75861b579c9eaab12968439d8d089355ee4de9",
+      "label_sha256": "cad2d57b470f2756d0b9c277533a07f73f2610a4a28c63886617387778849978"
+    },
+    {
+      "filename": "4-RH-侧位 .jpg",
+      "image_sha256": "297621c5dc877d80d2611347014b6157c97147989ac92fb4e3d10d473176caf4",
+      "label_sha256": "e18bd053ee98456ee4f52bd2e5162168471c517eb7ef432e302868ee55dfd0a0"
+    },
+    {
+      "filename": "15-正位.jpg",
+      "image_sha256": "af187a2884be66e676ff51840256f25958c94eaecd18182af3bceb7e4580255f",
+      "label_sha256": "0bd5f09034a1c68a32e925f9fc43f28253cb0d8adc9b0d604042842a6adcfc06"
+    },
+    {
+      "filename": "54-正+侧，P1 复杂骨折.jpg",
+      "image_sha256": "c42262f9f539419dee81c536f02294f73fdb41e1fb4171330e29424fa6b7f6a9",
+      "label_sha256": "90eb5357ac19e7b300f40413d99be85b6e697a4a9f59d6ab200f94363bb144d4"
+    },
+    {
+      "filename": "28-LF-正位.jpg",
+      "image_sha256": "f2172e12a16eacb34a79b1e8e14f848635d94f743fd8437af734b9040ca07040",
+      "label_sha256": "9c437573f910868cf0e108291e17dec78d2d368d2e65dddd9800b1c2f2d4e1cb"
+    },
+    {
+      "filename": "9-LH-正位.jpg",
+      "image_sha256": "1550bc50033c19165687a58289d092c49542e005a57ff5eebe7090502fd5a9a8",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "31-LF-正位.jpg",
+      "image_sha256": "d4e5d1d1f9f89a3ff29ab79cbf5bc951e9548c7a39ff6cbf69d0d0ea91c68c3b",
+      "label_sha256": "3883147ec34991fe7ac094d012304f28443b3051cd98b90b5527db3ad274a999"
+    },
+    {
+      "filename": "1-RF-正位.jpg",
+      "image_sha256": "f343cfe1e365ad954b802569d3b4e584524b9f271ebb203506f4763ddfade9bd",
+      "label_sha256": "afe1b9f7da59c8f18e37d7f507ba59811db223fd72d5103319dd1262b0986a02"
+    },
+    {
+      "filename": "67-正位 p1骨折.jpg",
+      "image_sha256": "003cb6c5dd503ed786c9b7ab8f1fcc311d7005339ef82e7f2881ed8144f10f13",
+      "label_sha256": "30465d6986545698bd5477f639f373dc4a6ff0738d777e85ad0afa9410fe40c5"
+    },
+    {
+      "filename": "33-正位.jpg",
+      "image_sha256": "50d0400c9eb987d13db162cae99b9e2638513061e28feb55542be5b05ca79bb0",
+      "label_sha256": "344a61e2ce163ad1bb5d1141bf56fd7b58a6b309efd9219f72a78facf83a4372"
+    },
+    {
+      "filename": "70-侧位 p1骨折.jpg",
+      "image_sha256": "292aec469abda9a39dd94d7ae88e75dbe000ee07727525ae10960093c8124921",
+      "label_sha256": "c00761108743650bfbefcbebdbcfa87e883fc78694c1abbd304c6349ca43149e"
+    },
+    {
+      "filename": "20-侧位.jpg",
+      "image_sha256": "a31b2aafa8acdf14dfa65d93f3fd8e61439c7e86f4f7cb2c4a2a1835547a0379",
+      "label_sha256": "e6da28b71666cf9280075ecc9865f9f7e209b2106499d8fae5eef053e3a85014"
+    },
+    {
+      "filename": "37-侧位.jpg",
+      "image_sha256": "c038f4463038919082d188116589a0d7e8a815dc78e993ffd5550bfa7cb4b290",
+      "label_sha256": "0b46dd7be60f840393b8cb1684328f4142b7fc106dbdc1c0765b9245d366c879"
+    },
+    {
+      "filename": "52-正位.jpg",
+      "image_sha256": "7ec253e6a38ff6e56abde9809ca1b17b50826c5d9eccbdd09287cb4c9cd388e3",
+      "label_sha256": "6ee3d521478d5c9c992014bfe5941591012757355ca26c8f2ded5457282f18f9"
+    },
+    {
+      "filename": "35-正位.jpg",
+      "image_sha256": "3df714651e16f94b2e8687d451eeb13491b525c87b17b074b407dfba6ae5b3dd",
+      "label_sha256": "09f9d07f2084efa5ac91838769b9ae535242e603f95fa07d62d1c9eac9759659"
+    },
+    {
+      "filename": "18-LH-正位.jpg",
+      "image_sha256": "2f4a7fb9a9bdbd89cd157b0050aaaf0c8f4e8c1e765220559c29c7cbcefcb09f",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "5-LF-正位.jpg",
+      "image_sha256": "5841f73a9bd1dbbaa3e3147d4cc4e00e4fc8d6060c1f87c98af07362d838c021",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "59-侧位+正位.jpg",
+      "image_sha256": "4054acd41482136df86fed33413c34e47829fdab6c34fda3b1f02fa1e77af2cf",
+      "label_sha256": "cc176ca70909c7baf05332207ae836cf3d4ba06d82b111e723552f912ce3c3bc"
+    },
+    {
+      "filename": "45-正位.jpg",
+      "image_sha256": "7b29d3949bb83bd3f8a057c0007e73947d5e3da8f9994a9bcd5d6d7ce8dd9b8c",
+      "label_sha256": "ed3b32b8bb45dc5f08263f1b78f7648243e3baa9725056e184688b2802869bea"
+    },
+    {
+      "filename": "71-侧位 P1近端跖外侧撕脱骨折.jpg",
+      "image_sha256": "01a785439dbc3d11097698d1067808ec88e4de4df7e5758de3bb292330294b4d",
+      "label_sha256": "0b57388ff25e932e6a50dbbdb936d60d52dbec3fbf0f8fb8df32a0eac9abe547"
+    },
+    {
+      "filename": "19-RH-侧位.jpg",
+      "image_sha256": "16b11705188c24ca2692bacd7964c43e92da7a6b2ed75513161e2b4d45900c50",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "64-RF-正位+斜位.jpg",
+      "image_sha256": "97dbbe1c236a4025d11aa04234ba8d6f711b6937f386140da052ab38b53203a8",
+      "label_sha256": "54a1d3d2ff15ff77266d801a924abd07390c203b687fd1d704ad3eb1a491ee13"
+    },
+    {
+      "filename": "78-侧位.jpg",
+      "image_sha256": "1c1eb24eb112b75ed8f02644fb6883b448362063a0fe42eb36f3a788e4228f93",
+      "label_sha256": "1f3c17f29659db8ad7e093c61a191b2723efc06d687348b76187c0a795216cca"
+    },
+    {
+      "filename": "11-LF-正位.jpg",
+      "image_sha256": "a7dac865292dece9f331ab2080736abca75baff96fcf1cb00f3c00163ddcc0b8",
+      "label_sha256": "a86e4af10e5180348c6144c30087a733854f1474eaa47da73d99277452d3df8c"
+    },
+    {
+      "filename": "36-RH-正+侧，P1骨折.jpg",
+      "image_sha256": "09ff10035ec99a8e58d40820187c9f6c7b30c792593680862cf006fcab3bef72",
+      "label_sha256": "0774d6eb3cfe1af33e660f41d23c002126255250a23bf0733aba0fa152dce65e"
+    },
+    {
+      "filename": "51-正位.jpg",
+      "image_sha256": "2aff413956b7ce2ebf8e260608e3d77a67ce7609aaa5ead5e1ff1d1a7d7eec3c",
+      "label_sha256": "759601086bbec36324e336e2d5bbd359123dd09dd3c4d44dc651f2250385a95e"
+    },
+    {
+      "filename": "12-RH-侧位.jpg",
+      "image_sha256": "2bddcea1bcfbd6d24050d1ebfe6dccfeae4cdf81015ed463d265b7abba34fbb4",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "48-正位.jpg",
+      "image_sha256": "019799a786c5d2bc2fe250b9c2182ec7975075b2e4a2fd4f98f3b3f890476522",
+      "label_sha256": "0311e4ff1bf02461021526dd2aaab06c2b70397854172a4fa0cf1bc40cb9cce9"
+    },
+    {
+      "filename": "69-侧位 籽骨基底部骨折.jpg",
+      "image_sha256": "dfe98682d2a862f920cce24707e6738b72abaaa367a50d0b882f98b2ab2ba7b3",
+      "label_sha256": "8241abb05d3bb600ec912774297dc032a6ac4c5449b1dedf7778a895d81c1a63"
+    },
+    {
+      "filename": "6-正位.jpg",
+      "image_sha256": "cbcc87138b91feeefc04de7f0aef2d61b486c277cc5b50f66b8825ca9ca3244f",
+      "label_sha256": "c8bb1c98afa80e6c72ac141ae5f1638135038ee5ed0ea2d0a15efc932e95bf9d"
+    },
+    {
+      "filename": "13-LF-侧位.jpg",
+      "image_sha256": "ecc2005691a6bd4221f1eb561a112a1ec7968d49869ad4d35df10cadff38197a",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "76-正位  p1骨折.jpg",
+      "image_sha256": "defb6494c56be313144c027b68a19e24d671563c14bd56fad2a215f8ecbb175e",
+      "label_sha256": "b9a9fd000b0fec97fc115d544f8bdba568287c97ce39d59c7486547a3a1d9d12"
+    },
+    {
+      "filename": "14-LH-侧位+正位.jpg",
+      "image_sha256": "edcaada369c8798b960e4c52e842089dae30a8af6f7d56070b35a082dc7b5ab2",
+      "label_sha256": "6d98237cb15f4159b90edc4f68d7a33a0c5c01f5d2dca0b642d21188f3dbea91"
+    },
+    {
+      "filename": "19-正位.jpg",
+      "image_sha256": "25835d9f807ba112e86ab9bdd6e711015c2cda3013d2dd54464c7f279434c6e2",
+      "label_sha256": "ddd055de102f1d6106f36bc76edd36a7825e033d753cb4837edab84b8d5dfa96"
+    },
+    {
+      "filename": "2-LF-侧位.jpg",
+      "image_sha256": "45aa3591fddbe8618e830b6d6b42197baf7f368010fa2b70eed054ae0df84160",
+      "label_sha256": "af44ba4fe7be9e966b293ff4c6d6374bf6d5c0de08b5074867c02935f356197d"
+    },
+    {
+      "filename": "20-RH-正位.jpg",
+      "image_sha256": "3d6c6710edc1b9134061c60cc2bfd88e030753df8d936ee124de9b58e2a5db53",
+      "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "66-侧位 p1骨折.jpg",
+      "image_sha256": "bf7d11621bd1234267ed480467f866a0b0802d23eb2f9332077eabae0a4fa524",
+      "label_sha256": "36e3eabfc2559fcb0592c1fd91b81c3b96b93309e5dc9a12e5588bf3091e850f"
+    },
+    {
+      "filename": "10-LF-侧位.jpg",
+      "image_sha256": "94da7a3e2c83b4853271fd7b0d95f450a22820a08378b1d28e9d6f7ed5d05819",
+      "label_sha256": "53c0760311034cb17b954aa569a09c8c610ba8cf03ece6c118355fa9eca2e192"
+    },
+    {
+      "filename": "13-RF-侧位.jpg",
+      "image_sha256": "ed0130a313c84b6cf049149cd15454073d294782fc1fe9d277461fd5cfebada9",
+      "label_sha256": "bf55f585c9e463e3113246adaaa29a9461477203b72bf45873e1f317182ef1ba"
+    },
+    {
+      "filename": "55-正位.jpg",
+      "image_sha256": "c3bfb186001a04cb185668d5565dc8a7da9ecad5291ff391a22f0f8cdd0ea9b3",
+      "label_sha256": "7c36c7ee7b3e6371a97c89036fc3083996194a6eb9586f7c1d9486ddb093e8e6"
+    }
+  ],
+  "lora_b_max_abs_after": {
+    "language_model.model.layers.24.self_attn.q_proj.lora_b": 0.026112014427781105,
+    "language_model.model.layers.24.self_attn.v_proj.lora_b": 0.023110702633857727,
+    "language_model.model.layers.25.self_attn.q_proj.lora_b": 0.023336665704846382,
+    "language_model.model.layers.25.self_attn.v_proj.lora_b": 0.02130037359893322,
+    "language_model.model.layers.26.self_attn.q_proj.lora_b": 0.023894358426332474,
+    "language_model.model.layers.26.self_attn.v_proj.lora_b": 0.020929304882884026,
+    "language_model.model.layers.27.self_attn.q_proj.lora_b": 0.023977061733603477,
+    "language_model.model.layers.27.self_attn.v_proj.lora_b": 0.024469386786222458
+  },
+  "training_seconds": 83.72468375001336,
+  "adapter_sha256": "17c61c1d8a369c2824c9e6a564e67fa3723c682a61614888ee2e89d049c34dc4",
+  "peak_memory_gb": 3.749684842
+}

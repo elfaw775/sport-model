@@ -1,0 +1,25 @@
+{"split": "val", "filename": "1-侧位.png", "status": "negative", "boxes": []}
+{"split": "val", "filename": "10-LH-侧位.jpg", "status": "negative", "boxes": []}
+{"split": "val", "filename": "17-LH-侧位.jpg", "status": "negative", "boxes": []}
+{"split": "val", "filename": "18-正位.jpg", "status": "positive", "boxes": [[133.10704126980283, 189.26110688215059, 691.050692299758, 724.9889541925841], [465.5820464275061, 227.39132493520088, 872.2432911789948, 800.2841743698721]]}
+{"split": "val", "filename": "26-LF-正位.jpg", "status": "negative", "boxes": []}
+{"split": "val", "filename": "29-RF-正位.jpg", "status": "negative", "boxes": []}
+{"split": "val", "filename": "32-RF-正位.jpg", "status": "positive", "boxes": [[447.37519501082426, 431.5241543780179, 660.9799349562242, 730.6763641527607]]}
+{"split": "val", "filename": "39-正位.jpg", "status": "positive", "boxes": [[372.81948017996234, 378.9518456022249, 562.1777188846111, 807.9013925630127], [402.5167446043469, 136.15575228021663, 652.636029647705, 626.7664815222876]]}
+{"split": "val", "filename": "41-侧位.jpg", "status": "positive", "boxes": [[231.14226765782328, 227.95011197728778, 468.0075220325343, 649.8647208881217]]}
+{"split": "val", "filename": "50-正位.jpg", "status": "positive", "boxes": [[204.67841620720628, 292.78303656990147, 447.2266153278953, 768.286424134761]]}
+{"split": "val", "filename": "57-LF-正+侧，近端籽骨顶端骨折.jpg", "status": "positive", "boxes": [[587.505046065707, 88.82049361140105, 1000.0, 676.7710363941949]]}
+{"split": "val", "filename": "58-正位.jpg", "status": "positive", "boxes": [[568.452142326681, 301.16197168032073, 815.7069756715148, 636.5621193933066], [481.48282468077235, 418.1153321463633, 731.0730674401906, 929.9885101963428]]}
+{"split": "val", "filename": "73-侧位 p1骨折.jpg", "status": "positive", "boxes": [[283.01028936312997, 533.8825246823653, 558.4892716359155, 824.6952841580977]]}
+{"split": "test", "filename": "16-侧位.jpg", "status": "positive", "boxes": [[147.6799051544691, 45.518949132908, 813.3642730340642, 1000.0], [518.8244648553119, 367.00087915715176, 963.864156095585, 1000.0], [322.0015159655009, 90.91073640095615, 658.6104796843318, 628.8859105084991]]}
+{"split": "test", "filename": "23-LF-正位.jpg", "status": "negative", "boxes": []}
+{"split": "test", "filename": "24-LH-侧位.jpg", "status": "negative", "boxes": []}
+{"split": "test", "filename": "34-LF-正+侧，P1骨折.jpg", "status": "positive", "boxes": [[75.87421988591267, 213.36181785531124, 485.26233606540126, 897.3396923642232], [458.8793390694018, 206.77933671818678, 957.2364965017304, 1000.0]]}
+{"split": "test", "filename": "38-正位.jpg", "status": "negative", "boxes": []}
+{"split": "test", "filename": "56-正位.jpg", "status": "positive", "boxes": [[585.8826297432007, 591.9664402314338, 784.7615678307704, 951.4770099005893], [466.8830824554897, 185.82594802728053, 937.9693405242467, 805.2267933528377]]}
+{"split": "test", "filename": "61-LF-正位+斜位.jpg", "status": "negative", "boxes": []}
+{"split": "test", "filename": "62-RF-正位+侧位.jpg", "status": "negative", "boxes": []}
+{"split": "test", "filename": "7-LF-正位.jpg", "status": "positive", "boxes": [[628.4112980252437, 337.0605104158683, 822.3969724308897, 586.5185828672684]]}
+{"split": "test", "filename": "7-RF-正位.jpg", "status": "negative", "boxes": []}
+{"split": "test", "filename": "75-正位 p1骨折.jpg", "status": "positive", "boxes": [[379.8363690648822, 281.341146335779, 652.4531674153834, 836.3176397521795]]}
+{"split": "test", "filename": "8-RF-侧位.jpg", "status": "negative", "boxes": []}

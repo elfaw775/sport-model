@@ -43,6 +43,8 @@ python3.12 -m venv .venv
 
 以下是原静态演示的开发与发布说明：
 
+[Qwen 实测与微调](training/results/qwen3-vl-2b-2026-11-18/README.md)沿用相同 84 匹马。历史留出 12 处病灶中，Qwen3-VL-2B 直接读片命中 0 处，QLoRA 微调命中 1 处。现役 YOLO 命中 3 处，工作台继续使用该模型。
+
 ## 仓库结构
 
 | 目录 | 内容 |
