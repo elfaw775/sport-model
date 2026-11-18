@@ -425,7 +425,7 @@ def test_shared_structured_report_conflicts_signatures_and_read_only_history(tea
         assert restarted.post(path + "/analyze").status_code == 200
         assert restarted.post(path + "/review", json=report).status_code == 409
         assert restarted.post(path + "/review", json={"note": "旧客户端"}).status_code == 409
-        assert restarted.post(path + "/review", json=report | {"findings": "", "revision": 2}).status_code == 422
+        assert restarted.post(path + "/review", json={"findings": "", "conclusion": " ", "revision": 2}).status_code == 422
         mark = {"kind": "distance", "points": [{"x": 3, "y": 4}, {"x": 0, "y": 0}]}
         mark_id = restarted.post(primary + "/measurements", json=mark).json()["images"][0]["measurements"][0]["id"]
         confirmed = restarted.post(path + "/review", json=report | {"revision": 2}).json()
@@ -437,6 +437,46 @@ def test_shared_structured_report_conflicts_signatures_and_read_only_history(tea
         assert restarted.post(primary + "/measurements", json=mark).status_code == 409
         assert restarted.delete(primary + "/measurements/" + mark_id).status_code == 409
         assert restarted.get(path).json()["report"] == saved
+
+
+@pytest.mark.parametrize(("findings", "conclusion"), [("已观察正位片", ""), ("", "建议核对侧位")])
+def test_one_review_field_signs_directly(team, monkeypatch, findings, conclusion):
+    sign_in_member(team, "wangyiyi")
+    path = "/api/cases/" + upload(team).json()["id"]
+    monkeypatch.setattr(detector, "detect", lambda _: [])
+    assert team.post(path + "/analyze").status_code == 200
+    signed = team.post(path + "/review", json={"findings": findings, "conclusion": conclusion, "revision": 0}).json()
+    assert signed["report"]["findings"] == findings and signed["report"]["conclusion"] == conclusion
+    assert signed["status"] == "reviewed" and signed["reviewer"] == "王一伊"
+    assert signed["empty_review_confirmed"] is False and signed["archived_at"] is None
+
+
+def test_blank_review_requires_acknowledgement_of_current_draft_and_persists(team, tmp_path, monkeypatch):
+    sign_in_member(team, "wangyiyi")
+    path = "/api/cases/" + upload(team).json()["id"]
+    monkeypatch.setattr(detector, "detect", lambda _: [])
+    team.post(path + "/analyze")
+    blank = {"findings": "\n ", "conclusion": "　", "revision": 0}
+    for flag in ({}, {"empty_review_confirmed": False}, {"empty_review_confirmed": "true"}):
+        assert team.post(path + "/review", json=blank | flag).status_code == 422
+    unchanged = team.get(path).json()
+    assert unchanged["status"] == "analyzed" and unchanged["report"]["revision"] == 0
+    assert unchanged["empty_review_confirmed"] is False and unchanged["reviewed_at"] is None
+
+    team.put(path + "/report", json=blank | {"findings": "同事已填写草稿"})
+    acknowledged = blank | {"empty_review_confirmed": True}
+    assert team.post(path + "/review", json=acknowledged).status_code == 409
+    assert team.post(path + "/review", json={"note": "", "empty_review_confirmed": True}).status_code == 409
+    assert team.get(path).json()["report"]["findings"] == "同事已填写草稿"
+    sign_in_member(team, "zhushijia")
+    signed = team.post(path + "/review", json=acknowledged | {"revision": 1}).json()
+    assert signed["status"] == "reviewed" and signed["empty_review_confirmed"] is True
+    assert signed["report"]["findings"] == signed["report"]["conclusion"] == signed["review_note"] == ""
+    assert signed["report"]["revision"] == 2 and signed["reviewer"] == "朱诗嘉" and signed["reviewed_at"]
+    assert signed["archived_at"] is None and team.post(path + "/review", json=acknowledged).status_code == 409
+    with TestClient(create_app(tmp_path)) as restarted:
+        sign_in_member(restarted, "alimire")
+        assert restarted.get(path).json() == signed
 
 
 def test_viewer_writes_stay_within_shared_workspace(team, tmp_path, monkeypatch):
@@ -463,6 +503,7 @@ def test_existing_multi_image_database_upgrades_without_guessing_quality_or_chan
     path = "/api/cases/" + case["id"]
     images = append_image(client, path, second).json()["images"]
     with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
+        database.execute("ALTER TABLE cases DROP COLUMN empty_review_confirmed")
         for column in ("metadata_reviewed_at", "metadata_reviewer", "quality"):
             database.execute(f"ALTER TABLE case_images DROP COLUMN {column}")
         database.execute("DROP TABLE image_measurements")
@@ -471,5 +512,6 @@ def test_existing_multi_image_database_upgrades_without_guessing_quality_or_chan
         with TestClient(create_app(tmp_path)) as upgraded:
             login(upgraded)
             case = upgraded.get(path).json()
+            assert case["empty_review_confirmed"] is False
             assert case["images"] == images and case["report"]["revision"] == 0
             assert [upgraded.get(image["url"]).content for image in images] == [first, second]

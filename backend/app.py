@@ -28,12 +28,13 @@ MAX_BYTES = 10 * 1024 * 1024
 MIMES = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 TEAM = {"wangyiyi": "王一伊", "zhushijia": "朱诗嘉", "alimire": "阿里米热", "liqihang": "李其杭"}
 CASE_FIELDS = """number, owner AS created_by, horse_name, comment, created_at, archived_at, status,
-    detections, model, threshold, analyzed_at, reviewer, review_note, reviewed_at"""
+    detections, model, threshold, analyzed_at, reviewer, review_note, reviewed_at, empty_review_confirmed"""
 CASE_SCHEMA = """CREATE TABLE IF NOT EXISTS cases (
     number INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL,
     horse_name TEXT NOT NULL, comment TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,
     archived_at TEXT, status TEXT NOT NULL DEFAULT 'registered', detections TEXT NOT NULL DEFAULT '[]',
-    model TEXT, threshold REAL, analyzed_at TEXT, reviewer TEXT, review_note TEXT, reviewed_at TEXT
+    model TEXT, threshold REAL, analyzed_at TEXT, reviewer TEXT, review_note TEXT, reviewed_at TEXT,
+    empty_review_confirmed INTEGER NOT NULL DEFAULT 0
 )"""
 IMAGES_SCHEMA = """CREATE TABLE IF NOT EXISTS case_images (
     case_number INTEGER NOT NULL REFERENCES cases(number) ON DELETE CASCADE,
@@ -54,6 +55,8 @@ def prepare_database(database, team_mode):
         high_water = database.execute("SELECT seq FROM sqlite_sequence WHERE name='cases'").fetchone()
         database.execute("ALTER TABLE cases RENAME TO cases_v1")
     database.execute(CASE_SCHEMA)
+    if "empty_review_confirmed" not in {row["name"] for row in database.execute("PRAGMA table_info(cases)")}:
+        database.execute("ALTER TABLE cases ADD COLUMN empty_review_confirmed INTEGER NOT NULL DEFAULT 0")
     database.execute(IMAGES_SCHEMA)
     if legacy:
         database.execute("""INSERT INTO cases(number, owner, horse_name, created_at, status, detections,
@@ -96,7 +99,8 @@ class Credentials(BaseModel):
 
 class Review(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    note: str = Field(min_length=1, max_length=2000)
+    note: str = Field(max_length=2000)
+    empty_review_confirmed: bool = Field(default=False, strict=True)
 
 
 class ReportDraft(BaseModel):
@@ -104,6 +108,10 @@ class ReportDraft(BaseModel):
     findings: str = Field(max_length=4000)
     conclusion: str = Field(max_length=2000)
     revision: int = Field(ge=0, strict=True)
+
+
+class ReportConfirmation(ReportDraft):
+    empty_review_confirmed: bool = Field(default=False, strict=True)
 
 
 class ImageReview(BaseModel):
@@ -184,6 +192,7 @@ def load_cases(database, owners, number=None):
         case = dict(row)
         key = case.pop("number")
         case.update(id=f"EV-{key:06d}", detections=json.loads(case["detections"]), images=[],
+                    empty_review_confirmed=bool(case["empty_review_confirmed"]),
                     has_image=False, filename=None, projection=None, width=None, height=None, quality_confirmed=False)
         case["report"] = {"findings": "", "conclusion": case["review_note"] or "", "author": case["reviewer"],
                           "updated_at": case["reviewed_at"], "revision": 0}
@@ -246,16 +255,16 @@ def editable_image(database, number, owner, position):
     return row
 
 
-def store_report(database, number, case, draft, author):
+def store_report(database, number, case, draft, author, *, confirmed_empty=False):
     findings, conclusion = draft.findings.strip(), draft.conclusion.strip()
     if not case["has_image"] or case["status"] == "reviewed":
         raise HTTPException(409, "请在上传影像后、确认复核前编辑报告")
     report = case["report"]
     if draft.revision != report["revision"]:
         raise HTTPException(409, "报告已更新，请重新读取病例后核对")
-    if not (findings or conclusion):
+    if not (findings or conclusion or confirmed_empty):
         raise HTTPException(422, "请填写影像所见或人工结论")
-    if (findings, conclusion) != (report["findings"], report["conclusion"]):
+    if confirmed_empty or (findings, conclusion) != (report["findings"], report["conclusion"]):
         database.execute("""INSERT INTO case_reports(case_number,findings,conclusion,author,updated_at,revision)
             VALUES (?,?,?,?,?,?) ON CONFLICT(case_number) DO UPDATE SET findings=excluded.findings,
             conclusion=excluded.conclusion, author=excluded.author, updated_at=excluded.updated_at,
@@ -557,7 +566,7 @@ def create_app(data_dir=None):
             return read_case(database, number, owner)
 
     @api.post("/api/cases/{identifier}/review")
-    def review(identifier: str, review: ReportDraft | Review, owner: str = Depends(record_owner),
+    def review(identifier: str, review: ReportConfirmation | Review, owner: str = Depends(record_owner),
                reviewer: str = Depends(current_user)):
         number = case_number(identifier)
         with connect() as database:
@@ -566,19 +575,20 @@ def create_app(data_dir=None):
             if case["status"] != "analyzed":
                 raise HTTPException(409, "仅待复核病例可以提交复核")
             name = accounts[reviewer][1]
-            if isinstance(review, ReportDraft):
+            if isinstance(review, ReportConfirmation):
                 note = review.conclusion.strip()
-                if not (review.findings.strip() and note):
-                    raise HTTPException(422, "确认复核须填写影像所见和人工结论")
-                store_report(database, number, case, review, name)
+                empty = not (review.findings.strip() or note)
             else:
                 if case["report"]["revision"]:
                     raise HTTPException(409, "已有结构化草稿，请核对最新报告后提交")
                 note = review.note.strip()
-                if not note:
-                    raise HTTPException(422, "请填写复核意见")
-            database.execute("""UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?
-                WHERE number=? AND owner=?""", (name, note, timestamp(), number, owner))
+                empty = not note
+            if empty and not review.empty_review_confirmed:
+                raise HTTPException(422, "复核内容为空，请再次确认留空提交")
+            if isinstance(review, ReportConfirmation):
+                store_report(database, number, case, review, name, confirmed_empty=empty)
+            database.execute("""UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?,
+                empty_review_confirmed=? WHERE number=? AND owner=?""", (name, note, timestamp(), empty, number, owner))
             return read_case(database, number, owner)
 
     api.mount("/static", StaticFiles(directory=ROOT / "backend/static"), name="assets")
