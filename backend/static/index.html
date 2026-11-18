@@ -16,6 +16,13 @@
     <symbol id="upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></symbol>
     <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
     <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></symbol>
+    <symbol id="book" viewBox="0 0 24 24"><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M8 3v18m3-12h6m-6 4h4M3 7h3M3 12h3M3 17h3"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></symbol>
+    <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m7.5 12 3 3 6-6"/></symbol>
+    <symbol id="image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 4-6 5 7"/></symbol>
   </defs></svg>
   <div class="shell">
     <aside class="sidebar">
@@ -24,8 +31,8 @@
       <div id="navigation" hidden>
         <p class="nav-group">临床工作台</p>
         <nav aria-label="主导航">
-          <a id="nav-work" href="#work"><svg><use href="#scan"/></svg>影像诊疗</a>
-          <a id="nav-archive" href="#archive"><svg><use href="#folder"/></svg>病例档案</a>
+          <a id="nav-archive" href="#dashboard"><svg><use href="#book"/></svg>就诊记录</a>
+          <a id="nav-work" href="#new"><svg><use href="#plus"/></svg>新建就诊</a>
         </nav>
       </div>
       <div class="side-foot"><div class="side-caption"><i></i> EQUINE RADIOLOGY</div><div id="identity" hidden><svg><use href="#user"/></svg><strong id="display-name"></strong><button type="button" id="logout">退出登录</button></div></div>
@@ -36,6 +43,7 @@
       <noscript>请启用 JavaScript 以使用影像工作台。</noscript>
     </main>
   </div>
+  <dialog id="record-dialog" aria-labelledby="dialog-title"></dialog>
   <div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
