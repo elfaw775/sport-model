@@ -265,7 +265,7 @@ export function mountViewer(container, record, {api, onUpload, onReport}) {
     if (p.x < 0 || p.y < 0 || p.x >= image.width || p.y >= image.height) {
       feedback("请在影像范围内取点。", true);return;
     }
-    const point = {x:Number(p.x.toFixed(3)), y:Number(p.y.toFixed(3))};
+    const point = {x:p.x, y:p.y};
     if (points.length && Math.hypot(point.x-points.at(-1).x, point.y-points.at(-1).y) < .001) {
       feedback("请选取不同的位置。", true);return;
     }

@@ -121,7 +121,7 @@ class Measurement(BaseModel):
     points: list[ImagePoint] = Field(min_length=2, max_length=3)
 
     def value(self, width, height):
-        if any(p.x > width or p.y > height for p in self.points):
+        if any(p.x >= width or p.y >= height for p in self.points):
             raise HTTPException(422, "测量点超出原图范围")
         if len(self.points) != (2 if self.kind == "distance" else 3):
             raise HTTPException(422, "距离需要两个点，角度需要三个点")

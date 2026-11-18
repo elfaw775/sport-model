@@ -367,6 +367,8 @@ def test_image_measurements_use_each_image_coordinates_and_server_computed_value
     angle = {"kind": "angle", "points": [{"x": 6, "y": 7}, {"x": 6, "y": 4}, {"x": 2, "y": 4}]}
     for body in [distance, {"kind": "distance", "points": angle["points"][:1]}, {"kind": "angle", "points": angle["points"][:2]},
                  {"kind": "angle", "points": [*angle["points"][:2], angle["points"][1]]},
+                 {"kind": "distance", "points": [angle["points"][0], {"x": 32, "y": 3}]},
+                 {"kind": "distance", "points": [angle["points"][0], {"x": 3, "y": 48}]},
                  {"kind": "distance", "points": [angle["points"][0], {"x": -1, "y": 2}]}]:
         assert team.post(primary + "/measurements", json=body).status_code == 422
     for invalid_id in ("0", "01", "9", "wrong"):
