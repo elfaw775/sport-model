@@ -26,7 +26,7 @@ SESSION_TTL = 8 * 3600
 MAX_BYTES = 10 * 1024 * 1024
 MIMES = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 TEAM = {"wangyiyi": "王一伊", "zhushijia": "朱诗嘉", "alimire": "阿里米热", "liqihang": "李其杭"}
-CASE_FIELDS = """number, horse_name, comment, created_at, archived_at, status,
+CASE_FIELDS = """number, owner AS created_by, horse_name, comment, created_at, archived_at, status,
     detections, model, threshold, analyzed_at, reviewer, review_note, reviewed_at"""
 CASE_SCHEMA = """CREATE TABLE IF NOT EXISTS cases (
     number INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL,
@@ -110,11 +110,14 @@ def case_number(identifier):
     return number
 
 
-def load_cases(database, owner, number=None):
+def load_cases(database, owners, number=None):
     if not database.in_transaction:
         database.execute("BEGIN")
-    condition = "owner = ?" + (" AND number = ?" if number is not None else "")
-    params = (owner, number) if number is not None else (owner,)
+    condition = "owner IN (" + ",".join("?" for _ in owners) + ")"
+    params = tuple(owners)
+    if number is not None:
+        condition += " AND number = ?"
+        params += (number,)
     records = {}
     for row in database.execute(f"SELECT {CASE_FIELDS} FROM cases WHERE {condition} ORDER BY number DESC", params):
         case = dict(row)
@@ -137,7 +140,7 @@ def load_cases(database, owner, number=None):
 
 
 def read_case(database, number, owner):
-    records = load_cases(database, owner, number)
+    records = load_cases(database, (owner,), number)
     if not records:
         raise HTTPException(404, "未找到此病例")
     return records[0]
@@ -258,6 +261,13 @@ def create_app(data_dir=None):
                 return session["username"]
         raise HTTPException(401, "请先登录工作台")
 
+    def record_owner(identifier: str, _user: str = Depends(current_user)):
+        with connect() as database:
+            case = database.execute("SELECT owner FROM cases WHERE number=?", (case_number(identifier),)).fetchone()
+        if case is None or case["owner"] not in accounts:
+            raise HTTPException(404, "未找到此病例")
+        return case["owner"]
+
     @api.get("/api/login-options")
     def login_options():
         return TEAM if team_mode else {}
@@ -305,18 +315,18 @@ def create_app(data_dir=None):
             save_attachment(database, number, owner, values)
             return read_case(database, number, owner)
 
-    @api.get("/api/cases")
-    def cases(owner: str = Depends(current_user)):
+    @api.get("/api/cases", dependencies=[Depends(current_user)])
+    def cases():
         with connect() as database:
-            return load_cases(database, owner)
+            return load_cases(database, accounts)
 
     @api.get("/api/cases/{identifier}")
-    def case_detail(identifier: str, owner: str = Depends(current_user)):
+    def case_detail(identifier: str, owner: str = Depends(record_owner)):
         with connect() as database:
             return read_case(database, case_number(identifier), owner)
 
     @api.patch("/api/cases/{identifier}")
-    def edit(identifier: str, update: VisitUpdate, owner: str = Depends(current_user)):
+    def edit(identifier: str, update: VisitUpdate, owner: str = Depends(record_owner)):
         if update.horse_name is None and update.comment is None:
             raise HTTPException(422, "请填写需要更新的资料")
         if update.horse_name is not None and not update.horse_name.strip():
@@ -329,7 +339,7 @@ def create_app(data_dir=None):
             return read_case(database, number, owner)
 
     @api.delete("/api/cases/{identifier}", status_code=204)
-    def delete(identifier: str, owner: str = Depends(current_user)):
+    def delete(identifier: str, owner: str = Depends(record_owner)):
         with connect() as database:
             changed = database.execute("DELETE FROM cases WHERE number=? AND owner=?", (case_number(identifier), owner))
             if not changed.rowcount:
@@ -337,7 +347,7 @@ def create_app(data_dir=None):
         return Response(status_code=204)
 
     @api.post("/api/cases/{identifier}/archive")
-    def archive(identifier: str, owner: str = Depends(current_user)):
+    def archive(identifier: str, owner: str = Depends(record_owner)):
         number = case_number(identifier)
         with connect() as database:
             database.execute("UPDATE cases SET archived_at=COALESCE(archived_at, ?) WHERE number=? AND owner=?",
@@ -346,7 +356,7 @@ def create_app(data_dir=None):
 
     @api.post("/api/cases/{identifier}/images", status_code=201)
     def add_image(identifier: str, image: UploadFile = File(), projection: Projection = Form(),
-                  quality_confirmed: bool = Form(), owner: str = Depends(current_user)):
+                  quality_confirmed: bool = Form(), owner: str = Depends(record_owner)):
         number = case_number(identifier)
         values = attachment(image, projection, quality_confirmed)
         with connect() as database:
@@ -354,7 +364,7 @@ def create_app(data_dir=None):
             return read_case(database, number, owner)
 
     @api.get("/api/cases/{identifier}/images/{image_id}")
-    def visit_image(identifier: str, image_id: str, owner: str = Depends(current_user)):
+    def visit_image(identifier: str, image_id: str, owner: str = Depends(record_owner)):
         if image_id == "primary":
             position = 0
         elif image_id.isascii() and image_id.isdecimal() and 0 < len(image_id) <= 18 and not image_id.startswith("0"):
@@ -366,13 +376,13 @@ def create_app(data_dir=None):
         return Response(row["original"], media_type=row["mime"])
 
     @api.get("/api/cases/{identifier}/image")
-    def case_image(identifier: str, owner: str = Depends(current_user)):
+    def case_image(identifier: str, owner: str = Depends(record_owner)):
         with connect() as database:
             row = original(database, case_number(identifier), owner)
         return Response(row["original"], media_type=row["mime"])
 
     @api.post("/api/cases/{identifier}/analyze")
-    def analyze(identifier: str, owner: str = Depends(current_user)):
+    def analyze(identifier: str, owner: str = Depends(record_owner)):
         number = case_number(identifier)
         with connect() as database:
             if read_case(database, number, owner)["status"] == "registered":
@@ -396,7 +406,7 @@ def create_app(data_dir=None):
             return read_case(database, number, owner)
 
     @api.post("/api/cases/{identifier}/review")
-    def review(identifier: str, review: Review, owner: str = Depends(current_user)):
+    def review(identifier: str, review: Review, owner: str = Depends(record_owner), reviewer: str = Depends(current_user)):
         if not review.note.strip():
             raise HTTPException(422, "请填写复核意见")
         number = case_number(identifier)
@@ -405,7 +415,7 @@ def create_app(data_dir=None):
             changed = database.execute("""
                 UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?, archived_at=COALESCE(archived_at, ?)
                 WHERE number=? AND owner=? AND status='analyzed'
-            """, (accounts[owner][1], review.note.strip(), now, now, number, owner))
+            """, (accounts[reviewer][1], review.note.strip(), now, now, number, owner))
             case = read_case(database, number, owner)
             if not changed.rowcount:
                 raise HTTPException(409, "仅待复核病例可以提交复核")

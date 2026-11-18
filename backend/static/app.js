@@ -82,7 +82,7 @@ function login() {
     </section>
     <section class="card login-card"><span class="tile-icon">${icon("mark")}</span><p class="eyebrow">WORKSPACE ACCESS</p><h2>登录工作台</h2><p class="sub">使用分配的账号进入影像诊疗与病例档案。</p>
       <form id="login-form"><label>账号${usernameField}</label><label>密码<input name="password" type="password" autocomplete="current-password" required placeholder="请输入密码"></label><p class="error" role="alert" hidden></p><button class="primary wide" type="submit">登录工作台 ${icon("arrow")}</button></form>
-      ${members.length ? '<p class="credentials">团队试用密码：小写拼音账号后加 <code>sportsHorse</code>，注意大写 H。<br>登录后仅显示该账号的就诊记录。</p>' : ''}
+      ${members.length ? '<p class="credentials">团队试用密码：小写拼音账号后加 <code>sportsHorse</code>，注意大写 H。<br>四位成员共享就诊记录，复核按登录姓名署名。</p>' : ''}
     </section></div>`;
   const form = byId("login-form");
   action(form,"正在登录…",async (active) => {
@@ -185,7 +185,7 @@ function editVisit(record, saved) {
 function deleteVisits(records, complete) {
   const single = records.length === 1;
   openDialog(`<span class="delete-symbol">${icon("trash")}</span><p class="eyebrow">DELETE RECORDS</p><h2 id="dialog-title">删除 ${records.length} 条就诊记录？</h2>
-    <p class="sub">${single ? escape(records[0].horse_name) + " · " + escape(records[0].id) : escape(records.slice(0,3).map(record=>record.id).join("、")) + (records.length>3?" 等":"")}<br>所选记录的影像、备注、模型结果和复核意见将一起删除，此操作不可撤销。</p>
+    <p class="sub">${single ? escape(records[0].horse_name) + " · " + escape(records[0].id) : escape(records.slice(0,3).map(record=>record.id).join("、")) + (records.length>3?" 等":"")}<br>所选记录的影像、备注、模型结果和复核意见将一起删除。${Object.keys(loginOptions).length ? "删除对所有团队成员生效。" : ""}此操作不可撤销。</p>
     <form id="delete-form">${errorBox}<div class="dialog-actions"><button class="secondary" type="button" id="cancel-delete" autofocus>取消</button><button class="danger" type="submit" id="confirm-delete">确认删除 ${records.length} 条</button></div></form>`,"cancel-delete");
   const form = byId("delete-form");
   action(form,"正在删除…",async active=>{
@@ -202,16 +202,18 @@ function archive(records) {
   const selected = new Set(), perPage=8;
   const stats = [
     ["book","全部就诊",records.length,"登记在册的记录","fern"],
-    ["image","已收影像",records.reduce((n,r)=> n+(r.images?.length||0),0),"本次账户上传的影像","slate"],
+    ["image","已收影像",records.reduce((n,r)=> n+(r.images?.length||0),0),"就诊记录中的全部影像","slate"],
     ["clock","待人工复核",records.filter(r=>r.status==="analyzed").length,"已完成模型分析","sand"],
     ["check","归档记录",records.filter(r=>r.archived_at).length,"已完成手动或复核归档","olive"],
   ];
-  page.innerHTML = heading("CLINICAL WORKSPACE","就诊记录看板","集中管理马匹就诊信息、检查影像与归档记录。",newLink) + `
+  const description = Object.keys(loginOptions).length ? "团队共享就诊记录、检查影像和归档报告。" : "集中管理就诊记录、检查影像和归档报告。";
+  page.innerHTML = heading("CLINICAL WORKSPACE","就诊记录看板",description,newLink) + `
     <div class="metric-grid">${stats.map(([symbol,title,count,note,tone])=>`<div class="metric ${tone}"><span class="metric-icon">${icon(symbol)}</span><span class="metric-title">${title}</span><strong>${count}</strong><small>${note}</small></div>`).join("")}</div>
     <section class="card ledger"><header class="ledger-head"><div><p class="eyebrow">VISIT REGISTRY</p><h2>就诊记录 <span class="count-tag">${records.length}</span></h2></div><div class="tools"><label class="search-field">${icon("search")}<input type="search" id="case-search" placeholder="搜索马匹、编号或备注" aria-label="搜索就诊记录"></label><select id="status-filter" aria-label="筛选记录状态">${Object.entries(stateNames).map(([key,label])=>`<option value="${key}">${label}</option>`).join("")}</select></div></header>
-    <div class="selection-bar"><span id="match-count"></span><button type="button" class="text-danger" id="batch-delete" disabled>${icon("trash")} 批量删除</button></div>
+    <div class="selection-bar"><span id="match-count"></span><div class="row-actions"><button type="button" class="text-button" id="refresh-records">刷新记录</button><button type="button" class="text-danger" id="batch-delete" disabled>${icon("trash")} 批量删除</button></div></div>
     <p id="batch-feedback" role="status" hidden></p><div id="case-list"></div><footer class="pager" id="pager"></footer></section>`;
   const query=byId("case-search"),filter=byId("status-filter");
+  byId("refresh-records").onclick=render;
   query.value=dashboardState.query;filter.value=dashboardState.filter;
   function refresh() {
     const term=query.value.trim().toLowerCase(),key=filter.value;
@@ -265,7 +267,8 @@ function detail(record) {
   const images=record.images || [];
   const warning=uploadMessage?.id===record.id ? uploadMessage.message : "";
   if(warning)uploadMessage=null;
-  page.innerHTML=heading("VISIT RECORD",escape(record.horse_name),escape(record.id)+" &nbsp;·&nbsp; 登记于 "+escape(dateText(record.created_at)),'<a href="#dashboard" class="secondary">返回记录看板</a>')+`
+  const creator = loginOptions[record.created_by] || (user?.username === record.created_by ? user.display_name : record.created_by);
+  page.innerHTML=heading("VISIT RECORD",escape(record.horse_name),escape(record.id)+" &nbsp;·&nbsp; 登记人："+escape(creator || "未记录")+" &nbsp;·&nbsp; "+escape(dateText(record.created_at)),'<a href="#dashboard" class="secondary">返回记录看板</a>')+`
     <section class="card visit-summary"><div class="spread"><div><p class="eyebrow">ENCOUNTER NOTE</p><h2>就诊记录</h2></div><div class="row-actions">${archiveBadge(record)}<button id="edit-visit" class="secondary">编辑记录</button>${!record.archived_at?'<button id="archive-visit" class="primary">手动归档</button>':""}</div></div>
     <p class="visit-comment">${escape(record.comment||"暂无就诊备注，可点击「编辑记录」补充。")}</p><div class="detail-meta"><span>${icon("image")} ${images.length} 张影像</span><span>${statusBadge(record.status)}</span>${record.archived_at?`<span>归档于 ${escape(dateText(record.archived_at))}</span>`:""}</div>
     ${warning?`<p class="error" role="alert">${escape(warning)}</p>`:""}</section>

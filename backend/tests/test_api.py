@@ -65,31 +65,46 @@ def test_auth_validation_and_revocation(client):
     assert client.get("/api/cases", headers={"cookie": f"equivision_session={token}"}).status_code == 401
 
 
-def test_members_have_separate_records_and_review_as_themselves(team, monkeypatch):
+def test_members_share_cases_but_keep_distinct_creator_and_reviewer(team, monkeypatch):
     members = {"wangyiyi": "王一伊", "zhushijia": "朱诗嘉", "alimire": "阿里米热", "liqihang": "李其杭"}
     assert team.get("/api/login-options").json() == members
     for username, password in (("demo", "EquiDemo2026!"), ("wangyiyi", "wangyiyisportshorse"),
                                ("Wangyiyi", "wangyiyisportsHorse"), ("liqihang", "zhushijiasportsHorse")):
         assert team.post("/api/login", json={"username": username, "password": password}).status_code == 401
     monkeypatch.setattr(detector, "detect", lambda _image: [])
-    records = {}
     for username, name in members.items():
         identity = sign_in_member(team, username)
         assert identity == team.get("/api/me").json() == {"username": username, "display_name": name}
-        assert team.get("/api/cases").json() == []
-        for other in records.values():
-            assert team.get(other + "/image").status_code == 404
-            assert team.patch(other, json={"comment": "修改"}).status_code == 404
-            assert team.delete(other).status_code == 404
-        path = "/api/cases/" + upload(team).json()["id"]
-        assert team.post(path + "/analyze").status_code == 200
-        assert team.post(path + "/review", json={"note": "已核对"}).json()["reviewer"] == name
-        records[username] = path
-        assert team.post("/api/logout").status_code == 204
-        assert team.get(path).status_code == 401
-    for username, path in records.items():
+
+    sign_in_member(team, "wangyiyi")
+    case = team.post("/api/visits", json={"horse_name": "追风"}).json()
+    path = "/api/cases/" + case["id"]
+    assert case["created_by"] == "wangyiyi"
+    for username in members:
         sign_in_member(team, username)
-        assert ["/api/cases/" + case["id"] for case in team.get("/api/cases").json()] == [path]
+        assert team.get("/api/cases").json() == [case]
+        assert team.get(path).json() == case
+    sign_in_member(team, "zhushijia")
+    assert team.patch(path, json={"comment": "他人补录"}).json()["comment"] == "他人补录"
+    primary, follow_up = picture(), picture(73, 40)
+    assert append_image(team, path, primary).status_code == 201
+    images = append_image(team, path, follow_up).json()["images"]
+    sign_in_member(team, "alimire")
+    assert team.get(path + "/image").content == team.get(images[0]["url"]).content == primary
+    assert team.get(images[1]["url"]).content == follow_up
+    assert team.post(path + "/archive").json()["archived_at"]
+    assert team.post(path + "/analyze").json()["status"] == "analyzed"
+    sign_in_member(team, "liqihang")
+    reviewed = team.post(path + "/review", json={"note": "已核对"}).json()
+    assert reviewed["reviewer"] == "李其杭" and reviewed["created_by"] == "wangyiyi"
+    team.post("/api/logout")
+    assert team.get("/api/cases").status_code == team.get(path).status_code == 401
+    assert team.get(images[1]["url"]).status_code == team.delete(path).status_code == 401
+    sign_in_member(team, "zhushijia")
+    assert team.get("/api/cases").json() == [reviewed]
+    assert team.delete(path).status_code == 204
+    sign_in_member(team, "wangyiyi")
+    assert not team.get("/api/cases").json() and team.get(images[1]["url"]).status_code == 404
 
 
 def test_default_team_migrates_only_legacy_owners_once_and_revokes_old_sessions(client, tmp_path, monkeypatch):
@@ -109,16 +124,37 @@ def test_default_team_migrates_only_legacy_owners_once_and_revokes_old_sessions(
     with TestClient(create_app(tmp_path)) as upgraded:
         assert upgraded.get("/api/me", headers={"cookie": f"equivision_session={legacy_token}"}).status_code == 401
         sign_in_member(upgraded, "alimire")
-        assert [case["horse_name"] for case in upgraded.get("/api/cases").json()] == ["另一匹马"]
-        assert upgraded.get(path).status_code == 404
+        migrated = prior | {"created_by": "wangyiyi"}
+        shared = upgraded.get("/api/cases").json()
+        assert [(case["horse_name"],case["created_by"]) for case in shared] == [("另一匹马","alimire"),("追风","wangyiyi")]
+        assert upgraded.get(path).json() == migrated
         sign_in_member(upgraded, "wangyiyi")
-        assert upgraded.get("/api/cases").json() == [prior]
+        assert upgraded.get("/api/cases").json() == shared
         assert upgraded.get(path + "/image").content == payload
     with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
         database.execute("INSERT INTO cases(owner, horse_name, created_at) VALUES ('demo','后来新增','2026-11-18')")
     with TestClient(create_app(tmp_path)) as restarted:
         sign_in_member(restarted, "wangyiyi")
-        assert restarted.get("/api/cases").json() == [prior]
+        assert restarted.get("/api/cases").json() == shared
+
+
+def test_team_and_custom_accounts_using_one_database_cannot_access_each_others_cases(team, tmp_path, monkeypatch):
+    sign_in_member(team, "wangyiyi")
+    team_case = upload(team).json()
+    monkeypatch.setenv("SPORT_MODEL_USERNAME", "external")
+    monkeypatch.setenv("SPORT_MODEL_PASSWORD", "test-password")
+    with TestClient(create_app(tmp_path)) as private:
+        login(private, "external")
+        private_case = upload(private).json()
+        for client, own, hidden in [(team, team_case, private_case), (private, private_case, team_case)]:
+            path = "/api/cases/" + hidden["id"]
+            assert client.get("/api/cases").json() == [own]
+            assert client.get(path).status_code == client.get(path + "/image").status_code == 404
+            assert client.get(hidden["images"][0]["url"]).status_code == 404
+            assert client.patch(path, json={"comment": "不能修改"}).status_code == 404
+            assert append_image(client, path, picture()).status_code == 404
+            assert client.post(path + "/archive").status_code == client.post(path + "/analyze").status_code == 404
+            assert client.post(path + "/review", json={"note": "不能复核"}).status_code == client.delete(path).status_code == 404
 
 
 def test_rejects_invalid_images_without_archiving(client):
