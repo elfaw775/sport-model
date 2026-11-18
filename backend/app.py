@@ -188,7 +188,8 @@ def save_attachment(database, number, owner, values):
     database.execute("""INSERT INTO case_images(case_number,position,filename,projection,quality_confirmed,width,height,mime,original)
         SELECT number, COALESCE((SELECT MAX(position)+1 FROM case_images WHERE case_number=number), 0),
         ?, ?, ?, ?, ?, ?, ? FROM cases WHERE number=? AND owner=?""", (*values, number, owner))
-    database.execute("UPDATE cases SET status='uploaded' WHERE number=? AND owner=? AND status='registered'", (number, owner))
+    database.execute("""UPDATE cases SET status='uploaded', archived_at=NULL
+        WHERE number=? AND owner=? AND status='registered'""", (number, owner))
 
 
 def create_case(database, owner, horse_name, comment):
@@ -350,9 +351,13 @@ def create_app(data_dir=None):
     def archive(identifier: str, owner: str = Depends(record_owner)):
         number = case_number(identifier)
         with connect() as database:
-            database.execute("UPDATE cases SET archived_at=COALESCE(archived_at, ?) WHERE number=? AND owner=?",
-                             (timestamp(), number, owner))
-            return read_case(database, number, owner)
+            changed = database.execute("""UPDATE cases SET archived_at=COALESCE(archived_at, ?)
+                WHERE number=? AND owner=? AND (archived_at IS NOT NULL OR status='reviewed'
+                OR NOT EXISTS (SELECT 1 FROM case_images WHERE case_number=cases.number))""", (timestamp(), number, owner))
+            case = read_case(database, number, owner)
+            if not changed.rowcount:
+                raise HTTPException(409, "有影像的病例须完成分析并确认人工复核后才能归档")
+            return case
 
     @api.post("/api/cases/{identifier}/images", status_code=201)
     def add_image(identifier: str, image: UploadFile = File(), projection: Projection = Form(),
@@ -410,12 +415,11 @@ def create_app(data_dir=None):
         if not review.note.strip():
             raise HTTPException(422, "请填写复核意见")
         number = case_number(identifier)
-        now = timestamp()
         with connect() as database:
             changed = database.execute("""
-                UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?, archived_at=COALESCE(archived_at, ?)
+                UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?
                 WHERE number=? AND owner=? AND status='analyzed'
-            """, (accounts[reviewer][1], review.note.strip(), now, now, number, owner))
+            """, (accounts[reviewer][1], review.note.strip(), timestamp(), number, owner))
             case = read_case(database, number, owner)
             if not changed.rowcount:
                 raise HTTPException(409, "仅待复核病例可以提交复核")

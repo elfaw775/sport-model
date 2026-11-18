@@ -77,8 +77,8 @@ function login() {
       members.map(([account,name]) => '<option value="' + escapeHTML(account) + '">' + escapeHTML(name) + ' · ' + escapeHTML(account) + '</option>').join("") + '</select>'
     : '<input name="username" autocomplete="username" required placeholder="请输入账号">';
   page.innerHTML = `<div class="login-grid">
-    <section class="intro"><p class="eyebrow">EQUINE IMAGING &nbsp; / &nbsp; 01</p><h1>运动马<br><span>影像工作台</span></h1><p>从首次就诊登记，<br>到每一张影像与每一份归档。</p>
-      <div class="intro-steps"><span><b>01</b>就诊建档</span><span><b>02</b>模型检测</span><span><b>03</b>复核归档</span></div>
+    <section class="intro"><p class="eyebrow">EQUINE IMAGING</p><h1>运动马<br><span>影像工作台</span></h1><p>上传球节 X 线片，<br>查看模型候选区域并完成人工复核。</p>
+      <div class="intro-steps"><span><b>01</b>上传影像</span><span><b>02</b>模型检测</span><span><b>03</b>复核归档</span></div>
     </section>
     <section class="card login-card"><span class="tile-icon">${icon("mark")}</span><p class="eyebrow">WORKSPACE ACCESS</p><h2>登录工作台</h2><p class="sub">使用分配的账号进入影像诊疗与病例档案。</p>
       <form id="login-form"><label>账号${usernameField}</label><label>密码<input name="password" type="password" autocomplete="current-password" required placeholder="请输入密码"></label><p class="error" role="alert" hidden></p><button class="primary wide" type="submit">登录工作台 ${icon("arrow")}</button></form>
@@ -92,7 +92,7 @@ function login() {
       user = identity;
       Object.assign(dashboardState, {query:"", filter:"all", page:1});
       uploadMessage = null;
-      if (!location.hash) history.replaceState(null, "", "#dashboard");
+      if (!location.hash) history.replaceState(null, "", "#new");
       render();
     }
   });
@@ -105,59 +105,145 @@ const dashboardState = {query:"", filter:"all", page:1};
 let uploadMessage = null;
 const stateNames = {all:"全部状态",active:"未归档",archived:"已归档",registered:"仅登记",uploaded:"待分析",analyzed:"待复核",reviewed:"已复核"};
 const archiveBadge = record => `<span class="badge ${record.archived_at ? "filed" : "open"}">${record.archived_at ? "已归档" : "未归档"}</span>`;
-const newLink = '<a class="primary" href="#new" id="new-visit">' + icon("plus") + '新建就诊记录</a>';
+const newLink = '<a class="primary" href="#new" id="new-visit">' + icon("plus") + '新建检查</a>';
 
 function visitFields(record={}) {
   return `<label>马匹名称 / 编号<input name="horse_name" id="horse-name" required maxlength="80" placeholder="例如：追风 或 H-001" value="${escape(record.horse_name)}"></label>
     <label>就诊备注 <span class="optional">选填</span><textarea name="comment" rows="4" maxlength="4000" placeholder="记录就诊原因、观察或后续安排">${escape(record.comment)}</textarea></label>`;
 }
-function imageFields(required=false) {
-  return `<div class="file-field"><span class="file-symbol">${icon("upload")}</span><div><strong class="file-title">选择或拖入影像</strong><small>可多选 · JPG / PNG / WebP · 单张不超过 10 MB</small></div><input type="file" id="image-file" name="image" aria-label="检查影像" accept="image/png,image/jpeg,image/webp" multiple ${required?"required":""}></div>
-    <div class="upload-options"${required?"":" hidden"}><label>本批影像投照方向<select name="projection"><option value="">请选择方向</option><option>正位</option><option>侧位</option><option>斜位</option><option>其他</option></select></label>
-    <label class="check"><input type="checkbox" name="quality_confirmed" value="true">我已确认本批影像清晰且对应本次球节检查。</label>
-    <small class="dim">方向不同的图片请分批上传。首张用于模型分析，后续图片作为本次就诊附件。</small></div>`;
+const projectionOptions = '<option value="">请选择投照方向</option><option>正位</option><option>侧位</option><option>斜位</option><option>其他</option>';
+const fileTypes = "image/png,image/jpeg,image/webp";
+const stages = ["上传影像", "模型分析", "查看结果", "人工复核", "确认复核", "病例归档"];
+let previewURL = "";
+
+function progressBar(current) {
+  return `<ol class="flow-progress" aria-label="影像检查流程">${stages.map((label, index) => {
+    const done = index < current;
+    return `<li class="${done ? "done" : index === current ? "current" : ""}" ${index === current ? 'aria-current="step"' : ""}>
+      <span class="flow-dot" aria-hidden="true">${done ? "✓" : index + 1}</span><span>${label}</span></li>`;
+  }).join("")}</ol>`;
 }
+
+function clearPreview() {
+  if (previewURL) URL.revokeObjectURL(previewURL);
+  previewURL = "";
+}
+
+function imageFields() {
+  return `<div class="file-field"><span class="file-symbol">${icon("upload")}</span><div><strong class="file-title">选择或拖入影像</strong><small>可多选 · JPG / PNG / WebP · 每张最多 10 MB</small></div>
+    <input type="file" name="image" aria-label="补充影像文件" accept="${fileTypes}" multiple required></div>
+    <div class="upload-options"><label>本批影像投照方向<select name="projection" required>${projectionOptions}</select></label>
+    <label class="check"><input type="checkbox" name="quality_confirmed" value="true" required>我已确认影像清晰，且属于同一次球节检查。</label>
+    <small class="dim">主图用于分析，同次检查的其他影像作为附图保存。</small></div>`;
+}
+
 function wireImages(form) {
   const input = form.elements.image;
-  const update = () => {
+  const preview = form.querySelector("#image-preview");
+  preview?.addEventListener("error", () => {
+    if (!input.files.length || !preview.hasAttribute("src")) return;
+    preview.hidden = true;
+    preview.closest(".image-drop").classList.remove("has-preview");
+    input.setCustomValidity("无法读取所选主图，请重新选择 JPG、PNG 或 WebP 影像。");
+    form.querySelector(".file-title").textContent = input.validationMessage;
+  });
+  input.addEventListener("change", () => {
     const files = Array.from(input.files);
-    form.querySelector(".upload-options").hidden = !files.length;
-    for (const key of ["projection", "quality_confirmed"]) form.elements[key].required = Boolean(files.length);
-    input.setCustomValidity(files.some(file => file.size > 10 * 1024 * 1024) ? "单张影像不能超过 10 MB。" : "");
-    form.querySelector(".file-title").textContent = files.length ? files.map(file => file.name).join("、") : "选择或拖入影像";
-  };
-  input.addEventListener("change",update);
-  update();
+    const file = files[0];
+    const tooLarge = files.some(item => item.size > 10 * 1024 * 1024);
+    input.setCustomValidity(tooLarge ? "每张影像最多 10 MB，请重新选择。" : "");
+    const title = form.querySelector(".file-title");
+    title.textContent = file ? file.name + (files.length > 1 ? " 等 " + files.length + " 张" : "") : "选择或拖入影像";
+    if (preview) {
+      clearPreview();
+      const host = preview.closest(".image-drop");
+      host.classList.toggle("has-preview", Boolean(file) && !tooLarge);
+      preview.hidden = !file || tooLarge;
+      if (preview.hidden) preview.removeAttribute("src");
+      else {
+        previewURL = URL.createObjectURL(file);
+        preview.src = previewURL;
+      }
+      if (tooLarge) input.reportValidity();
+    }
+  });
 }
-async function attachFiles(id, form) {
-  const files = Array.from(form.elements.image.files);
-  let complete = 0;
-  for (const file of files) {
-    const payload = new FormData();
-    payload.set("image",file);
-    payload.set("projection",form.elements.projection.value);
-    payload.set("quality_confirmed",String(form.elements.quality_confirmed.checked));
-    try { await api(casePath(id) + "/images",{method:"POST",body:payload}); }
-    catch (error) { return `已保存记录，成功上传 ${complete}/${files.length} 张。${file.name}：${formatError(error)}。其余未上传，请从“补充影像”重试。`; }
-    complete++;
+
+function imagePayload(file, projection, quality) {
+  const payload = new FormData();
+  payload.set("image", file);
+  payload.set("projection", projection);
+  payload.set("quality_confirmed", String(quality));
+  return payload;
+}
+
+async function attachFiles(id, files, projection, quality) {
+  for (const [index, file] of files.entries()) {
+    try {
+      await api(casePath(id) + "/images", {method:"POST", body:imagePayload(file, projection, quality)});
+    } catch (error) {
+      return `未上传 ${files.length - index} 张影像。${file.name}：${formatError(error)}。请从“补充影像”重试。`;
+    }
   }
   return "";
 }
+
 function createVisit() {
-  page.innerHTML = heading("NEW VISIT","新建就诊记录","可以先登记马匹与备注，影像、模型分析和人工复核均可稍后补充。",'<a href="#dashboard" class="secondary">返回记录看板</a>') + `
-    <div class="upload-grid"><section class="card"><form id="visit-form"><header class="section-head"><span class="step-no">01</span><h2>就诊登记</h2></header>${visitFields()}
-    <header class="section-head upload-head"><span class="step-no">02</span><h2>检查影像</h2><span class="optional">选填</span></header>${imageFields()}${errorBox}
-    <button class="primary" type="submit">保存就诊记录 ${icon("arrow")}</button></form></section>
-    <aside class="context-panel"><p class="eyebrow">VISIT GUIDE</p><span class="large-symbol">${icon("book")}</span><h2>一份档案，连续记录</h2><ol class="guide"><li><b>登记</b>保存时生成独立的 EV 就诊编号。</li><li><b>补充</b>可随时更新备注，上传同次检查的影像。</li><li><b>归档</b>普通就诊可直接归档；模型辅助结果另行人工复核。</li></ol></aside></div>`;
+  page.innerHTML = heading("新建检查", "上传检查影像", "选择本次检查的 X 线片，上传后即可开始模型分析。") + progressBar(0) + `
+    <form class="card intake" id="visit-form">
+      <section class="intake-image"><div class="panel-title"><h2>检查影像</h2><span>首张为分析主图</span></div>
+        <div class="image-drop">
+          <div class="drop-corners" aria-hidden="true"></div>
+          <img id="image-preview" alt="所选主图预览" hidden>
+          <div class="drop-prompt"><span class="drop-icon">${icon("upload")}</span><strong>选择或拖入 X 线片</strong><span>JPG、PNG、WebP · 每张最多 10 MB</span></div>
+          <div class="preview-hint">点击重新选择影像</div>
+          <input id="image-file" type="file" name="image" aria-label="选择检查影像" accept="${fileTypes}" multiple required>
+        </div>
+        <p class="file-status">${icon("image")}<span class="file-title" aria-live="polite">尚未选择影像</span></p>
+      </section>
+      <section class="intake-settings"><h2>检查信息</h2>
+        <label>马匹名称 / 编号<input id="horse-name" name="horse_name" maxlength="80" required placeholder="例如：追风 或 H-001"></label>
+        <label>投照方向<select name="projection" required>${projectionOptions}</select></label>
+        <dl class="model-scope"><dt>检查部位</dt><dd>球节</dd><dt>关注病变</dt><dd>疑似骨折</dd></dl>
+        <label class="check"><input type="checkbox" name="quality_confirmed" value="true" required>已核对马匹、方向和影像清晰度</label>
+        ${errorBox}<button class="primary wide" type="submit">上传影像 ${icon("arrow")}</button>
+      </section>
+    </form>
+    <footer class="intake-foot"><span>暂时没有影像？ <a id="manual-visit" href="#manual">手动登记就诊</a></span><a href="#dashboard">${icon("book")} 查找历史记录</a></footer>`;
   const form = byId("visit-form");
   wireImages(form);
-  action(form,"正在保存…",async active=>{
-    const horse_name = form.elements.horse_name.value.trim(), comment = form.elements.comment.value.trim();
+  action(form, "正在上传…", async active => {
+    const horseName = form.elements.horse_name.value.trim();
+    if (!horseName) throw new Error("请填写马匹名称或编号。");
+    const [mainImage, ...additional] = Array.from(form.elements.image.files);
+    const projection = form.elements.projection.value;
+    const quality = form.elements.quality_confirmed.checked;
+    const payload = imagePayload(mainImage, projection, quality);
+    payload.set("horse_name", horseName);
+    const record = await api("/api/cases", {method:"POST", body:payload});
+    const message = await attachFiles(record.id, additional, projection, quality);
+    if (active()) {
+      if (message) uploadMessage = {id:record.id, message};
+      location.hash = caseLink(record.id);
+      notify(message ? "主图已保存，请核对附图。" : "影像已上传。");
+    }
+  });
+}
+
+function manualVisit() {
+  page.innerHTML = heading("就诊登记", "手动登记就诊", "先记录马匹和就诊备注，之后可在同一病例中补充影像。",
+    '<a class="secondary" href="#new">返回影像检查</a>') + `
+    <section class="card manual-card"><h2>就诊信息</h2><form id="manual-form">${visitFields()}${errorBox}
+      <button type="submit" class="primary">保存登记 ${icon("arrow")}</button></form></section>`;
+  const form = byId("manual-form");
+  action(form, "正在登记…", async active => {
+    const horse_name = form.elements.horse_name.value.trim();
     if (!horse_name) throw new Error("请填写马匹名称或编号。");
-    const record = await api("/api/visits",json({horse_name,comment}));
-    const message = await attachFiles(record.id,form);
-    if (message) uploadMessage = {id:record.id,message};
-    if(active()) { location.hash=caseLink(record.id); notify(message ? "记录已保存，部分影像尚未上传。" : "就诊记录已保存。"); }
+    const record = await api("/api/visits", json({horse_name, comment:form.elements.comment.value.trim()}));
+    if (active()) {
+      location.hash = caseLink(record.id);
+      notify("就诊登记已保存。");
+    }
   });
 }
 function openDialog(content, closeId) {
@@ -254,82 +340,165 @@ function archive(records) {
   refresh();
 }
 
-function detail(record) {
-  const analyzed = ["reviewed","analyzed"].includes(record.status);
+function imageViewer(record) {
   const boxes = record.detections || [];
-  const base = casePath(record.id);
-  const size = Number(record.width) + " " + Number(record.height);
-  const boxLayer = boxes.map((box,index) => {
+  const labelWidth = Math.max(record.width / 18, record.height / 14);
+  const boxLayer = boxes.map((box, index) => {
     const left = Number(box.x1), top = Number(box.y1);
     const tag = String(index + 1).padStart(2, "0");
-    return `<rect x="${left}" y="${top}" width="${Number(box.x2)-left}" height="${Number(box.y2)-top}"/><svg x="${left}" y="${top}" width="${record.width * .06}" height="${record.width * .035}" viewBox="0 0 40 22"><rect class="tag-bg" width="40" height="22"/><text x="20" y="16" text-anchor="middle">${tag}</text></svg>`;
+    return `<rect x="${left}" y="${top}" width="${Number(box.x2) - left}" height="${Number(box.y2) - top}"/>
+      <svg x="${left}" y="${top}" width="${labelWidth}" height="${labelWidth * .55}" viewBox="0 0 40 22"><rect class="tag-bg" width="40" height="22"/><text x="20" y="16" text-anchor="middle">${tag}</text></svg>`;
   }).join("");
-  const images=record.images || [];
-  const warning=uploadMessage?.id===record.id ? uploadMessage.message : "";
-  if(warning)uploadMessage=null;
-  const creator = loginOptions[record.created_by] || (user?.username === record.created_by ? user.display_name : record.created_by);
-  page.innerHTML=heading("VISIT RECORD",escape(record.horse_name),escape(record.id)+" &nbsp;·&nbsp; 登记人："+escape(creator || "未记录")+" &nbsp;·&nbsp; "+escape(dateText(record.created_at)),'<a href="#dashboard" class="secondary">返回记录看板</a>')+`
-    <section class="card visit-summary"><div class="spread"><div><p class="eyebrow">ENCOUNTER NOTE</p><h2>就诊记录</h2></div><div class="row-actions">${archiveBadge(record)}<button id="edit-visit" class="secondary">编辑记录</button>${!record.archived_at?'<button id="archive-visit" class="primary">手动归档</button>':""}</div></div>
-    <p class="visit-comment">${escape(record.comment||"暂无就诊备注，可点击「编辑记录」补充。")}</p><div class="detail-meta"><span>${icon("image")} ${images.length} 张影像</span><span>${statusBadge(record.status)}</span>${record.archived_at?`<span>归档于 ${escape(dateText(record.archived_at))}</span>`:""}</div>
-    ${warning?`<p class="error" role="alert">${escape(warning)}</p>`:""}</section>
-    <section class="card media-card"><div class="spread"><div><p class="eyebrow">VISIT IMAGES</p><h2>就诊影像 <span class="count-tag">${images.length}</span></h2></div><button class="secondary" id="add-images" aria-expanded="false" aria-controls="attach-form">${icon("upload")} 补充影像</button></div>
-    ${images.length?`<div class="image-tray">${images.map(image=>`<a class="image-tile" href="${escape(image.url)}" target="_blank" rel="noopener" aria-label="查看原图 ${escape(image.filename)}"><img loading="lazy" src="${escape(image.url)}" alt=""><span><strong>${image.id==="primary"?"主图":"附图"} · ${escape(image.projection)}</strong><small>${escape(image.filename)}</small></span>${icon("arrow")}</a>`).join("")}</div>`:'<p class="dim media-placeholder">尚未上传影像。可直接归档，也可以上传第一张球节 X 线片开始分析。</p>'}
-    <form id="attach-form" hidden>${imageFields(true)}${errorBox}<button class="primary" type="submit">保存影像</button></form></section>`;
-  if(record.has_image) page.insertAdjacentHTML("beforeend",`
-    <div class="report-grid"><section class="card image-card"><div class="section-head spread"><div><p class="eyebrow">RADIOGRAPH</p><h2>检查影像</h2></div>${statusBadge(record.status)}</div>
-      <div class="viewer"><svg class="radiograph" viewBox="0 0 ${size}" role="img" aria-label="原始 X 线影像及模型候选区域"><image width="100%" height="100%" href="${escapeHTML(base)}/image"/><g id="boxes">${boxLayer}</g></svg></div>
-      <div class="viewer-foot"><span>${escapeHTML(record.filename)} · ${Number(record.width)} × ${Number(record.height)}</span>${boxes.length ? '<label class="overlay-switch"><input id="overlay" type="checkbox" checked>候选框</label>' : ""}</div>
-    </section><div class="report-side"><section class="card"><p class="eyebrow">EXAM DETAILS</p><h2>主图检查信息</h2><dl><dt>马匹</dt><dd>${escapeHTML(record.horse_name)}</dd><dt>部位 / 方向</dt><dd>球节 · ${escapeHTML(record.projection || "—")}</dd><dt>关注病变</dt><dd>骨折</dd><dt>登记时间</dt><dd>${escapeHTML(dateText(record.created_at))}</dd></dl></section>
-    <section class="card results"><p class="eyebrow">MODEL FINDINGS</p><h2>${analyzed ? "辅助检测结果" : "模型检测"}</h2>
-      ${analyzed ? `<p class="count"><strong>${boxes.length}</strong> 个候选区域</p>${boxes.length ? `<ul class="findings">${boxes.map((box,index) => `<li><span>区域 ${String(index + 1).padStart(2,"0")}</span><b>置信分数 ${pct(box.score)}</b></li>`).join("")}</ul>` : '<p class="sub">在本次阈值下未检出候选区域，不能排除骨折。</p>'}<dl><dt>模型版本</dt><dd class="mono">${escapeHTML(record.model)}</dd><dt>检测阈值</dt><dd>${pct(record.threshold)}</dd></dl>` : `<p class="sub">影像已保存。开始后将调用球节骨折检测模型。</p><form id="analyze-form"><button class="primary" type="submit">${icon("scan")} 开始 AI 分析</button></form>`}
-      <p class="model-note">AI 仅提供参考。模型置信分数不是患病概率，最终结论由人工复核。</p></section></div></div>
-    <section class="card review"><div><p class="eyebrow">HUMAN REVIEW</p><h2>人工复核</h2></div>
-    ${record.status === "reviewed" ? `<div class="reviewed-note"><p>${escapeHTML(record.review_note)}</p><small>复核人：${escapeHTML(record.reviewer)} · ${escapeHTML(dateText(record.reviewed_at))}</small></div>` : analyzed ? `<form id="review-form"><label for="review-note">复核意见</label><textarea id="review-note" name="note" rows="3" required maxlength="2000" placeholder="结合影像记录人工判断与候选区域核对结果"></textarea><button class="primary" type="submit">确认复核并归档</button></form>` : '<p class="sub">完成模型检测后，可填写人工复核意见。</p>'}</section><p class="error" role="alert" hidden></p>`);
-  byId("edit-visit").onclick=()=>editVisit(record,detail);
-  if(byId("archive-visit"))byId("archive-visit").onclick=async event=>{
-    const button=event.currentTarget, ticket=revision;
-    button.disabled=true;
-    try {const updated=await api(base+"/archive",{method:"POST"});if(ticket===revision){detail(updated);notify("就诊记录已归档。");}}
-    catch(error){if(ticket===revision)notify(formatError(error));}finally{button.disabled=false;}
-  };
-  const attach=byId("attach-form");
-  byId("add-images").onclick=()=>{attach.hidden=!attach.hidden;byId("add-images").setAttribute("aria-expanded",String(!attach.hidden));};
-  wireImages(attach);
-  action(attach,"正在上传…",async active=>{
-    const message=await attachFiles(record.id,attach);
-    const updated=await api(base);
-    if(active()){if(message)uploadMessage={id:record.id,message};detail(updated);if(!message)notify("影像已保存。");}
+  return `<section class="card image-card"><div class="panel-title"><h2>检查主图</h2><span>球节 · ${escape(record.projection)}</span></div>
+    <div class="viewer"><svg class="radiograph" viewBox="0 0 ${Number(record.width)} ${Number(record.height)}" role="img" aria-label="原始 X 线影像及模型候选区域">
+      <image width="100%" height="100%" href="${casePath(record.id)}/image"/><g id="boxes">${boxLayer}</g></svg></div>
+    <div class="viewer-foot"><span>${escape(record.filename)} · ${Number(record.width)} × ${Number(record.height)}</span>
+    ${boxes.length ? '<label class="overlay-switch"><input id="overlay" type="checkbox" checked>候选框</label>' : ""}</div></section>`;
+}
+
+const archiveButton = '<button id="archive-visit" class="primary wide" type="button">' + icon("folder") + ' 归档病例</button>';
+
+function analysisPanel(record) {
+  const analyzed = ["analyzed", "reviewed"].includes(record.status);
+  const boxes = record.detections || [];
+  const findings = boxes.length
+    ? `<ul class="findings">${boxes.map((box,index) => `<li><span>疑似骨折 · 区域 ${String(index + 1).padStart(2,"0")}</span><b>置信分数 ${pct(box.score)}</b></li>`).join("")}</ul>`
+    : '<p class="sub">当前阈值下未检出疑似骨折区域，仍需结合原片进行复核。</p>';
+  const modelInfo = `<details class="model-info"><summary>模型信息</summary><dl><dt>模型版本</dt><dd class="mono">${escape(record.model)}</dd><dt>检测阈值</dt><dd>${pct(record.threshold)}</dd><dt>分析时间</dt><dd>${escape(dateText(record.analyzed_at))}</dd></dl></details>`;
+  let controls;
+  if (!analyzed) {
+    controls = `<form id="analyze-form">${errorBox}<button class="primary wide" type="submit">${icon("scan")} 开始分析</button><p class="inference-status" role="status">模型正在处理主图，请稍候…</p></form>`;
+  } else if (record.status === "analyzed") {
+    controls = `<button class="primary wide" id="start-review" aria-expanded="false" aria-controls="review-form">${icon("user")} 人工复核</button>
+      <form id="review-form" hidden><label for="review-note">人工复核意见</label>
+      <textarea id="review-note" name="note" rows="3" required maxlength="2000" placeholder="核对原片与候选区域，记录您的判断"></textarea>
+      <small class="dim">复核人 · ${escape(user.display_name)}</small>${errorBox}
+      <button class="primary wide" type="submit">确认复核 ${icon("check")}</button></form>`;
+  } else {
+    controls = `<div class="reviewed-note"><h3>人工复核意见</h3><p>${escape(record.review_note)}</p>
+      <small>复核人：${escape(record.reviewer)} · ${escape(dateText(record.reviewed_at))}</small></div>
+      ${record.archived_at ? '<a class="secondary wide" href="#dashboard">查找历史记录</a>' : archiveButton}`;
+  }
+  return `<section class="card results" tabindex="-1"><div class="panel-title"><h2>${analyzed ? "模型分析结果" : "模型分析"}</h2>${record.archived_at && record.status === "reviewed" ? archiveBadge(record) : statusBadge(record.status)}</div>
+    ${analyzed ? `<p class="count"><strong>${boxes.length}</strong> 个候选区域</p>${findings}${modelInfo}` :
+      '<div class="analysis-ready"><span class="ready-icon">' + icon("scan") + '</span><div><strong>主图已就绪</strong><p>检测球节 X 线片中的疑似骨折区域。</p></div></div>'}
+    <p class="model-note">AI 仅提供参考。置信分数表示模型对候选区域的评分，诊疗结论由人工复核。</p>
+    ${controls}</section>`;
+}
+
+function detail(record) {
+  const base = casePath(record.id);
+  byId("nav-work").classList.toggle("selected", !record.archived_at);
+  byId("nav-archive").classList.toggle("selected", Boolean(record.archived_at));
+  const images = record.images || [];
+  const warning = uploadMessage?.id === record.id ? uploadMessage.message : "";
+  if (warning) uploadMessage = null;
+  const reviewerConfirmed = record.status === "reviewed";
+  const stage = reviewerConfirmed ? (record.archived_at ? 6 : 5) : record.status === "analyzed" ? 2 : 1;
+  const creator = loginOptions[record.created_by] || (user.username === record.created_by ? user.display_name : record.created_by);
+  const title = heading("检查工作台", escape(record.horse_name), escape(record.id) + "　·　" + escape(dateText(record.created_at)),
+    '<a href="#dashboard" class="secondary">历史记录</a>');
+  const matchesLegacy = record.has_image && record.archived_at && !reviewerConfirmed;
+  page.innerHTML = title +
+    (record.has_image ? progressBar(stage) : "") +
+    (warning ? `<p class="error" role="alert">${escape(warning)}</p>` : "") +
+    (matchesLegacy ? '<p class="legacy-note">这是一条已归档的历史病例，人工复核尚待完成。</p>' : "") +
+    (record.has_image ? `<div class="report-grid">${imageViewer(record)}${analysisPanel(record)}</div>` : "") + `
+    <section class="card visit-summary"><div class="spread"><div class="panel-title"><h2>就诊信息</h2>${archiveBadge(record)}</div>
+      <div class="row-actions"><button id="edit-visit" class="secondary">编辑记录</button>${!record.has_image && !record.archived_at ? archiveButton : ""}</div></div>
+      <p class="visit-comment">${escape(record.comment || "暂无就诊备注")}</p>
+      <div class="detail-meta"><span>${icon("user")} 登记人：${escape(creator || "未记录")}</span><span>${icon("image")} ${images.length} 张影像</span>
+      ${record.archived_at ? `<span>${icon("folder")} 归档于 ${escape(dateText(record.archived_at))}</span>` : ""}</div></section>
+    <section class="card media-card"><div class="spread"><div class="panel-title"><h2>就诊影像</h2><span class="count-tag">${images.length}</span></div>
+      <button class="secondary" id="add-images" aria-expanded="false" aria-controls="attach-form">${icon("upload")} 补充影像</button></div>
+      ${images.length ? `<div class="image-tray">${images.map(image => `<a class="image-tile" href="${escape(image.url)}" target="_blank" rel="noopener" aria-label="查看原图 ${escape(image.filename)}">
+        <img loading="lazy" src="${escape(image.url)}" alt=""><span><strong>${image.id === "primary" ? "主图" : "附图"} · ${escape(image.projection)}</strong><small>${escape(image.filename)}</small></span>${icon("arrow")}</a>`).join("")}</div>` :
+        '<p class="dim media-placeholder">尚未上传影像，补充主图后即可开始模型分析。</p>'}
+      <form id="attach-form" hidden>${imageFields()}${errorBox}<button class="primary" type="submit">保存影像</button></form></section>`;
+
+  function displayNextStage(updated, message) {
+    detail(updated);
+    const results = page.querySelector(".results");
+    if (results) results.focus({preventScroll:true});
+    if (results && window.matchMedia("(max-width: 800px)").matches) results.scrollIntoView({block:"start"});
+    else window.scrollTo(0, 0);
+    notify(message);
+  }
+  byId("edit-visit").onclick = () => editVisit(record, detail);
+  byId("archive-visit")?.addEventListener("click", async event => {
+    const button = event.currentTarget;
+    const ticket = revision;
+    button.disabled = true;
+    try {
+      const updated = await api(base + "/archive", {method:"POST"});
+      if (ticket === revision) displayNextStage(updated, "病例已归档。");
+    } catch (error) {
+      if (ticket === revision) notify(formatError(error));
+    } finally { button.disabled = false; }
   });
-  byId("overlay")?.addEventListener("change",event => { byId("boxes").style.display = event.target.checked ? "" : "none"; });
+  const attach = byId("attach-form");
+  byId("add-images").onclick = event => {
+    attach.hidden = !attach.hidden;
+    event.currentTarget.setAttribute("aria-expanded", String(!attach.hidden));
+    if (!attach.hidden) attach.elements.image.focus();
+  };
+  wireImages(attach);
+  action(attach, "正在上传…", async active => {
+    const message = await attachFiles(record.id, Array.from(attach.elements.image.files), attach.elements.projection.value, attach.elements.quality_confirmed.checked);
+    const updated = await api(base);
+    if (active()) {
+      if (message) uploadMessage = {id:record.id, message};
+      if (!record.has_image && updated.has_image) displayNextStage(updated, "主图已保存，可开始分析。");
+      else {
+        detail(updated);
+        if (!message) notify("影像已保存。");
+      }
+    }
+  });
+  byId("overlay")?.addEventListener("change", event => { byId("boxes").style.display = event.target.checked ? "" : "none"; });
   const analyzeForm = byId("analyze-form");
-  if (analyzeForm) action(analyzeForm,"模型推理中…",async (active) => {
-    const result = await api(base + "/analyze",{method:"POST"});
-    if (active()) { detail(result); notify("模型检测完成，结果已保存。"); }
+  if (analyzeForm) action(analyzeForm, "模型分析中…", async active => {
+    const result = await api(base + "/analyze", {method:"POST"});
+    if (active()) displayNextStage(result, "模型分析完成，请核对影像与结果。");
   });
   const reviewForm = byId("review-form");
-  if (reviewForm) action(reviewForm,"正在归档…",async (active) => {
-    const note = new FormData(reviewForm).get("note").trim();
+  if (!reviewForm) return;
+  function showStep(index) {
+    page.querySelector(".flow-progress").outerHTML = progressBar(index);
+  }
+  byId("start-review").onclick = event => {
+    event.currentTarget.hidden = true;
+    event.currentTarget.setAttribute("aria-expanded", "true");
+    reviewForm.hidden = false;
+    showStep(3);
+    byId("review-note").focus();
+  };
+  byId("review-note").oninput = event => showStep(event.currentTarget.value.trim() ? 4 : 3);
+  action(reviewForm, "正在确认…", async active => {
+    const note = reviewForm.elements.note.value.trim();
     if (!note) throw new Error("请填写复核意见。");
-    const result = await api(base + "/review",json({note}));
-    if (active()) { detail(result); notify("复核意见已归档。"); }
+    const result = await api(base + "/review", json({note}));
+    if (active()) displayNextStage(result, "复核意见已确认。");
   });
 }
 
 async function render() {
   const ticket = ++revision;
+  clearPreview();
   if(dialog.open) dialog.close();
   byId("navigation").hidden = byId("identity").hidden = !user;
   byId("display-name").textContent = user?.display_name || "";
   page.setAttribute("aria-busy","false");
   if (!user) { login(); return; }
+  if (!location.hash) history.replaceState(null, "", "#new");
   const route = location.hash.slice(1);
   const isCase = route.startsWith("case/");
-  const create = route === "new" || route === "work";
-  const archived = !isCase && !create;
-  byId("crumb").textContent = archived ? "就诊记录" : isCase ? "就诊详情" : "新建就诊";
-  byId("nav-work").classList.toggle("selected", !archived && !isCase);
-  byId("nav-archive").classList.toggle("selected", archived || isCase);
-  if (create) { createVisit(); return; }
+  const archived = route === "dashboard" || route === "archive";
+  byId("crumb").textContent = archived ? "历史记录" : isCase ? "检查详情" : route === "manual" ? "手动登记" : "新建检查";
+  byId("nav-work").classList.toggle("selected", !archived);
+  byId("nav-archive").classList.toggle("selected", archived);
+  if (route === "manual") { manualVisit(); return; }
+  if (!archived && !isCase) { createVisit(); return; }
   page.innerHTML = '<p class="sub">正在读取病例…</p>';
   page.setAttribute("aria-busy","true");
   try {

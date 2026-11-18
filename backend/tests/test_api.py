@@ -92,7 +92,7 @@ def test_members_share_cases_but_keep_distinct_creator_and_reviewer(team, monkey
     sign_in_member(team, "alimire")
     assert team.get(path + "/image").content == team.get(images[0]["url"]).content == primary
     assert team.get(images[1]["url"]).content == follow_up
-    assert team.post(path + "/archive").json()["archived_at"]
+    assert team.post(path + "/archive").status_code == 409
     assert team.post(path + "/analyze").json()["status"] == "analyzed"
     sign_in_member(team, "liqihang")
     reviewed = team.post(path + "/review", json={"note": "已核对"}).json()
@@ -102,6 +102,8 @@ def test_members_share_cases_but_keep_distinct_creator_and_reviewer(team, monkey
     assert team.get(images[1]["url"]).status_code == team.delete(path).status_code == 401
     sign_in_member(team, "zhushijia")
     assert team.get("/api/cases").json() == [reviewed]
+    archived = team.post(path + "/archive").json()
+    assert archived["archived_at"] and archived == reviewed | {"archived_at": archived["archived_at"]}
     assert team.delete(path).status_code == 204
     sign_in_member(team, "wangyiyi")
     assert not team.get("/api/cases").json() and team.get(images[1]["url"]).status_code == 404
@@ -193,9 +195,11 @@ def test_workflow_persistence_and_ownership(client, tmp_path, monkeypatch):
     assert analyzed["detections"] == predicted and analyzed["model"] == detector.MODEL_ID
     assert analyzed["status"] == "analyzed" and analyzed["analyzed_at"]
     assert client.post(resource + "/analyze").status_code == 409
+    assert client.post(resource + "/archive").status_code == 409
     assert client.post(resource + "/review", json={"note": "   "}).status_code == 422
+    assert client.get(resource).json() == analyzed
     reviewed = client.post(resource + "/review", json={"note": "  已核对原片  "}).json()
-    assert reviewed["status"] == "reviewed" and reviewed["reviewed_at"]
+    assert reviewed["status"] == "reviewed" and reviewed["reviewed_at"] and reviewed["archived_at"] is None
     assert (reviewed["reviewer"], reviewed["review_note"], reviewed["detections"]) == ("王一伊", "已核对原片", predicted)
     assert client.post(resource + "/review", json={"note": "改写"}).status_code == 409
     with TestClient(create_app(tmp_path)) as restarted:
@@ -234,8 +238,11 @@ def test_manual_visits_can_be_archived_edited_and_deleted_without_inference(clie
     assert (changed["horse_name"], changed["comment"], changed["archived_at"]) == ("追风 II", "病史已补充", archived["archived_at"])
     assert client.patch(path, json={"comment": ""}).json()["comment"] == ""
     first, second = picture(), picture(70, 30)
+    assert append_image(client, path, b"invalid").status_code == 422
+    assert client.get(path).json()["archived_at"] == archived["archived_at"]
     attached = append_image(client, path, first).json()
-    assert attached["has_image"] and attached["status"] == "uploaded" and attached["archived_at"]
+    assert attached["has_image"] and attached["status"] == "uploaded" and attached["archived_at"] is None
+    assert client.post(path + "/archive").status_code == 409
     assert attached["images"][0]["id"] == "primary"
     response = append_image(client, path, second, "复查.png", "侧位")
     assert response.status_code == 201
@@ -263,13 +270,33 @@ def test_edit_and_upload_do_not_change_reviewed_primary_image(client, monkeypatc
     monkeypatch.setattr(detector, "detect", lambda _: [{"x1": 1, "y1": 2, "x2": 5, "y2": 6, "score": 0.4}])
     assert client.post(path + "/analyze").status_code == 200
     reviewed = client.post(path + "/review", json={"note": "兽医已复核"}).json()
-    assert reviewed["reviewed_at"] == reviewed["archived_at"]
+    assert reviewed["reviewed_at"] and reviewed["archived_at"] is None
+    archived = client.post(path + "/archive").json()
+    assert archived["archived_at"] and client.post(path + "/archive").json() == archived
     edited = client.patch(path, json={"comment": "复查预约"}).json()
     assert edited["horse_name"] == reviewed["horse_name"]
     update = append_image(client, path, picture(65, 30), "后续复查.png").json()
     for key in ("status", "detections", "model", "reviewer", "reviewed_at", "review_note", "archived_at", "width", "height"):
-        assert update[key] == reviewed[key]
+        assert update[key] == archived[key]
     assert client.get(path + "/image").content == primary and len(update["images"]) == 2
+
+
+def test_legacy_unreviewed_image_archive_keeps_its_original_history(client, tmp_path, monkeypatch):
+    login(client)
+    path = "/api/cases/" + upload(client).json()["id"]
+    previous_time = "2026-10-01T01:02:03+00:00"
+    with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
+        database.execute("UPDATE cases SET archived_at=?", (previous_time,))
+    case = client.get(path).json()
+    assert case["status"] == "uploaded" and case["reviewed_at"] is None
+    assert client.post(path + "/archive").json() == case
+    attached = append_image(client, path, picture()).json()
+    assert attached["archived_at"] == previous_time and attached["reviewer"] is None
+    monkeypatch.setattr(detector, "detect", lambda _: [])
+    analyzed = client.post(path + "/analyze").json()
+    assert analyzed["status"] == "analyzed" and client.post(path + "/archive").json() == analyzed
+    reviewed = client.post(path + "/review", json={"note": "补充复核"}).json()
+    assert reviewed["archived_at"] == previous_time and reviewed["reviewed_at"] and reviewed["reviewer"] == "王一伊"
 
 
 def test_case_edits_and_attachments_require_owner_and_same_origin(client, tmp_path, monkeypatch):
