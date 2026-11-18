@@ -68,29 +68,35 @@ def shipped():
         (folder / (split + "_predictions.json")).write_text(json.dumps(records,ensure_ascii=False))
 
 
+def score_run(folder, validation_filename="val_predictions.json"):
+    labels = {split: truth(split) for split in ("val", "test")}
+    filenames = {"val": validation_filename, "test": "test_predictions.json"}
+    predicted = {split: json.loads((folder / filenames[split]).read_text()) for split in labels}
+    # Select on validation films only, at most one false positive per film on average.
+    grid = [.01, .025, .05, .075, .10, .15, .20, .25, .30, .40, .50, .60, .70, .80, .90, .95, .99, 1.001]
+    candidates = [(cutoff, counts(predicted["val"], labels["val"], cutoff)) for cutoff in grid]
+    feasible = [(cutoff, score) for cutoff, score in candidates if score["fp"] <= len(labels["val"])]
+    threshold, _ = max(feasible, key=lambda item: (item[1]["tp"], -item[1]["fp"], -item[0]))
+    report = {"val_selected_cutoff": threshold}
+    for key, cutoff in (("fixed_0.15", .15), ("val_selected", threshold)):
+        report[key] = {split: counts(predicted[split], labels[split], cutoff) for split in labels}
+    return report
+
+
 def compare():
-    labels = {split:truth(split) for split in ("val","test")}
-    results = {}
-    for name in ("shipped","yolo","frcnn"):
-        files = dict(val="predictions.json" if name == "frcnn" else "val_predictions.json",test="test_predictions.json")
-        predicted = {split:json.loads((WORK / name / fname).read_text()) for split,fname in files.items()}
-        # Fixed grid; validation only. Bound the mean number of false positives at one per film.
-        grid = [.01,.025,.05,.075,.10,.15,.20,.25,.30,.40,.50,.60,.70,.80,.90,.95,.99,1.001]
-        feasible = [(threshold, counts(predicted["val"],labels["val"],threshold)) for threshold in grid]
-        feasible = [(threshold, score) for threshold,score in feasible if score["fp"] <= len(labels["val"])]
-        threshold, _ = max(feasible, key=lambda candidate:(candidate[1]["tp"],-candidate[1]["fp"],-candidate[0]))
-        results[name] = {"val_selected_cutoff":threshold}
-        for key,cutoff in (("fixed_0.15",.15),("val_selected",threshold)):
-            results[name][key] = {split:counts(predicted[split], labels[split], cutoff) for split in labels}
-    return results
+    return {name: score_run(WORK / name, "predictions.json" if name == "frcnn" else "val_predictions.json")
+            for name in ("shipped", "yolo", "frcnn")}
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shipped",action="store_true",help="Export shipped ONNX predictions (backend dependencies required)")
+    parser.add_argument("--candidate", type=Path, help="Score one training output directory and print its metrics as JSON")
     args = parser.parse_args()
     if args.shipped:
         shipped()
+    elif args.candidate:
+        print(json.dumps(score_run(args.candidate), indent=2))
     else:
         report = json.dumps(compare(), indent=2)
         (WORK / "comparison.json").write_text(report + "\n")

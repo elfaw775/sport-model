@@ -1,0 +1,27 @@
+{
+  "val_selected_cutoff": 1.001,
+  "fixed_0.15": {
+    "val": {
+      "tp": 4,
+      "fp": 41,
+      "fn": 8
+    },
+    "test": {
+      "tp": 2,
+      "fp": 28,
+      "fn": 10
+    }
+  },
+  "val_selected": {
+    "val": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 12
+    },
+    "test": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 12
+    }
+  }
+}

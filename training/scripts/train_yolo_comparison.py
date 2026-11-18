@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--device", default="mps")
     parser.add_argument("--epochs", default=12, type=int)
     parser.add_argument("--batch", default=4, type=int)
+    parser.add_argument("--imgsz", default=640, type=int, help="Square training and inference size, in pixels")
     args = parser.parse_args()
     output = args.output.resolve()
     data = args.data.resolve(strict=True)
@@ -48,7 +49,7 @@ def main():
     started = monotonic()
     model.train(
         data=str(data), device=args.device, project=str(output), name="fit",
-        epochs=args.epochs, patience=0, batch=args.batch, imgsz=640, seed=42,
+        epochs=args.epochs, patience=0, batch=args.batch, imgsz=args.imgsz, seed=42,
         workers=0, amp=False, cache=False, plots=False, freeze=10,
         optimizer="AdamW", lr0=0.001, lrf=0.1, warmup_epochs=1, nbs=8,
         mosaic=0.0, close_mosaic=0, fliplr=0.0, flipud=0.0,
@@ -64,7 +65,7 @@ def main():
         predictions = {}
         for file in files:
             result, = detector.predict(
-                source=str(file), imgsz=640, conf=0.01, iou=0.7, device=args.device,
+                source=str(file), imgsz=args.imgsz, conf=0.01, iou=0.7, device=args.device,
                 rect=False, max_det=300, verbose=False, save=False,
             )
             predictions[file.name] = [
@@ -75,7 +76,7 @@ def main():
         counts[split] = len(predictions)
     metadata = {"initial_weights": weights.name, "initial_sha256": hashlib.sha256(weights.read_bytes()).hexdigest(),
                 "checkpoint": "fit/weights/last.pt", "epochs": args.epochs, "batch": args.batch, "seed": 42,
-                "training_seconds": elapsed, "image_counts": counts,
+                "imgsz": args.imgsz, "training_seconds": elapsed, "image_counts": counts,
                 "torch": str(torch.__version__), "ultralytics": ultralytics.__version__, "device": args.device}
     (output / "run.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
