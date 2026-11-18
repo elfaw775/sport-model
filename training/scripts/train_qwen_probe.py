@@ -1,7 +1,6 @@
 """Fit small spatial heads to frozen Qwen3-VL merger tokens on the existing horse split."""
 import argparse
 from collections import Counter
-import hashlib
 import json
 from pathlib import Path
 
@@ -27,11 +26,9 @@ def paths(split):
 def extract(model_path, output):
     import mlx.core as mx
     from mlx_vlm import load
-    from evaluate_qwen_vl import WEIGHT_SHA256
+    from qwen_checkpoints import CHECKPOINTS
 
-    with (model_path / "model.safetensors").open("rb") as stream:
-        if hashlib.file_digest(stream, "sha256").hexdigest() != WEIGHT_SHA256:
-            raise ValueError("Frozen probe requires the checkpoint used for this experiment")
+    CHECKPOINTS["2b"].verify(model_path)
     model, processor = load(str(model_path))
     tower = model.vision_tower
     dtype = tower.patch_embed.proj.weight.dtype

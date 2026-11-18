@@ -5,6 +5,8 @@
 
 [Qwen3-VL-2B 对照实验](results/qwen3-vl-2b-2026-11-18/README.md)比较了直接读片、59 匹马上的 QLoRA 微调和冻结视觉特征训练，包含两个数据分组的整片判断、病灶定位、尺寸对照以及全部留出片的框叠图。
 
+[多款视觉模型的马片实测](results/vision-model-scale-2026-11-18/README.md)在相同划分上比较 Qwen 2B 至 9B、MiMo 和 DeepSeek，记录每款模型框中的病灶、误报、人工标注样本上的微调结果及本机资源用量。
+
 ## 标签转换版本（2026-11-18）
 
 历史 v1/v2 的转换器忽略了 CVAT 的 `attributes.rotation`。当前转换器将四个顶点绕矩形中心旋转，取轴对齐外接矩形，最后裁剪到图像边界。已发布的 v1/v2 标签、模型和下文历史指标按原版本保留。修正标签后的实验分别记录在 [640 像素 YOLO 与 Faster R-CNN 对照](results/comparison-2026-11-18/README.md) 和 [960 像素 YOLO 重训](results/yolo11s-960-2026-11-18/README.md)。

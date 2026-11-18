@@ -19,7 +19,8 @@ from mlx_vlm.utils import load_config, prepare_inputs
 from PIL import Image
 
 from compare_detectors import WORK
-from evaluate_qwen_vl import MAX_PIXELS, PROMPT, REVISION, WEIGHT_SHA256
+from evaluate_qwen_vl import MAX_PIXELS, PROMPT
+from qwen_checkpoints import CHECKPOINTS
 
 
 def digest(path):
@@ -54,19 +55,25 @@ def completion_loss(model, prefix_ids, pixels, grid, target_ids):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--checkpoint", choices=("2b", "7b", "8b"), default="2b")
+    parser.add_argument("--bf16-compute", action="store_true", help="Cast FP16 base tensors to BF16 for numerical stability")
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     if (args.output / "adapter").exists():
         raise FileExistsError("Choose an output directory without an existing adapter")
-    assert digest(args.model / "model.safetensors") == WEIGHT_SHA256
+    spec = CHECKPOINTS[args.checkpoint]
+    spec.verify(args.model)
     mx.random.seed(42)
     model, processor = load(str(args.model))
+    if args.bf16_compute:
+        model.set_dtype(mx.bfloat16, predicate=lambda dtype: dtype == mx.float16)
     processor.image_processor.max_pixels = MAX_PIXELS
     prompt = apply_chat_template(processor, load_config(args.model), PROMPT, num_images=1)
+    depth = len(model.language_model.model.layers)
     targets = [f"language_model.model.layers.{layer}.self_attn.{proj}_proj"
-               for layer in range(24, 28) for proj in ("q", "v")]
+               for layer in range(depth - 4, depth) for proj in ("q", "v")]
     model = prepare_model_for_training(model, target_modules=targets, train_type="lora",
                                        lora_rank=8, lora_alpha=16, lora_dropout=0)
     model.train()
@@ -76,13 +83,15 @@ def main():
     optimizer = optim.AdamW(learning_rate=0.00015, weight_decay=0)
     calc_grad = nn.value_and_grad(model, completion_loss)
     rows = training_rows()
-    metadata = {"base_revision": REVISION, "base_sha256": WEIGHT_SHA256, "rank": 8, "alpha": 16,
-                "modules": targets, "trainable_parameters": count, "epochs": 1, "batch_size": 1,
+    metadata = {"base_model": spec.model_id, "base_revision": spec.revision, "weight_files_sha256": spec.weights, "rank": 8, "alpha": 16,
+                "bf16_compute": args.bf16_compute, "modules": targets, "trainable_parameters": count, "epochs": 1, "batch_size": 1,
                 "optimizer": "AdamW", "learning_rate": 0.00015, "weight_decay": 0, "seed": 42,
                 "loss": "mean cross-entropy over assistant JSON and end token only",
                 "max_pixels": MAX_PIXELS, "prompt": PROMPT,
                 "inputs": [{"filename": im.name, "image_sha256": digest(im), "label_sha256": digest(lb)}
                            for im, lb, _ in rows]}
+    if "model.safetensors" in spec.weights:
+        metadata["base_sha256"] = spec.weights["model.safetensors"]
     started = time.perf_counter()
     with (args.output / "loss.jsonl").open("w") as log:
         for step, (image, _, answer) in enumerate(rows, 1):
