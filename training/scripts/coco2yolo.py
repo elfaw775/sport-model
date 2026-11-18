@@ -13,13 +13,29 @@ COCO 是 JSON，会把所有帧的所有标注都带出来（不像 YOLO 导出�
   # 想保留全部类别（0=病变, 1=annotation mark 一起留）：
   python3 coco2yolo.py instances_default.json --out labels_converted --keep-all
 
-转完后，把 labels_converted 里的 txt 覆盖到 sporthorse1103/labels/train/，
-再跑 split_dataset.py 即可。
+请输出到独立目录，核对框的位置后再创建新数据集。
 """
 
 import argparse
 import json
+import math
 import os
+
+
+def rotated_bounds(bbox, rotation):
+    left, top, width, height = bbox
+    if rotation % 360 == 0:
+        return left, top, left + width, top + height
+    center_x, center_y = left + width / 2, top + height / 2
+    angle = math.radians(rotation)
+    cosine, sine = math.cos(angle), math.sin(angle)
+    corners = [
+        (center_x + dx * cosine - dy * sine, center_y + dx * sine + dy * cosine)
+        for dx in (-width / 2, width / 2)
+        for dy in (-height / 2, height / 2)
+    ]
+    horizontal, vertical = zip(*corners)
+    return min(horizontal), min(vertical), max(horizontal), max(vertical)
 
 
 def main():
@@ -76,7 +92,8 @@ def main():
         if not bbox:
             skipped += 1
             continue
-        boxes_by_img[a["image_id"]].append((cid, bbox))
+        rotation = float(a.get("attributes", {}).get("rotation", 0))
+        boxes_by_img[a["image_id"]].append((cid, rotated_bounds(bbox, rotation)))
 
     os.makedirs(args.out, exist_ok=True)
     written = 0
@@ -86,15 +103,16 @@ def main():
         stem = os.path.splitext(fname)[0]
         out_path = os.path.join(args.out, stem + ".txt")
         lines = []
-        for cid, (x, y, w, h) in boxes_by_img.get(img_id, []):
+        for cid, bounds in boxes_by_img.get(img_id, []):
             # 裁剪到图片边界（旋转框的 AABB 可能溢出）
-            x0, y0 = max(0.0, x), max(0.0, y)
-            x1, y1 = min(float(W), x + w), min(float(H), y + h)
+            left, top, right, bottom = bounds
+            x0, y0 = max(0.0, left), max(0.0, top)
+            x1, y1 = min(float(W), right), min(float(H), bottom)
             cw, ch = x1 - x0, y1 - y0
             if cw <= 0.5 or ch <= 0.5:
                 degenerate += 1
                 continue
-            if (x0, y0, x1, y1) != (x, y, x + w, y + h):
+            if (x0, y0, x1, y1) != bounds:
                 clipped += 1
             cx = (x0 + cw / 2) / W
             cy = (y0 + ch / 2) / H

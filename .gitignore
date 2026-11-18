@@ -12,3 +12,8 @@ scripts/smoke.png
 
 # os
 .DS_Store
+.venv/
+__pycache__/
+.pytest_cache/
+work/
+var/
