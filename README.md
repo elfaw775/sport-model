@@ -1,7 +1,29 @@
-# 马球节病变检测 · 纯静态 Web（Next.js + ONNX Runtime Web）
+# EQUIVISION · 马球节影像工作台
 
-**完全没有后端**：模型在浏览器里用 ONNX Runtime Web 推理，图片不上传服务器。
-构建产物是纯静态文件，可直接部署到 **GitHub Pages**。
+本仓库有两个入口：Python 工作台支持登录、真实检测、人工复核和持久病例档案；[已有 GitHub Pages 演示](https://elfaw775.github.io/sport-model/) 仍在浏览器推理，不会将影像上传到 Python 或共享病例库。
+
+## 一期工作台：本地运行
+
+在仓库根目录使用 Python 3.12：
+
+```bash
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements.txt
+.venv/bin/python -m uvicorn backend.app:app --host 127.0.0.1 --port 8765
+```
+
+打开 <http://127.0.0.1:8765/>，本地试用账号 `demo`、密码 `EquiDemo2026!`，默认复核人王一伊。
+填写马匹、手选投照方向，确认影像清晰后上传 PNG、JPEG 或 WebP；每次上传创建一个 EV 病例号。点「开始 AI 分析」时，服务才用原仓库的 YOLO11s v2 ONNX 权重和 CPU 分析该图。可以用仓库中的 [侧位示例](training/data/sporthorse_v2/images/test/16-侧位.jpg) 走一遍流程。
+
+报告保留候选框在原图上的位置、模型置信分数、权重标识、阈值和推理时间；即使未检出也可以复核。提交意见后从「病例档案」按名称或编号搜索，复看原图、模型结果、复核人和时间。原始文件和记录均保存在默认的 `var/cases.sqlite3`（不进 Git）；重启时使用同一数据目录。模型故障会明确失败并保留待分析病例。
+
+- `backend/app.py`：FastAPI 会话和病例接口；`backend/detector.py`：校验权重、真实 ONNX 推理及坐标还原；`backend/static/`：工作台界面。
+- 本地账号可用 `SPORT_MODEL_USERNAME`、`SPORT_MODEL_PASSWORD`、`SPORT_MODEL_DISPLAY_NAME` 替换。若另行托管，使用持久化的 `SPORT_MODEL_DATA_DIR`、HTTPS、非演示凭据和 `SPORT_MODEL_SECURE_COOKIE=1`；GitHub Pages 本身不能运行此服务。
+- 验证：安装运行依赖后执行 `.venv/bin/python -m pip install pytest httpx` 和 `.venv/bin/python -m pytest -q backend/tests`。测试包含仓库权重在两张影像上的输出回归、登录与跨用户隔离、病例状态和重启持久化。输出回归不能证明诊断准确性。
+
+一期真实模型只支持马球节疑似骨折定位。0.15 是候选框筛选阈值，分数不是患病概率；未检出不能排除骨折。项目保留原 v2 权重，修正了供下轮训练使用的旋转框转换，没有重新训练或宣称准确率提升。[训练归档](training/README.md) 记录了版本和已知限制。[Qwen3‑VL](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct) 与 [DeepSeek‑VL2](https://github.com/deepseek-ai/DeepSeek-VL2) 均有视觉定位能力，官方资料未提供本任务的独立评估；本版不使用它们判片或生成结论。
+
+以下是原静态演示的开发与发布说明：
 
 ## 仓库结构
 
@@ -148,7 +170,7 @@ web-next/
 
 ## 6. 已知限制
 
-- **模型本身很弱**：test 召回率约 17%，框也不够准，属流程演示级别。
+- **模型仍属于研究原型**：不同版本、阈值和标签下的结果不能混用，参见训练指南的 v2 评估。
 - 首次打开要下载 **约 24MB**（模型 10MB + WASM 14MB），之后浏览器缓存。
 - 浏览器推理速度：**约 150–300ms/张**（yolo11n，WASM；M 系列机器）。
 - SQLite 换成了 IndexedDB：只能存在本机浏览器，不能多端同步、不能服务端查询。

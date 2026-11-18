@@ -3,6 +3,19 @@
 这份目录是**网页 Demo 背后的模型训练全过程**：数据转换 → 拆分 → 训练 → 评估。
 网站本身（Next.js + 浏览器端 ONNX 推理）在仓库根目录。
 
+## 标签转换版本（2026-11-18）
+
+历史 v1/v2 的转换器忽略了 CVAT 的 `attributes.rotation`。当前转换器将四个顶点绕矩形中心旋转，取轴对齐外接矩形，最后裁剪到图像边界。已发布的 v1/v2 标签、模型和下文指标仍是历史版本；本次仅修复转换器，未重训，也没有新的准确性评估。
+
+从仓库根目录运行下面的命令，在独立目录生成待核对的标签（只需 Python 标准库）：
+
+```bash
+python3 training/scripts/coco2yolo.py training/source/coco/instances_default.json \
+  --out work/labels-qa/rotation-aware --keep 病变
+```
+
+当前原始 COCO 生成 68 份标签、81 个病变框（66 个带非零角度），过滤 29 个部位标记，1 个外接矩形需要裁剪，未丢弃病变框。例：`45-正位.txt` 输出 `0 0.365307 0.569137 0.198325 0.441708`，对应像素坐标（左、上、右、下）约为（43.38、117.02、75.71、265.44）。复核原图上的框后，再沿用既有病例划分在新目录准备训练集。
+
 ---
 
 ## 目录结构
@@ -95,27 +108,17 @@ training/
 
 ---
 
-## 快速复现
+## 使用归档 v1 数据运行原训练配方
 
 ```bash
-# 0) 环境
+# 从仓库根目录开始；需要检出 training/data 下的归档训练数据
+cd training
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 # macOS 上 ultralytics 需要 numpy<2：
 pip install "numpy==1.26.4"
 
-cd training
-
-# 1) COCO -> YOLO（只保留「病变」，越界框自动裁剪）
-python scripts/coco2yolo.py source/coco/instances_default.json --out labels_coco --keep 病变
-
-# 2) 拆分
-python scripts/split_dataset.py \
-    --images data/originals \
-    --labels labels_coco \
-    --out data/sporthorse --ratio 0.7 0.15 0.15 --seed 42
-
-# 3) 训练（当前最佳：yolo11s + freeze=10）
+# 训练：只读历史标签；不调用新转换器覆盖归档
 yolo detect train model=yolo11s.pt data=data/sporthorse/data.yaml \
     epochs=200 imgsz=640 batch=16 device=mps seed=42 patience=50 freeze=10 \
     project=runs name=lesion_yolo11s_freeze10
