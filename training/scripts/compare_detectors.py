@@ -13,12 +13,12 @@ WORK = ROOT / "work/model-comparison"
 sys.path.insert(0, str(ROOT))
 
 
-def truth(split):
+def truth(split, dataset=WORK / "dataset"):
     result = {}
-    for path in (WORK / "dataset/images" / split).iterdir():
+    for path in sorted((dataset / "images" / split).iterdir()):
         with Image.open(path) as image:
             width, height = image.size
-        lines = (WORK / "dataset/labels" / split / (path.stem + ".txt")).read_text().splitlines()
+        lines = (dataset / "labels" / split / (path.stem + ".txt")).read_text(encoding="utf-8").splitlines()
         boxes = []
         for line in lines:
             cls, cx, cy, bw, bh = map(float, line.split())
@@ -55,6 +55,15 @@ def counts(predictions, labels, cutoff):
     return dict(tally)
 
 
+def select_operating_point(predictions, labels):
+    """Pick the cutoff on validation only, with at most one false-positive box per film on average."""
+    grid = [.01, .025, .05, .075, .10, .15, .20, .25, .30, .40, .50, .60, .70, .80, .90, .95, .99, 1.001]
+    options = [(threshold, counts(predictions, labels, threshold)) for threshold in grid]
+    feasible = [(threshold, score) for threshold, score in options if score["fp"] <= len(labels)]
+    threshold, _ = max(feasible, key=lambda candidate: (candidate[1]["tp"], -candidate[1]["fp"], -candidate[0]))
+    return threshold
+
+
 def shipped():
     from backend import detector
     detector.THRESHOLD = .01
@@ -74,11 +83,7 @@ def compare():
     for name in ("shipped","yolo","frcnn"):
         files = dict(val="predictions.json" if name == "frcnn" else "val_predictions.json",test="test_predictions.json")
         predicted = {split:json.loads((WORK / name / fname).read_text()) for split,fname in files.items()}
-        # Fixed grid; validation only. Bound the mean number of false positives at one per film.
-        grid = [.01,.025,.05,.075,.10,.15,.20,.25,.30,.40,.50,.60,.70,.80,.90,.95,.99,1.001]
-        feasible = [(threshold, counts(predicted["val"],labels["val"],threshold)) for threshold in grid]
-        feasible = [(threshold, score) for threshold,score in feasible if score["fp"] <= len(labels["val"])]
-        threshold, _ = max(feasible, key=lambda candidate:(candidate[1]["tp"],-candidate[1]["fp"],-candidate[0]))
+        threshold = select_operating_point(predicted["val"], labels["val"])
         results[name] = {"val_selected_cutoff":threshold}
         for key,cutoff in (("fixed_0.15",.15),("val_selected",threshold)):
             results[name][key] = {split:counts(predicted[split], labels[split], cutoff) for split in labels}
