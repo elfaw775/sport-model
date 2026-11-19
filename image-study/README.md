@@ -89,3 +89,28 @@ The helper fetches the selected image splits and manifest from the pinned GitHub
 ```powershell
 & $py image-study/with_film_data.py --splits train -- $py image-study/hf_features.py --models dinov2 --splits train
 ```
+
+## Original YOLO11s on the same five folds
+
+The first YOLO11s checkpoint came from a single split of 59 training, 13 validation and 12 test films. Its 12-film score answers a different question from cross-validation. To reproduce the historical method on all 84 films, start five fresh detectors from the public COCO YOLO11s weights and use the archived v2 box labels. Each detector fits 50 or 51 films, uses 17 for checkpoint and threshold selection, and predicts the remaining 16 or 17. Each film contributes exactly one held-out prediction. Model code and settings follow Ultralytics 8.4.200. The new run uses CUDA on the RTX 4070 Laptop GPU. The original run used Apple MPS.
+
+Use the archived Ultralytics version for the original detector. Keep the run output separate from the temporary film data. Then run the independent audit against the published detector and DINOv2 Small results.
+
+```powershell
+& $py image-study/with_film_data.py --legacy-labels -- $py image-study/cv84/original_yolo.py --work $out
+& $py image-study/cv84/compare_original.py --original "$out/original-yolo-report.json" --output $out
+```
+
+The original Ultralytics version disables mixed precision on MPS even when the saved configuration requests it. A CUDA mixed-precision pilot produced nonfinite validation losses and was stopped before any outer-fold predictions. All five official refits started from COCO using FP32 with AMP and TF32 disabled. They ran for 101, 79, 110, 130 and 196 epochs. All five selected checkpoints and all official training and validation curves were finite.
+
+The three-way comparison uses a threshold chosen on each model's calibration films to balance sensitivity and specificity. Each YOLO film score is its most confident retained detection, with zero assigned when it returns no boxes. The DINOv2 Small classifier outputs a whole-film score.
+
+| Model | Correct films | Missed positive films (of 68) | False alarms (of 16) |
+|---|---:|---:|---:|
+| Original YOLO11s recipe | 64/84 (76.2%) | 15 | 5 |
+| Retrained YOLO11s with rotation-corrected labels | 62/84 (73.8%) | 20 | 2 |
+| DINOv2 Small | 82/84 (97.6%) | 2 | 0 |
+
+At its historical fixed evaluation threshold of 0.15, the original YOLO11s recipe also classified 64/84 correctly, with 12 misses and 8 false alarms. DINOv2 Small was selected after experiments on these data. A separate image-height control classified 81/84 correctly. Generalization across horses and acquisition sources still needs independent testing.
+
+[Training settings from the original checkpoint](published/cv84/original-yolo-recipe.json) · [Three-model summary](published/cv84/three-model-summary.json) · [Paired film predictions](published/cv84/three-model-oof.csv) · [Individual original-recipe folds](published/cv84/original-yolo-report.json)

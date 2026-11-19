@@ -27,7 +27,7 @@ def get(url):
                 raise
 
 
-def run(command, splits):
+def run(command, splits, *, legacy_labels=False):
     tree = json.loads(get(f"https://api.github.com/repos/{REPO}/git/trees/{COMMIT}?recursive=1"))
     if tree["truncated"]:
         raise ValueError("Incomplete repository tree")
@@ -51,8 +51,14 @@ def run(command, splits):
                 and Path(rel).parts[1] in splits and Path(rel).suffix.lower() in {".jpg",".jpeg",".png"}]
         if {(Path(rel).parts[1],Path(rel).stem) for rel in images}!=expected or len(images)!=len(expected):
             raise ValueError("Published filenames differ from the pinned manifest")
+        files = list(images)
+        if legacy_labels:
+            labels = [Path("labels", Path(rel).parts[1], Path(rel).stem + ".txt").as_posix() for rel in images]
+            if not all(rel in objects for rel in labels):
+                raise ValueError("A pinned legacy label is missing")
+            files.extend(labels)
         with ThreadPoolExecutor(max_workers=5) as pool:
-            list(pool.map(fetch,images))
+            list(pool.map(fetch,files))
         print(f"{len(images)} verified films available to this process",flush=True)
         return subprocess.run(command,env={**os.environ,"SPORT_XRAY_DATA":str(root)}).returncode
 
@@ -60,9 +66,10 @@ def run(command, splits):
 if __name__=="__main__":
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--splits",choices=("train","val","test"),nargs="+",default=["train","val","test"])
+    ap.add_argument("--legacy-labels",action="store_true",help="Also verify and stage the original YOLO box labels")
     ap.add_argument("command",nargs=argparse.REMAINDER)
     args=ap.parse_args()
     command=args.command[1:] if args.command[:1]==["--"] else args.command
     if not command:
         ap.error("Supply a training command after --")
-    raise SystemExit(run(command,args.splits))
+    raise SystemExit(run(command,args.splits,legacy_labels=args.legacy_labels))

@@ -1,0 +1,81 @@
+{
+  "unit": "film",
+  "seed": 42,
+  "folds": 5,
+  "positives": 68,
+  "negatives": 16,
+  "models": {
+    "original": {
+      "n": 84,
+      "correct": 64,
+      "tp": 53,
+      "tn": 11,
+      "fp": 5,
+      "fn": 15,
+      "accuracy": 0.7619047619047619,
+      "sensitivity": 0.7794117647058824,
+      "specificity": 0.6875,
+      "accuracy_ci95": [
+        0.6565105362606595,
+        0.8480937199452167
+      ]
+    },
+    "retrained": {
+      "n": 84,
+      "correct": 62,
+      "tp": 48,
+      "tn": 14,
+      "fp": 2,
+      "fn": 20,
+      "accuracy": 0.7380952380952381,
+      "sensitivity": 0.7058823529411765,
+      "specificity": 0.875,
+      "accuracy_ci95": [
+        0.6307458301481983,
+        0.8280244533925751
+      ]
+    },
+    "dino": {
+      "n": 84,
+      "correct": 82,
+      "tp": 66,
+      "tn": 16,
+      "fp": 0,
+      "fn": 2,
+      "accuracy": 0.9761904761904762,
+      "sensitivity": 0.9705882352941176,
+      "specificity": 1.0,
+      "accuracy_ci95": [
+        0.9166255334330945,
+        0.997103437029467
+      ]
+    },
+    "original_fixed_015": {
+      "n": 84,
+      "correct": 64,
+      "tp": 56,
+      "tn": 8,
+      "fp": 8,
+      "fn": 12,
+      "accuracy": 0.7619047619047619,
+      "sensitivity": 0.8235294117647058,
+      "specificity": 0.5,
+      "accuracy_ci95": [
+        0.6565105362606595,
+        0.8480937199452167
+      ]
+    }
+  },
+  "paired_dino_correct": {
+    "original": {
+      "dino_only": 19,
+      "yolo_only": 1
+    },
+    "retrained": {
+      "dino_only": 21,
+      "yolo_only": 1
+    }
+  },
+  "source_sha256": "52cb0afd1e77abcc35dd1ce8ba15a53916f77f097586cf36c7cd3da918fd2389",
+  "retrained_public_report_sha256": "5177bd5c7825a86644f0cd0eb24a4bbd7a39946cb5e907a54724a64381016358"
+}
