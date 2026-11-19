@@ -1,0 +1,4348 @@
+{
+  "folds_sha256": "94f0266affa11a16559887fc10ea7dfa767936963276ee99fed515b2b7d5df6c",
+  "source_sha256": "b382f9c7342151a7463f13e22668c92d59d4114651c3ebfbb4437f129e564eb9",
+  "plan_sha256": "095a9a3e4878ff6009750c2ecc24b8fd835bd87584f04464976a8d02fe288487",
+  "source_feature_sha256": {
+    "dinov2": {
+      "features\\dinov2-train.npz": "7c4a08c996e7d561195c313afcdde21eecc7d4d13f873571148beba249832512",
+      "features\\dinov2-val.npz": "40cb47db5043f633ac013f720e144090255bf22023a3af65e2d3abda396b9a25",
+      "features\\dinov2-test.npz": "71a2538a414d45e1258f044ae9bc312b7acbf454455a8c8a677183d88a556b7c"
+    },
+    "rad-dino": {
+      "features\\rad-dino-train.npz": "b9d34bfb7fd5057b2d239ee1cd41de9ba11bbf34015a831968b398cca30bfcd4",
+      "features\\rad-dino-val.npz": "ebbdc57fe24870413cad5fc72e4dfbac2a82b1a25f7950a2a9226d5077b447ab",
+      "features\\rad-dino-test.npz": "0b48f0be7e94a5209ab2df890e9f44d33eb9259cc6119fd92d9e7d1f550617c1"
+    },
+    "resnet18": {
+      "features\\resnet18-train.npz": "a65e3e549af9dfe1d786fbe6d9a7ecdfbcd255e575ea8f7eb771e1adf8b9ae82",
+      "features\\resnet18-val.npz": "1573793791cd1f433aeb809686134846e2e027b4fa9504b45cd0c3c5bed96f16",
+      "cv84\\features\\resnet18-test.npz": "69870897fa1722d481fdab2250326cb4b6eaf5601a4325a373963f18a69dc7f1"
+    },
+    "bone-siglip": {
+      "cv84\\features\\bone-siglip.npz": "db04e347fa73fba1da94cf6ede32e946f9761bb3bcac2bfb620f9cf98a42705c"
+    },
+    "biomedclip": {
+      "cv84\\features\\biomedclip.npz": "ee352c7e8ef431fd433a23f5a58a9e4ebcb36672ed9d46c94c7f686de72f575b"
+    },
+    "dinov2reg-base": {
+      "cv84\\features\\dinov2reg-base.npz": "88ba17f890c245bb90fb490891dce9ec9d4f067400440d2f1ce330497222829e"
+    },
+    "convnextv2-tiny": {
+      "cv84\\features\\convnextv2-tiny.npz": "a3822e861661a1183c588401285b5dca49ba2ce594a865bbafe37dec7b590bf9"
+    },
+    "yolo11s-coco": {
+      "cv84\\features\\yolo11s-coco.npz": "f430dfa7245a29f1c57288a770bb9e70da5f2bc6da16afa0920f2bd9df69aa08"
+    }
+  },
+  "repeats": {
+    "42": {
+      "groups": {
+        "all84": {
+          "dinov2": {
+            "n": 84,
+            "tp": 67,
+            "fp": 0,
+            "tn": 16,
+            "fn": 1,
+            "balanced_accuracy": 0.9926470588235294,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 0.9880952380952381,
+            "accuracy_ci95": [
+              0.9354480315679597,
+              0.9996986429411597
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9464303458729032,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 84,
+            "tp": 68,
+            "fp": 0,
+            "tn": 16,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9570350803704349,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9471969572063602,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9471969572063602,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 84,
+            "tp": 67,
+            "fp": 0,
+            "tn": 16,
+            "fn": 1,
+            "balanced_accuracy": 0.9926470588235294,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 0.9880952380952381,
+            "accuracy_ci95": [
+              0.9354480315679597,
+              0.9996986429411597
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9464303458729032,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 84,
+            "tp": 62,
+            "fp": 0,
+            "tn": 16,
+            "fn": 6,
+            "balanced_accuracy": 0.9558823529411764,
+            "roc_auc": 0.9733455882352942,
+            "average_precision": 0.9943927485501733,
+            "accuracy": 0.9285714285714286,
+            "accuracy_ci95": [
+              0.850987691359596,
+              0.9733369959681631
+            ],
+            "sensitivity": 0.9117647058823529,
+            "sensitivity_ci95": [
+              0.8177768013320661,
+              0.9669275191103401
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.942237365570709,
+              1.0
+            ]
+          },
+          "biomedclip": {
+            "n": 84,
+            "tp": 67,
+            "fp": 0,
+            "tn": 16,
+            "fn": 1,
+            "balanced_accuracy": 0.9926470588235294,
+            "roc_auc": 0.9954044117647058,
+            "average_precision": 0.998992747784045,
+            "accuracy": 0.9880952380952381,
+            "accuracy_ci95": [
+              0.9354480315679597,
+              0.9996986429411597
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9464303458729032,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 84,
+            "tp": 67,
+            "fp": 0,
+            "tn": 16,
+            "fn": 1,
+            "balanced_accuracy": 0.9926470588235294,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 0.9880952380952381,
+            "accuracy_ci95": [
+              0.9354480315679597,
+              0.9996986429411597
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9464303458729032,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 84,
+            "tp": 65,
+            "fp": 0,
+            "tn": 16,
+            "fn": 3,
+            "balanced_accuracy": 0.9779411764705883,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 0.9642857142857143,
+            "accuracy_ci95": [
+              0.89915768842582,
+              0.9925734168774473
+            ],
+            "sensitivity": 0.9558823529411765,
+            "sensitivity_ci95": [
+              0.8764373756682212,
+              0.9908078047972126
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9448283656811866,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 84,
+            "tp": 66,
+            "fp": 2,
+            "tn": 14,
+            "fn": 2,
+            "balanced_accuracy": 0.9227941176470589,
+            "roc_auc": 0.9917279411764706,
+            "average_precision": 0.9980218168329222,
+            "accuracy": 0.9523809523809523,
+            "accuracy_ci95": [
+              0.8825430286281704,
+              0.9868749277295028
+            ],
+            "sensitivity": 0.9705882352941176,
+            "sensitivity_ci95": [
+              0.897758988071881,
+              0.9964180385797287
+            ],
+            "specificity": 0.875,
+            "specificity_ci95": [
+              0.6165237631507364,
+              0.9844863961845861
+            ],
+            "precision": 0.9705882352941176,
+            "precision_ci95": [
+              0.897758988071881,
+              0.9964180385797287
+            ]
+          },
+          "height": {
+            "n": 84,
+            "tp": 66,
+            "fp": 1,
+            "tn": 15,
+            "fn": 2,
+            "balanced_accuracy": 0.9540441176470589,
+            "roc_auc": 0.9908088235294119,
+            "average_precision": 0.9969826165760421,
+            "accuracy": 0.9642857142857143,
+            "accuracy_ci95": [
+              0.89915768842582,
+              0.9925734168774473
+            ],
+            "sensitivity": 0.9705882352941176,
+            "sensitivity_ci95": [
+              0.897758988071881,
+              0.9964180385797287
+            ],
+            "specificity": 0.9375,
+            "specificity_ci95": [
+              0.697679261565468,
+              0.9984188882772341
+            ],
+            "precision": 0.9850746268656716,
+            "precision_ci95": [
+              0.9196235493769823,
+              0.9996221936556889
+            ]
+          },
+          "all_positive": {
+            "n": 84,
+            "tp": 68,
+            "fp": 16,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8095238095238095,
+            "accuracy": 0.8095238095238095,
+            "accuracy_ci95": [
+              0.7091898348119026,
+              0.8870241369750447
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9471969572063602,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.20590721420782268
+            ],
+            "precision": 0.8095238095238095,
+            "precision_ci95": [
+              0.7091898348119026,
+              0.8870241369750447
+            ]
+          },
+          "nested_hf": {
+            "n": 84,
+            "tp": 67,
+            "fp": 0,
+            "tn": 16,
+            "fn": 1,
+            "balanced_accuracy": 0.9926470588235294,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 0.9880952380952381,
+            "accuracy_ci95": [
+              0.9354480315679597,
+              0.9996986429411597
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9464303458729032,
+              1.0
+            ]
+          }
+        },
+        "original59": {
+          "dinov2": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 59,
+            "tp": 48,
+            "fp": 0,
+            "tn": 11,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9393910990496601,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9260272146527198,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9260272146527198,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 59,
+            "tp": 43,
+            "fp": 0,
+            "tn": 11,
+            "fn": 5,
+            "balanced_accuracy": 0.9479166666666667,
+            "roc_auc": 0.9810606060606061,
+            "average_precision": 0.9959386840870588,
+            "accuracy": 0.9152542372881356,
+            "accuracy_ci95": [
+              0.8132056645283031,
+              0.9719087432790161
+            ],
+            "sensitivity": 0.8958333333333334,
+            "sensitivity_ci95": [
+              0.7734223387162362,
+              0.965301877878804
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9177888788458615,
+              1.0
+            ]
+          },
+          "biomedclip": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 0.9962121212121211,
+            "average_precision": 0.9991666666666668,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 59,
+            "tp": 45,
+            "fp": 0,
+            "tn": 11,
+            "fn": 3,
+            "balanced_accuracy": 0.96875,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9491525423728814,
+            "accuracy_ci95": [
+              0.8585127605247451,
+              0.9893887196761202
+            ],
+            "sensitivity": 0.9375,
+            "sensitivity_ci95": [
+              0.8280400692094295,
+              0.9869207555904473
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9212948995931569,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 59,
+            "tp": 46,
+            "fp": 1,
+            "tn": 10,
+            "fn": 2,
+            "balanced_accuracy": 0.9337121212121212,
+            "roc_auc": 0.9867424242424242,
+            "average_precision": 0.9968236972566441,
+            "accuracy": 0.9491525423728814,
+            "accuracy_ci95": [
+              0.8585127605247451,
+              0.9893887196761202
+            ],
+            "sensitivity": 0.9583333333333334,
+            "sensitivity_ci95": [
+              0.8574590267986226,
+              0.994913532069967
+            ],
+            "specificity": 0.9090909090909091,
+            "specificity_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ],
+            "precision": 0.9787234042553191,
+            "precision_ci95": [
+              0.8870622828535999,
+              0.9994614682946577
+            ]
+          },
+          "height": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 0.9886363636363635,
+            "average_precision": 0.9961158192090398,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "all_positive": {
+            "n": 59,
+            "tp": 48,
+            "fp": 11,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8135593220338984,
+            "accuracy": 0.8135593220338984,
+            "accuracy_ci95": [
+              0.6908513465780732,
+              0.9030805348827233
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9260272146527198,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.28491415291815436
+            ],
+            "precision": 0.8135593220338984,
+            "precision_ci95": [
+              0.6908513465780732,
+              0.9030805348827233
+            ]
+          },
+          "nested_hf": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          }
+        },
+        "original13": {
+          "dinov2": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 13,
+            "tp": 9,
+            "fp": 0,
+            "tn": 3,
+            "fn": 1,
+            "balanced_accuracy": 0.95,
+            "roc_auc": 0.9,
+            "average_precision": 0.9769230769230769,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6637328831200572,
+              1.0
+            ]
+          },
+          "biomedclip": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "height": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "all_positive": {
+            "n": 13,
+            "tp": 10,
+            "fp": 3,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.7692307692307693,
+            "accuracy": 0.7692307692307693,
+            "accuracy_ci95": [
+              0.461868460765959,
+              0.9496189265088485
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.7075982261787133
+            ],
+            "precision": 0.7692307692307693,
+            "precision_ci95": [
+              0.461868460765959,
+              0.9496189265088485
+            ]
+          },
+          "nested_hf": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          }
+        },
+        "original12": {
+          "dinov2": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "biomedclip": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "height": {
+            "n": 12,
+            "tp": 9,
+            "fp": 0,
+            "tn": 2,
+            "fn": 1,
+            "balanced_accuracy": 0.95,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9166666666666666,
+            "accuracy_ci95": [
+              0.6152038348490559,
+              0.9978924067681397
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6637328831200572,
+              1.0
+            ]
+          },
+          "all_positive": {
+            "n": 12,
+            "tp": 10,
+            "fp": 2,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8333333333333334,
+            "accuracy": 0.8333333333333334,
+            "accuracy_ci95": [
+              0.5158622513140328,
+              0.9791374745399076
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.841886116991581
+            ],
+            "precision": 0.8333333333333334,
+            "precision_ci95": [
+              0.5158622513140328,
+              0.9791374745399076
+            ]
+          },
+          "nested_hf": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          }
+        }
+      },
+      "paired": {
+        "yolo11s-coco": {
+          "primary_only_correct": 3,
+          "comparator_only_correct": 0,
+          "exact_mcnemar_p": 0.25
+        },
+        "height": {
+          "primary_only_correct": 3,
+          "comparator_only_correct": 1,
+          "exact_mcnemar_p": 0.625
+        },
+        "all_positive": {
+          "primary_only_correct": 16,
+          "comparator_only_correct": 1,
+          "exact_mcnemar_p": 0.000274658203125
+        }
+      },
+      "selections": {
+        "rad-dino": 2,
+        "dinov2": 3
+      }
+    },
+    "73": {
+      "groups": {
+        "all84": {
+          "dinov2": {
+            "n": 84,
+            "tp": 67,
+            "fp": 1,
+            "tn": 15,
+            "fn": 1,
+            "balanced_accuracy": 0.9613970588235294,
+            "roc_auc": 0.9972426470588236,
+            "average_precision": 0.9993786246893122,
+            "accuracy": 0.9761904761904762,
+            "accuracy_ci95": [
+              0.9166255334330945,
+              0.997103437029467
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 0.9375,
+            "specificity_ci95": [
+              0.697679261565468,
+              0.9984188882772341
+            ],
+            "precision": 0.9852941176470589,
+            "precision_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ]
+          },
+          "rad-dino": {
+            "n": 84,
+            "tp": 67,
+            "fp": 2,
+            "tn": 14,
+            "fn": 1,
+            "balanced_accuracy": 0.9301470588235294,
+            "roc_auc": 0.9972426470588236,
+            "average_precision": 0.9993635689569944,
+            "accuracy": 0.9642857142857143,
+            "accuracy_ci95": [
+              0.89915768842582,
+              0.9925734168774473
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 0.875,
+            "specificity_ci95": [
+              0.6165237631507364,
+              0.9844863961845861
+            ],
+            "precision": 0.9710144927536232,
+            "precision_ci95": [
+              0.8991846195179275,
+              0.9964702406177984
+            ]
+          },
+          "resnet18": {
+            "n": 84,
+            "tp": 67,
+            "fp": 0,
+            "tn": 16,
+            "fn": 1,
+            "balanced_accuracy": 0.9926470588235294,
+            "roc_auc": 0.9990808823529411,
+            "average_precision": 0.9997868712702471,
+            "accuracy": 0.9880952380952381,
+            "accuracy_ci95": [
+              0.9354480315679597,
+              0.9996986429411597
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9464303458729032,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 84,
+            "tp": 61,
+            "fp": 1,
+            "tn": 15,
+            "fn": 7,
+            "balanced_accuracy": 0.9172794117647058,
+            "roc_auc": 0.958639705882353,
+            "average_precision": 0.990632431935333,
+            "accuracy": 0.9047619047619048,
+            "accuracy_ci95": [
+              0.8209403467172924,
+              0.957979573457174
+            ],
+            "sensitivity": 0.8970588235294118,
+            "sensitivity_ci95": [
+              0.7993347019352242,
+              0.9575995119253876
+            ],
+            "specificity": 0.9375,
+            "specificity_ci95": [
+              0.697679261565468,
+              0.9984188882772341
+            ],
+            "precision": 0.9838709677419355,
+            "precision_ci95": [
+              0.9133789877930804,
+              0.9995917316225427
+            ]
+          },
+          "biomedclip": {
+            "n": 84,
+            "tp": 67,
+            "fp": 2,
+            "tn": 14,
+            "fn": 1,
+            "balanced_accuracy": 0.9301470588235294,
+            "roc_auc": 0.9935661764705883,
+            "average_precision": 0.9985913681847938,
+            "accuracy": 0.9642857142857143,
+            "accuracy_ci95": [
+              0.89915768842582,
+              0.9925734168774473
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 0.875,
+            "specificity_ci95": [
+              0.6165237631507364,
+              0.9844863961845861
+            ],
+            "precision": 0.9710144927536232,
+            "precision_ci95": [
+              0.8991846195179275,
+              0.9964702406177984
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 84,
+            "tp": 68,
+            "fp": 0,
+            "tn": 16,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9570350803704349,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9471969572063602,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9471969572063602,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 84,
+            "tp": 67,
+            "fp": 2,
+            "tn": 14,
+            "fn": 1,
+            "balanced_accuracy": 0.9301470588235294,
+            "roc_auc": 0.9972426470588236,
+            "average_precision": 0.9993635689569944,
+            "accuracy": 0.9642857142857143,
+            "accuracy_ci95": [
+              0.89915768842582,
+              0.9925734168774473
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 0.875,
+            "specificity_ci95": [
+              0.6165237631507364,
+              0.9844863961845861
+            ],
+            "precision": 0.9710144927536232,
+            "precision_ci95": [
+              0.8991846195179275,
+              0.9964702406177984
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 84,
+            "tp": 63,
+            "fp": 3,
+            "tn": 13,
+            "fn": 5,
+            "balanced_accuracy": 0.8694852941176471,
+            "roc_auc": 0.9908088235294118,
+            "average_precision": 0.9978206095894615,
+            "accuracy": 0.9047619047619048,
+            "accuracy_ci95": [
+              0.8209403467172924,
+              0.957979573457174
+            ],
+            "sensitivity": 0.9264705882352942,
+            "sensitivity_ci95": [
+              0.8366878726543961,
+              0.9756947889493305
+            ],
+            "specificity": 0.8125,
+            "specificity_ci95": [
+              0.5435434537683883,
+              0.9595262660940541
+            ],
+            "precision": 0.9545454545454546,
+            "precision_ci95": [
+              0.8728574940886829,
+              0.9905262614362937
+            ]
+          },
+          "height": {
+            "n": 84,
+            "tp": 66,
+            "fp": 2,
+            "tn": 14,
+            "fn": 2,
+            "balanced_accuracy": 0.9227941176470589,
+            "roc_auc": 0.9908088235294119,
+            "average_precision": 0.9969826165760421,
+            "accuracy": 0.9523809523809523,
+            "accuracy_ci95": [
+              0.8825430286281704,
+              0.9868749277295028
+            ],
+            "sensitivity": 0.9705882352941176,
+            "sensitivity_ci95": [
+              0.897758988071881,
+              0.9964180385797287
+            ],
+            "specificity": 0.875,
+            "specificity_ci95": [
+              0.6165237631507364,
+              0.9844863961845861
+            ],
+            "precision": 0.9705882352941176,
+            "precision_ci95": [
+              0.897758988071881,
+              0.9964180385797287
+            ]
+          },
+          "all_positive": {
+            "n": 84,
+            "tp": 68,
+            "fp": 16,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8095238095238095,
+            "accuracy": 0.8095238095238095,
+            "accuracy_ci95": [
+              0.7091898348119026,
+              0.8870241369750447
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9471969572063602,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.20590721420782268
+            ],
+            "precision": 0.8095238095238095,
+            "precision_ci95": [
+              0.7091898348119026,
+              0.8870241369750447
+            ]
+          },
+          "nested_hf": {
+            "n": 84,
+            "tp": 67,
+            "fp": 1,
+            "tn": 15,
+            "fn": 1,
+            "balanced_accuracy": 0.9613970588235294,
+            "roc_auc": 0.9972426470588236,
+            "average_precision": 0.9993786246893122,
+            "accuracy": 0.9761904761904762,
+            "accuracy_ci95": [
+              0.9166255334330945,
+              0.997103437029467
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 0.9375,
+            "specificity_ci95": [
+              0.697679261565468,
+              0.9984188882772341
+            ],
+            "precision": 0.9852941176470589,
+            "precision_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ]
+          }
+        },
+        "original59": {
+          "dinov2": {
+            "n": 59,
+            "tp": 47,
+            "fp": 1,
+            "tn": 10,
+            "fn": 1,
+            "balanced_accuracy": 0.9441287878787878,
+            "roc_auc": 0.9962121212121211,
+            "average_precision": 0.9991666666666668,
+            "accuracy": 0.9661016949152542,
+            "accuracy_ci95": [
+              0.8828515361116068,
+              0.9958680670276348
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 0.9090909090909091,
+            "specificity_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ],
+            "precision": 0.9791666666666666,
+            "precision_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ]
+          },
+          "rad-dino": {
+            "n": 59,
+            "tp": 47,
+            "fp": 1,
+            "tn": 10,
+            "fn": 1,
+            "balanced_accuracy": 0.9441287878787878,
+            "roc_auc": 0.9962121212121212,
+            "average_precision": 0.9991408021541951,
+            "accuracy": 0.9661016949152542,
+            "accuracy_ci95": [
+              0.8828515361116068,
+              0.9958680670276348
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 0.9090909090909091,
+            "specificity_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ],
+            "precision": 0.9791666666666666,
+            "precision_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ]
+          },
+          "resnet18": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 0.9981060606060606,
+            "average_precision": 0.9995748299319729,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 59,
+            "tp": 42,
+            "fp": 0,
+            "tn": 11,
+            "fn": 6,
+            "balanced_accuracy": 0.9375,
+            "roc_auc": 0.9753787878787878,
+            "average_precision": 0.9942258290364981,
+            "accuracy": 0.8983050847457628,
+            "accuracy_ci95": [
+              0.7916804508244976,
+              0.9617555070893478
+            ],
+            "sensitivity": 0.875,
+            "sensitivity_ci95": [
+              0.7475394913580472,
+              0.9527162395788205
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9159161450596448,
+              1.0
+            ]
+          },
+          "biomedclip": {
+            "n": 59,
+            "tp": 47,
+            "fp": 1,
+            "tn": 10,
+            "fn": 1,
+            "balanced_accuracy": 0.9441287878787878,
+            "roc_auc": 0.9924242424242424,
+            "average_precision": 0.998397435897436,
+            "accuracy": 0.9661016949152542,
+            "accuracy_ci95": [
+              0.8828515361116068,
+              0.9958680670276348
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 0.9090909090909091,
+            "specificity_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ],
+            "precision": 0.9791666666666666,
+            "precision_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 59,
+            "tp": 48,
+            "fp": 0,
+            "tn": 11,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9393910990496601,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9260272146527198,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9260272146527198,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 59,
+            "tp": 47,
+            "fp": 1,
+            "tn": 10,
+            "fn": 1,
+            "balanced_accuracy": 0.9441287878787878,
+            "roc_auc": 0.9981060606060606,
+            "average_precision": 0.9995748299319729,
+            "accuracy": 0.9661016949152542,
+            "accuracy_ci95": [
+              0.8828515361116068,
+              0.9958680670276348
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 0.9090909090909091,
+            "specificity_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ],
+            "precision": 0.9791666666666666,
+            "precision_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 59,
+            "tp": 44,
+            "fp": 2,
+            "tn": 9,
+            "fn": 4,
+            "balanced_accuracy": 0.8674242424242424,
+            "roc_auc": 0.9848484848484849,
+            "average_precision": 0.996415533991338,
+            "accuracy": 0.8983050847457628,
+            "accuracy_ci95": [
+              0.7916804508244976,
+              0.9617555070893478
+            ],
+            "sensitivity": 0.9166666666666666,
+            "sensitivity_ci95": [
+              0.8001719858006191,
+              0.976826504863239
+            ],
+            "specificity": 0.8181818181818182,
+            "specificity_ci95": [
+              0.4822441476398273,
+              0.9771688017000404
+            ],
+            "precision": 0.9565217391304348,
+            "precision_ci95": [
+              0.8516132240798842,
+              0.99469051715057
+            ]
+          },
+          "height": {
+            "n": 59,
+            "tp": 47,
+            "fp": 1,
+            "tn": 10,
+            "fn": 1,
+            "balanced_accuracy": 0.9441287878787878,
+            "roc_auc": 0.9886363636363635,
+            "average_precision": 0.9961158192090398,
+            "accuracy": 0.9661016949152542,
+            "accuracy_ci95": [
+              0.8828515361116068,
+              0.9958680670276348
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 0.9090909090909091,
+            "specificity_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ],
+            "precision": 0.9791666666666666,
+            "precision_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ]
+          },
+          "all_positive": {
+            "n": 59,
+            "tp": 48,
+            "fp": 11,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8135593220338984,
+            "accuracy": 0.8135593220338984,
+            "accuracy_ci95": [
+              0.6908513465780732,
+              0.9030805348827233
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9260272146527198,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.28491415291815436
+            ],
+            "precision": 0.8135593220338984,
+            "precision_ci95": [
+              0.6908513465780732,
+              0.9030805348827233
+            ]
+          },
+          "nested_hf": {
+            "n": 59,
+            "tp": 47,
+            "fp": 1,
+            "tn": 10,
+            "fn": 1,
+            "balanced_accuracy": 0.9441287878787878,
+            "roc_auc": 0.9962121212121211,
+            "average_precision": 0.9991666666666668,
+            "accuracy": 0.9661016949152542,
+            "accuracy_ci95": [
+              0.8828515361116068,
+              0.9958680670276348
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 0.9090909090909091,
+            "specificity_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ],
+            "precision": 0.9791666666666666,
+            "precision_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ]
+          }
+        },
+        "original13": {
+          "dinov2": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "resnet18": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 13,
+            "tp": 9,
+            "fp": 1,
+            "tn": 2,
+            "fn": 1,
+            "balanced_accuracy": 0.7833333333333333,
+            "roc_auc": 0.8666666666666667,
+            "average_precision": 0.9669230769230769,
+            "accuracy": 0.8461538461538461,
+            "accuracy_ci95": [
+              0.5455289443234422,
+              0.9807933280174715
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9,
+            "precision_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ]
+          },
+          "biomedclip": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "height": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "all_positive": {
+            "n": 13,
+            "tp": 10,
+            "fp": 3,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.7692307692307693,
+            "accuracy": 0.7692307692307693,
+            "accuracy_ci95": [
+              0.461868460765959,
+              0.9496189265088485
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.7075982261787133
+            ],
+            "precision": 0.7692307692307693,
+            "precision_ci95": [
+              0.461868460765959,
+              0.9496189265088485
+            ]
+          },
+          "nested_hf": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          }
+        },
+        "original12": {
+          "dinov2": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "biomedclip": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 12,
+            "tp": 9,
+            "fp": 0,
+            "tn": 2,
+            "fn": 1,
+            "balanced_accuracy": 0.95,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9166666666666666,
+            "accuracy_ci95": [
+              0.6152038348490559,
+              0.9978924067681397
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6637328831200572,
+              1.0
+            ]
+          },
+          "height": {
+            "n": 12,
+            "tp": 9,
+            "fp": 0,
+            "tn": 2,
+            "fn": 1,
+            "balanced_accuracy": 0.95,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9166666666666666,
+            "accuracy_ci95": [
+              0.6152038348490559,
+              0.9978924067681397
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6637328831200572,
+              1.0
+            ]
+          },
+          "all_positive": {
+            "n": 12,
+            "tp": 10,
+            "fp": 2,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8333333333333334,
+            "accuracy": 0.8333333333333334,
+            "accuracy_ci95": [
+              0.5158622513140328,
+              0.9791374745399076
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.841886116991581
+            ],
+            "precision": 0.8333333333333334,
+            "precision_ci95": [
+              0.5158622513140328,
+              0.9791374745399076
+            ]
+          },
+          "nested_hf": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          }
+        }
+      },
+      "paired": {
+        "yolo11s-coco": {
+          "primary_only_correct": 7,
+          "comparator_only_correct": 1,
+          "exact_mcnemar_p": 0.0703125
+        },
+        "height": {
+          "primary_only_correct": 4,
+          "comparator_only_correct": 2,
+          "exact_mcnemar_p": 0.6875
+        },
+        "all_positive": {
+          "primary_only_correct": 15,
+          "comparator_only_correct": 1,
+          "exact_mcnemar_p": 0.000518798828125
+        }
+      },
+      "selections": {
+        "dinov2": 4,
+        "rad-dino": 1
+      }
+    },
+    "101": {
+      "groups": {
+        "all84": {
+          "dinov2": {
+            "n": 84,
+            "tp": 68,
+            "fp": 0,
+            "tn": 16,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9570350803704349,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9471969572063602,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9471969572063602,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 84,
+            "tp": 67,
+            "fp": 0,
+            "tn": 16,
+            "fn": 1,
+            "balanced_accuracy": 0.9926470588235294,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 0.9880952380952381,
+            "accuracy_ci95": [
+              0.9354480315679597,
+              0.9996986429411597
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9464303458729032,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 84,
+            "tp": 67,
+            "fp": 0,
+            "tn": 16,
+            "fn": 1,
+            "balanced_accuracy": 0.9926470588235294,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 0.9880952380952381,
+            "accuracy_ci95": [
+              0.9354480315679597,
+              0.9996986429411597
+            ],
+            "sensitivity": 0.9852941176470589,
+            "sensitivity_ci95": [
+              0.9207660100872119,
+              0.9996277485971014
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9464303458729032,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 84,
+            "tp": 58,
+            "fp": 1,
+            "tn": 15,
+            "fn": 10,
+            "balanced_accuracy": 0.8952205882352942,
+            "roc_auc": 0.9430147058823529,
+            "average_precision": 0.9874454897756875,
+            "accuracy": 0.8690476190476191,
+            "accuracy_ci95": [
+              0.7777590387260145,
+              0.9327764480883606
+            ],
+            "sensitivity": 0.8529411764705882,
+            "sensitivity_ci95": [
+              0.7461365850705295,
+              0.9271599485212578
+            ],
+            "specificity": 0.9375,
+            "specificity_ci95": [
+              0.697679261565468,
+              0.9984188882772341
+            ],
+            "precision": 0.9830508474576272,
+            "precision_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ]
+          },
+          "biomedclip": {
+            "n": 84,
+            "tp": 65,
+            "fp": 0,
+            "tn": 16,
+            "fn": 3,
+            "balanced_accuracy": 0.9779411764705883,
+            "roc_auc": 0.9963235294117647,
+            "average_precision": 0.9991830065359475,
+            "accuracy": 0.9642857142857143,
+            "accuracy_ci95": [
+              0.89915768842582,
+              0.9925734168774473
+            ],
+            "sensitivity": 0.9558823529411765,
+            "sensitivity_ci95": [
+              0.8764373756682212,
+              0.9908078047972126
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9448283656811866,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 84,
+            "tp": 68,
+            "fp": 0,
+            "tn": 16,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9570350803704349,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9471969572063602,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9471969572063602,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 84,
+            "tp": 65,
+            "fp": 0,
+            "tn": 16,
+            "fn": 3,
+            "balanced_accuracy": 0.9779411764705883,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 0.9642857142857143,
+            "accuracy_ci95": [
+              0.89915768842582,
+              0.9925734168774473
+            ],
+            "sensitivity": 0.9558823529411765,
+            "sensitivity_ci95": [
+              0.8764373756682212,
+              0.9908078047972126
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9448283656811866,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 84,
+            "tp": 63,
+            "fp": 2,
+            "tn": 14,
+            "fn": 5,
+            "balanced_accuracy": 0.9007352941176471,
+            "roc_auc": 0.9889705882352942,
+            "average_precision": 0.9972984471042798,
+            "accuracy": 0.9166666666666666,
+            "accuracy_ci95": [
+              0.835810919729205,
+              0.9658376221460336
+            ],
+            "sensitivity": 0.9264705882352942,
+            "sensitivity_ci95": [
+              0.8366878726543961,
+              0.9756947889493305
+            ],
+            "specificity": 0.875,
+            "specificity_ci95": [
+              0.6165237631507364,
+              0.9844863961845861
+            ],
+            "precision": 0.9692307692307692,
+            "precision_ci95": [
+              0.8932296794256009,
+              0.9962517377804871
+            ]
+          },
+          "height": {
+            "n": 84,
+            "tp": 66,
+            "fp": 1,
+            "tn": 15,
+            "fn": 2,
+            "balanced_accuracy": 0.9540441176470589,
+            "roc_auc": 0.9908088235294119,
+            "average_precision": 0.9969826165760421,
+            "accuracy": 0.9642857142857143,
+            "accuracy_ci95": [
+              0.89915768842582,
+              0.9925734168774473
+            ],
+            "sensitivity": 0.9705882352941176,
+            "sensitivity_ci95": [
+              0.897758988071881,
+              0.9964180385797287
+            ],
+            "specificity": 0.9375,
+            "specificity_ci95": [
+              0.697679261565468,
+              0.9984188882772341
+            ],
+            "precision": 0.9850746268656716,
+            "precision_ci95": [
+              0.9196235493769823,
+              0.9996221936556889
+            ]
+          },
+          "all_positive": {
+            "n": 84,
+            "tp": 68,
+            "fp": 16,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8095238095238095,
+            "accuracy": 0.8095238095238095,
+            "accuracy_ci95": [
+              0.7091898348119026,
+              0.8870241369750447
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9471969572063602,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.20590721420782268
+            ],
+            "precision": 0.8095238095238095,
+            "precision_ci95": [
+              0.7091898348119026,
+              0.8870241369750447
+            ]
+          },
+          "nested_hf": {
+            "n": 84,
+            "tp": 68,
+            "fp": 0,
+            "tn": 16,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999998,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9570350803704349,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9471969572063602,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7940927857921772,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9471969572063602,
+              1.0
+            ]
+          }
+        },
+        "original59": {
+          "dinov2": {
+            "n": 59,
+            "tp": 48,
+            "fp": 0,
+            "tn": 11,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9393910990496601,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9260272146527198,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9260272146527198,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 59,
+            "tp": 39,
+            "fp": 0,
+            "tn": 11,
+            "fn": 9,
+            "balanced_accuracy": 0.90625,
+            "roc_auc": 0.9545454545454545,
+            "average_precision": 0.9904452913820331,
+            "accuracy": 0.847457627118644,
+            "accuracy_ci95": [
+              0.7300804081876353,
+              0.927797572060018
+            ],
+            "sensitivity": 0.8125,
+            "sensitivity_ci95": [
+              0.6737069760432866,
+              0.9105016181506272
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9097488990396657,
+              1.0
+            ]
+          },
+          "biomedclip": {
+            "n": 59,
+            "tp": 46,
+            "fp": 0,
+            "tn": 11,
+            "fn": 2,
+            "balanced_accuracy": 0.9791666666666667,
+            "roc_auc": 0.9962121212121211,
+            "average_precision": 0.9991666666666668,
+            "accuracy": 0.9661016949152542,
+            "accuracy_ci95": [
+              0.8828515361116068,
+              0.9958680670276348
+            ],
+            "sensitivity": 0.9583333333333334,
+            "sensitivity_ci95": [
+              0.8574590267986226,
+              0.994913532069967
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9229381729480993,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 59,
+            "tp": 48,
+            "fp": 0,
+            "tn": 11,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9393910990496601,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9260272146527198,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9260272146527198,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 59,
+            "tp": 46,
+            "fp": 0,
+            "tn": 11,
+            "fn": 2,
+            "balanced_accuracy": 0.9791666666666667,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9661016949152542,
+            "accuracy_ci95": [
+              0.8828515361116068,
+              0.9958680670276348
+            ],
+            "sensitivity": 0.9583333333333334,
+            "sensitivity_ci95": [
+              0.8574590267986226,
+              0.994913532069967
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9229381729480993,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 59,
+            "tp": 44,
+            "fp": 1,
+            "tn": 10,
+            "fn": 4,
+            "balanced_accuracy": 0.9128787878787878,
+            "roc_auc": 0.9848484848484849,
+            "average_precision": 0.9963276655106125,
+            "accuracy": 0.9152542372881356,
+            "accuracy_ci95": [
+              0.8132056645283031,
+              0.9719087432790161
+            ],
+            "sensitivity": 0.9166666666666666,
+            "sensitivity_ci95": [
+              0.8001719858006191,
+              0.976826504863239
+            ],
+            "specificity": 0.9090909090909091,
+            "specificity_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ],
+            "precision": 0.9777777777777777,
+            "precision_ci95": [
+              0.8822956685817058,
+              0.9994375402845977
+            ]
+          },
+          "height": {
+            "n": 59,
+            "tp": 47,
+            "fp": 0,
+            "tn": 11,
+            "fn": 1,
+            "balanced_accuracy": 0.9895833333333333,
+            "roc_auc": 0.9886363636363635,
+            "average_precision": 0.9961158192090398,
+            "accuracy": 0.9830508474576272,
+            "accuracy_ci95": [
+              0.9091440671133507,
+              0.9995709766672765
+            ],
+            "sensitivity": 0.9791666666666666,
+            "sensitivity_ci95": [
+              0.8893038394068478,
+              0.9994726847465769
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9245142663089414,
+              1.0
+            ]
+          },
+          "all_positive": {
+            "n": 59,
+            "tp": 48,
+            "fp": 11,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8135593220338984,
+            "accuracy": 0.8135593220338984,
+            "accuracy_ci95": [
+              0.6908513465780732,
+              0.9030805348827233
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9260272146527198,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.28491415291815436
+            ],
+            "precision": 0.8135593220338984,
+            "precision_ci95": [
+              0.6908513465780732,
+              0.9030805348827233
+            ]
+          },
+          "nested_hf": {
+            "n": 59,
+            "tp": 48,
+            "fp": 0,
+            "tn": 11,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.9393910990496601,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.9260272146527198,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.7150858470818455,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.9260272146527198,
+              1.0
+            ]
+          }
+        },
+        "original13": {
+          "dinov2": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 13,
+            "tp": 9,
+            "fp": 1,
+            "tn": 2,
+            "fn": 1,
+            "balanced_accuracy": 0.7833333333333333,
+            "roc_auc": 0.9,
+            "average_precision": 0.9769230769230769,
+            "accuracy": 0.8461538461538461,
+            "accuracy_ci95": [
+              0.5455289443234422,
+              0.9807933280174715
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9,
+            "precision_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ]
+          },
+          "biomedclip": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 13,
+            "tp": 9,
+            "fp": 0,
+            "tn": 3,
+            "fn": 1,
+            "balanced_accuracy": 0.95,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6637328831200572,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "height": {
+            "n": 13,
+            "tp": 10,
+            "fp": 1,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 0.8333333333333333,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9230769230769231,
+            "accuracy_ci95": [
+              0.6397025647321225,
+              0.9980543715026533
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.6666666666666666,
+            "specificity_ci95": [
+              0.09429932405024609,
+              0.9915962413403874
+            ],
+            "precision": 0.9090909090909091,
+            "precision_ci95": [
+              0.5872200830116173,
+              0.9977010277861857
+            ]
+          },
+          "all_positive": {
+            "n": 13,
+            "tp": 10,
+            "fp": 3,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.7692307692307693,
+            "accuracy": 0.7692307692307693,
+            "accuracy_ci95": [
+              0.461868460765959,
+              0.9496189265088485
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.7075982261787133
+            ],
+            "precision": 0.7692307692307693,
+            "precision_ci95": [
+              0.461868460765959,
+              0.9496189265088485
+            ]
+          },
+          "nested_hf": {
+            "n": 13,
+            "tp": 10,
+            "fp": 0,
+            "tn": 3,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.752947361999529,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.2924017738212866,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          }
+        },
+        "original12": {
+          "dinov2": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "rad-dino": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "resnet18": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "bone-siglip": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "biomedclip": {
+            "n": 12,
+            "tp": 9,
+            "fp": 0,
+            "tn": 2,
+            "fn": 1,
+            "balanced_accuracy": 0.95,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9166666666666666,
+            "accuracy_ci95": [
+              0.6152038348490559,
+              0.9978924067681397
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6637328831200572,
+              1.0
+            ]
+          },
+          "dinov2reg-base": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "convnextv2-tiny": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          },
+          "yolo11s-coco": {
+            "n": 12,
+            "tp": 9,
+            "fp": 0,
+            "tn": 2,
+            "fn": 1,
+            "balanced_accuracy": 0.95,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 0.9166666666666666,
+            "accuracy_ci95": [
+              0.6152038348490559,
+              0.9978924067681397
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6637328831200572,
+              1.0
+            ]
+          },
+          "height": {
+            "n": 12,
+            "tp": 9,
+            "fp": 0,
+            "tn": 2,
+            "fn": 1,
+            "balanced_accuracy": 0.95,
+            "roc_auc": 1.0,
+            "average_precision": 1.0,
+            "accuracy": 0.9166666666666666,
+            "accuracy_ci95": [
+              0.6152038348490559,
+              0.9978924067681397
+            ],
+            "sensitivity": 0.9,
+            "sensitivity_ci95": [
+              0.5549838829718047,
+              0.9974714214555382
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6637328831200572,
+              1.0
+            ]
+          },
+          "all_positive": {
+            "n": 12,
+            "tp": 10,
+            "fp": 2,
+            "tn": 0,
+            "fn": 0,
+            "balanced_accuracy": 0.5,
+            "roc_auc": 0.5,
+            "average_precision": 0.8333333333333334,
+            "accuracy": 0.8333333333333334,
+            "accuracy_ci95": [
+              0.5158622513140328,
+              0.9791374745399076
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 0.0,
+            "specificity_ci95": [
+              0.0,
+              0.841886116991581
+            ],
+            "precision": 0.8333333333333334,
+            "precision_ci95": [
+              0.5158622513140328,
+              0.9791374745399076
+            ]
+          },
+          "nested_hf": {
+            "n": 12,
+            "tp": 10,
+            "fp": 0,
+            "tn": 2,
+            "fn": 0,
+            "balanced_accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 0.9999999999999999,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              0.7353515306029488,
+              1.0
+            ],
+            "sensitivity": 1.0,
+            "sensitivity_ci95": [
+              0.6915028921812392,
+              1.0
+            ],
+            "specificity": 1.0,
+            "specificity_ci95": [
+              0.15811388300841897,
+              1.0
+            ],
+            "precision": 1.0,
+            "precision_ci95": [
+              0.6915028921812392,
+              1.0
+            ]
+          }
+        }
+      },
+      "paired": {
+        "yolo11s-coco": {
+          "primary_only_correct": 7,
+          "comparator_only_correct": 0,
+          "exact_mcnemar_p": 0.015625
+        },
+        "height": {
+          "primary_only_correct": 3,
+          "comparator_only_correct": 0,
+          "exact_mcnemar_p": 0.25
+        },
+        "all_positive": {
+          "primary_only_correct": 16,
+          "comparator_only_correct": 0,
+          "exact_mcnemar_p": 3.0517578125e-05
+        }
+      },
+      "selections": {
+        "dinov2": 4,
+        "resnet18": 1
+      }
+    }
+  },
+  "stability": {
+    "dinov2": {
+      "n": 84,
+      "agree": 82,
+      "always_correct": 82,
+      "always_wrong": 0,
+      "flipped": 2
+    },
+    "rad-dino": {
+      "n": 84,
+      "agree": 80,
+      "always_correct": 80,
+      "always_wrong": 0,
+      "flipped": 4
+    },
+    "resnet18": {
+      "n": 84,
+      "agree": 84,
+      "always_correct": 83,
+      "always_wrong": 1,
+      "flipped": 0
+    },
+    "bone-siglip": {
+      "n": 84,
+      "agree": 77,
+      "always_correct": 72,
+      "always_wrong": 5,
+      "flipped": 7
+    },
+    "biomedclip": {
+      "n": 84,
+      "agree": 80,
+      "always_correct": 79,
+      "always_wrong": 1,
+      "flipped": 4
+    },
+    "dinov2reg-base": {
+      "n": 84,
+      "agree": 83,
+      "always_correct": 83,
+      "always_wrong": 0,
+      "flipped": 1
+    },
+    "convnextv2-tiny": {
+      "n": 84,
+      "agree": 79,
+      "always_correct": 78,
+      "always_wrong": 1,
+      "flipped": 5
+    },
+    "yolo11s-coco": {
+      "n": 84,
+      "agree": 77,
+      "always_correct": 73,
+      "always_wrong": 4,
+      "flipped": 7
+    },
+    "height": {
+      "n": 84,
+      "agree": 83,
+      "always_correct": 80,
+      "always_wrong": 3,
+      "flipped": 1
+    },
+    "all_positive": {
+      "n": 84,
+      "agree": 84,
+      "always_correct": 68,
+      "always_wrong": 16,
+      "flipped": 0
+    },
+    "nested_hf": {
+      "n": 84,
+      "agree": 82,
+      "always_correct": 82,
+      "always_wrong": 0,
+      "flipped": 2
+    }
+  },
+  "refit84": {
+    "winner": "dinov2",
+    "threshold": 0.17883443932013382,
+    "inner_summary": {
+      "dinov2": {
+        "auc": 1.0,
+        "ap": 1.0,
+        "auc_pair_credit2": 2176,
+        "ap_exact": "1",
+        "threshold": 0.17883443932013382
+      },
+      "rad-dino": {
+        "auc": 1.0,
+        "ap": 1.0,
+        "auc_pair_credit2": 2176,
+        "ap_exact": "1",
+        "threshold": 0.3885891422777166
+      },
+      "resnet18": {
+        "auc": 1.0,
+        "ap": 1.0,
+        "auc_pair_credit2": 2176,
+        "ap_exact": "1",
+        "threshold": 0.1669009825715016
+      },
+      "bone-siglip": {
+        "auc": 0.9623161764705882,
+        "ap": 0.9917598833857338,
+        "auc_pair_credit2": 2094,
+        "ap_exact": "136686338629106743/137822008047429888",
+        "threshold": 0.5243117652407148
+      },
+      "biomedclip": {
+        "auc": 0.9963235294117647,
+        "ap": 0.9991830065359477,
+        "auc_pair_credit2": 2168,
+        "ap_exact": "1223/1224",
+        "threshold": 0.6241342575254534
+      },
+      "dinov2reg-base": {
+        "auc": 1.0,
+        "ap": 1.0,
+        "auc_pair_credit2": 2176,
+        "ap_exact": "1",
+        "threshold": 0.292062029951119
+      },
+      "convnextv2-tiny": {
+        "auc": 1.0,
+        "ap": 1.0,
+        "auc_pair_credit2": 2176,
+        "ap_exact": "1",
+        "threshold": 0.12124505290578069
+      },
+      "yolo11s-coco": {
+        "auc": 0.9963235294117647,
+        "ap": 0.9991283011137945,
+        "auc_pair_credit2": 2168,
+        "ap_exact": "78313099/78381424",
+        "threshold": 0.9154252138811798
+      },
+      "height": {
+        "auc": 0.9908088235294118,
+        "ap": 0.9969826165760421,
+        "auc_pair_credit2": 2156,
+        "ap_exact": "96811/97104",
+        "threshold": 40.5
+      },
+      "all_positive": {
+        "auc": 0.5,
+        "ap": 0.8095238095238095,
+        "auc_pair_credit2": 1088,
+        "ap_exact": "17/21",
+        "threshold": 1.0
+      }
+    },
+    "head_sha256": "71dc95cdf63bd8a9e79899e0d30317596801d0f9e97c71f088b0e6651047296c",
+    "inner_validation": [
+      [
+        3,
+        4,
+        8,
+        11,
+        15,
+        18,
+        20,
+        27,
+        32,
+        35,
+        42,
+        47,
+        50,
+        57,
+        59,
+        61,
+        62,
+        71,
+        72,
+        74,
+        83
+      ],
+      [
+        5,
+        7,
+        9,
+        16,
+        22,
+        30,
+        36,
+        37,
+        38,
+        40,
+        41,
+        43,
+        46,
+        48,
+        58,
+        63,
+        65,
+        67,
+        69,
+        70,
+        75
+      ],
+      [
+        0,
+        6,
+        10,
+        13,
+        14,
+        17,
+        24,
+        26,
+        39,
+        44,
+        45,
+        52,
+        54,
+        55,
+        56,
+        60,
+        68,
+        73,
+        76,
+        80,
+        81
+      ],
+      [
+        1,
+        2,
+        12,
+        19,
+        21,
+        23,
+        25,
+        28,
+        29,
+        31,
+        33,
+        34,
+        49,
+        51,
+        53,
+        64,
+        66,
+        77,
+        78,
+        79,
+        82
+      ]
+    ]
+  }
+}

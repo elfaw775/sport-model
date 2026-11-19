@@ -3,6 +3,8 @@
 这份目录是**网页 Demo 背后的模型训练全过程**：数据转换 → 拆分 → 训练 → 评估。
 网站本身（Next.js + 浏览器端 ONNX 推理）在仓库根目录。
 
+[84 张马片的整片判断与交叉验证](../image-study/README.md)记录了七种 Hugging Face 视觉模型与 YOLO 的逐片对照、原训练片复测，以及哪些影像线索可能影响判断。
+
 RTX 4070 Laptop 的 [RF-DETR Small 对照实验](docs/rfdetr-cuda.md)复用修正后的框和历史病例划分，同时评估归档 YOLO11s 与重训的 YOLO11s。它是训练侧实验，不更换网页推理权重。
 
 [Qwen3-VL-2B 对照实验](results/qwen3-vl-2b-2026-11-18/README.md)比较了直接读片、59 匹马上的 QLoRA 微调和冻结视觉特征训练，包含两个数据分组的整片判断、病灶定位、尺寸对照以及全部留出片的框叠图。
