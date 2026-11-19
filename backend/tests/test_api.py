@@ -2,6 +2,7 @@ import io
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -539,6 +540,8 @@ def test_existing_multi_image_database_upgrades_without_guessing_quality_or_chan
     with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
         database.execute("ALTER TABLE cases DROP COLUMN empty_review_confirmed")
         database.execute("ALTER TABLE cases DROP COLUMN screening")
+        database.execute("DROP TABLE image_annotations")
+        database.execute("ALTER TABLE cases DROP COLUMN annotation_revision")
         for column in ("metadata_reviewed_at", "metadata_reviewer", "quality"):
             database.execute(f"ALTER TABLE case_images DROP COLUMN {column}")
         database.execute("DROP TABLE image_measurements")
@@ -549,5 +552,90 @@ def test_existing_multi_image_database_upgrades_without_guessing_quality_or_chan
             case = upgraded.get(path).json()
             assert case["empty_review_confirmed"] is False
             assert case["screening"] is None
+            assert case["annotation_revision"] == 0
             assert case["images"] == images and case["report"]["revision"] == 0
             assert [upgraded.get(image["url"]).content for image in images] == [first, second]
+
+
+def rectangle(label="关节边缘"):
+    return {"revision": 0, "kind": "rectangle", "label": label,
+            "points": [{"x": 20.5, "y": 24}, {"x": 1, "y": 3}]}
+
+
+def test_annotations_keep_image_ownership_snapshots_and_signature(team, tmp_path, monkeypatch):
+    sign_in_member(team, "wangyiyi")
+    case = upload(team).json()
+    path = "/api/cases/" + case["id"]
+    second = append_image(team, path, picture(61, 80)).json()["images"][1]
+    url = second["url"] + "/annotations/" + str(uuid4())
+    body = rectangle()
+    created = team.put(url, json=body).json()
+    assert created["annotation_revision"] == 1 and created["detections"] == []
+    assert created["images"][0]["annotations"] == []
+    mark, = created["images"][1]["annotations"]
+    assert (mark["created_by"], mark["source"], mark["revision"]) == ("王一伊", "manual", 1)
+    assert mark["points"] == [{"x": 1, "y": 3}, {"x": 20.5, "y": 24}]
+    assert team.put(url, json=body).json() == created
+    with TestClient(create_app(tmp_path)) as other:
+        assert other.put(url, json=body).status_code == 401
+        sign_in_member(other, "zhushijia")
+        update = body | {"label": "待复核区域", "revision": 1}
+        assert other.put(url, json=update).json()["images"][1]["annotations"][0]["updated_by"] == "朱诗嘉"
+    stale = team.put(url, json=body | {"label": "旧值", "revision": 1})
+    assert stale.status_code == 409
+    monkeypatch.setattr(screening, "classify", lambda _: {"model": "test", "score": 0.1, "threshold": 0.2,
+                                                         "predicted_positive": False})
+    monkeypatch.setattr(detector, "detect", lambda _: [])
+    assert team.post(path + "/analyze").status_code == 200
+    assert team.post(path + "/review", json={"note": "签署", "annotation_revision": 1}).status_code == 409
+    assert team.post(path + "/review", json={"note": "已核对标注", "annotation_revision": 2}).status_code == 200
+    assert team.put(url, json=body | {"revision": 2, "label": "签署后编辑"}).status_code == 409
+    assert team.delete(url + "?revision=2").status_code == 409
+    archived = team.post(path + "/archive").json()
+    assert archived["archived_at"] and archived["images"][1]["annotations"][0]["label"] == "待复核区域"
+    with TestClient(create_app(tmp_path)) as reopened:
+        sign_in_member(reopened, "zhushijia")
+        assert reopened.get(path).json() == archived
+    monkeypatch.setenv("SPORT_MODEL_USERNAME", "outsider")
+    monkeypatch.setenv("SPORT_MODEL_PASSWORD", "test-password")
+    with TestClient(create_app(tmp_path)) as outsider:
+        login(outsider, "outsider")
+        assert outsider.put(url, json=body).status_code == 404
+        assert outsider.delete(url + "?revision=2").status_code == 404
+
+
+def test_annotation_conflicting_writes_and_delete_retry(client):
+    login(client)
+    case = upload(client).json()
+    path = "/api/cases/" + case["id"]
+    url = case["images"][0]["url"] + "/annotations/" + str(uuid4())
+    body = rectangle()
+    assert client.put(url, json=body).status_code == 200
+    with ThreadPoolExecutor(2) as pool:
+        writes = list(pool.map(lambda label: client.put(url, json=body | {"label": label, "revision": 1}),
+                               ["第一项", "第二项"]))
+    assert sorted(r.status_code for r in writes) == [200, 409]
+    assert client.delete(url + "?revision=1").status_code == 409
+    removed = client.delete(url + "?revision=2").json()
+    assert removed["annotation_revision"] == 3 and not removed["images"][0]["annotations"]
+    assert client.delete(url + "?revision=2").json() == removed
+    assert client.put(url, json=body).status_code == 409  # A delayed create cannot resurrect a deleted mark.
+    assert client.get(path).json() == removed
+
+
+def test_annotation_geometry_is_pixel_space_and_bounded(client):
+    login(client)
+    image = upload(client).json()["images"][0]
+    url = image["url"] + "/annotations/" + str(uuid4())
+    def polygon(coords):
+        return {"revision": 0, "kind": "polygon", "label": "人工区域",
+                "points": [{"x": x, "y": y} for x, y in coords]}
+    for invalid in ([(1,1),(2,2)], [(1,1),(1,1),(5,6)], [(1,1),(2,2),(3,3)],
+                    [(1,1),(10,10),(1,8),(10,1)], [(0,0),(32,0),(7,8)]):
+        assert client.put(url, json=polygon(invalid)).status_code == 422
+    for invalid in (rectangle("  "), rectangle() | {"points": [{"x": 1,"y": 0},{"x": 1,"y": 5}]},
+                    rectangle() | {"source": "ai"}):
+        assert client.put(url, json=invalid).status_code == 422
+    valid = polygon([(0,0),(18.5,0),(5.5,7),(20,20),(0,18)])
+    saved = client.put(url, json=valid).json()["images"][0]["annotations"][0]
+    assert saved["points"] == valid["points"] and saved["kind"] == "polygon"

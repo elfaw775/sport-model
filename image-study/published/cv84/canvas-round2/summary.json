@@ -1,0 +1,758 @@
+{
+  "films": 84,
+  "positives": 68,
+  "device": "NVIDIA GeForce RTX 4070 Laptop GPU",
+  "decision_rule": "score >= model and fold threshold",
+  "plan_sha256": "9af5fa0b5fccbef2a9287d62d36497a3198a0b982b2ffc26deaf93fe1ffaa253",
+  "scores_sha256": "89d6b94898a420f474feec72a00e635183ee6de22efd8fbf167aa61523221831",
+  "augmented_heads_sha256": "ad5253c00fca090234b5976aec4a5d8160e9b3e8aa54884e361bffa60ec0c6b8",
+  "conditions": {
+    "black_center": [
+      0,
+      2
+    ],
+    "gray_8": [
+      8,
+      2
+    ],
+    "gray_16": [
+      16,
+      2
+    ],
+    "gray_32": [
+      32,
+      2
+    ],
+    "gray_64": [
+      64,
+      2
+    ],
+    "gray_128": [
+      128,
+      2
+    ],
+    "align_0": [
+      0,
+      0
+    ],
+    "align_25": [
+      0,
+      1
+    ],
+    "align_75": [
+      0,
+      3
+    ],
+    "align_100": [
+      0,
+      4
+    ]
+  },
+  "candidate_training_views": [
+    "black_center",
+    "gray_16",
+    "align_25",
+    "align_75"
+  ],
+  "stability": {
+    "locked_original": {
+      "always_correct": 81,
+      "always_wrong": 1,
+      "ever_flipped": 2,
+      "flipped_ids": [
+        "79-正位 外侧籽骨粉碎性横骨折",
+        "78-侧位"
+      ],
+      "always_wrong_ids": [
+        "13-RF-侧位"
+      ]
+    },
+    "fit_augmented": {
+      "always_correct": 81,
+      "always_wrong": 1,
+      "ever_flipped": 2,
+      "flipped_ids": [
+        "79-正位 外侧籽骨粉碎性横骨折",
+        "78-侧位"
+      ],
+      "always_wrong_ids": [
+        "13-RF-侧位"
+      ]
+    }
+  },
+  "metrics": {
+    "locked_original": {
+      "black_center": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 82,
+          "misses": 2,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 69,
+            "misses": 2,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_8": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 82,
+          "misses": 2,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 69,
+            "misses": 2,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_16": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 81,
+          "misses": 3,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 1
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 68,
+            "misses": 3,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 1
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_32": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 81,
+          "misses": 3,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 1
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 68,
+            "misses": 3,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 1
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_64": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 81,
+          "misses": 3,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 1
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 68,
+            "misses": 3,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 1
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_128": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 81,
+          "misses": 3,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 1
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 68,
+            "misses": 3,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 1
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "align_0": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 1,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 1,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "align_25": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 82,
+          "misses": 2,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 69,
+            "misses": 2,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "align_75": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 1,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 1,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "align_100": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 1,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 1,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      }
+    },
+    "fit_augmented": {
+      "black_center": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_8": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_16": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 82,
+          "misses": 2,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 1
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 69,
+            "misses": 2,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 1
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_32": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 81,
+          "misses": 3,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 2
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 68,
+            "misses": 3,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 2
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_64": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 82,
+          "misses": 2,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 1
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 69,
+            "misses": 2,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 1
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "gray_128": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 82,
+          "misses": 2,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 1
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 69,
+            "misses": 2,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 1
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "align_0": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "align_25": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "align_75": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      },
+      "align_100": {
+        "all": {
+          "n": 84,
+          "positives": 68,
+          "correct": 83,
+          "misses": 1,
+          "false_alarms": 0,
+          "turned_positive": 0,
+          "turned_negative": 0
+        },
+        "by_padding_axis": {
+          "left_right": {
+            "n": 71,
+            "positives": 55,
+            "correct": 70,
+            "misses": 1,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          },
+          "top_bottom": {
+            "n": 13,
+            "positives": 13,
+            "correct": 13,
+            "misses": 0,
+            "false_alarms": 0,
+            "turned_positive": 0,
+            "turned_negative": 0
+          }
+        }
+      }
+    }
+  },
+  "changed_from_same_models_black_center": {
+    "locked_original": {
+      "black_center": [],
+      "gray_8": [],
+      "gray_16": [
+        "78-侧位"
+      ],
+      "gray_32": [
+        "78-侧位"
+      ],
+      "gray_64": [
+        "78-侧位"
+      ],
+      "gray_128": [
+        "78-侧位"
+      ],
+      "align_0": [
+        "79-正位 外侧籽骨粉碎性横骨折"
+      ],
+      "align_25": [],
+      "align_75": [
+        "79-正位 外侧籽骨粉碎性横骨折"
+      ],
+      "align_100": [
+        "79-正位 外侧籽骨粉碎性横骨折"
+      ]
+    },
+    "fit_augmented": {
+      "black_center": [],
+      "gray_8": [],
+      "gray_16": [
+        "78-侧位"
+      ],
+      "gray_32": [
+        "79-正位 外侧籽骨粉碎性横骨折",
+        "78-侧位"
+      ],
+      "gray_64": [
+        "78-侧位"
+      ],
+      "gray_128": [
+        "78-侧位"
+      ],
+      "align_0": [],
+      "align_25": [],
+      "align_75": [],
+      "align_100": []
+    }
+  }
+}
