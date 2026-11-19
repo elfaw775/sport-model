@@ -297,6 +297,9 @@ label.search-field:not(.check){position:relative;display:flex;align-items:center
 .case-result-strip .result-meta span{font-variant-numeric:tabular-nums}
 .case-result-strip h2{font-size:clamp(17px,1.4vw,22px);letter-spacing:-.025em}
 .case-result-strip p{color:#516354;margin:3px 0 0}
+.case-result-strip .localization-summary{margin-top:6px}
+.model-summary h3{font-size:14px;margin:16px 0 4px}
+.model-summary details p{overflow-wrap:anywhere}
 .case-result-strip.no-detections{background:#faf6eb;border-color:#e5ddc5}
 .no-detections .tile-icon{background:#f1e8ce;color:#82683d}
 .case-result-strip .primary{flex-shrink:0}

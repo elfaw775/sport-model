@@ -1,11 +1,10 @@
-from functools import lru_cache
-from hashlib import sha256
 from pathlib import Path
 
 import cv2
 import numpy as np
-import onnxruntime as ort
 from PIL import Image
+
+from .onnx_models import verified_session
 
 
 WEIGHTS = Path(__file__).resolve().parent / "models/yolo11s-fetlock-640.onnx"
@@ -13,16 +12,6 @@ WEIGHTS_SHA256 = "61286f939c6a6c4a591d5034e33794ba0af99b5f1f29aac279bb15974c025b
 MODEL_ID = "YOLO11s-fetlock-640@" + WEIGHTS_SHA256[:12]
 THRESHOLD = 0.20
 INPUT_SIZE = 640
-
-
-@lru_cache(maxsize=1)
-def _session(path=WEIGHTS, expected_sha256=WEIGHTS_SHA256):
-    weights = path.read_bytes()
-    if sha256(weights).hexdigest() != expected_sha256:
-        raise ValueError("模型文件与登记版本不一致")
-    options = ort.SessionOptions()
-    options.intra_op_num_threads = 2
-    return ort.InferenceSession(weights, sess_options=options, providers=["CPUExecutionProvider"])
 
 
 def _prepare(image):
@@ -65,6 +54,6 @@ def _decode(output, scale, left, top, width, height, threshold=THRESHOLD):
 
 def detect(image: Image.Image) -> list[dict[str, float]]:
     tensor, scale, left, top = _prepare(image)
-    session = _session()
+    session = verified_session(WEIGHTS, WEIGHTS_SHA256)
     output, = session.run(None, {session.get_inputs()[0].name: tensor})
     return _decode(output, scale, left, top, image.width, image.height)

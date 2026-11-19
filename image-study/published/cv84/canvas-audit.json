@@ -1,0 +1,952 @@
+{
+  "n": 84,
+  "design": "fixed seed-42 matched-budget folds, frozen thresholds",
+  "max_baseline_score_drift": 3.3056692309851865e-05,
+  "score_rule": "positive if score >= threshold",
+  "summary": {
+    "original": {
+      "correct": 82,
+      "missed": 2,
+      "false_alarms": 0,
+      "flips": 0
+    },
+    "gray_padding": {
+      "correct": 81,
+      "missed": 3,
+      "false_alarms": 0,
+      "flips": 1
+    },
+    "aligned_start": {
+      "correct": 83,
+      "missed": 1,
+      "false_alarms": 0,
+      "flips": 1
+    }
+  },
+  "films": [
+    {
+      "image": "22-LF-正位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9997833251472152,
+        "gray_padding": 0.9996523046901196,
+        "aligned_start": 0.999650703727005
+      }
+    },
+    {
+      "image": "12-LF-侧位",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.792560602038916,
+        "gray_padding": 0.7676172934452143,
+        "aligned_start": 0.8161202241990609
+      }
+    },
+    {
+      "image": "45-正位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9990365017181825,
+        "gray_padding": 0.9984210833459642,
+        "aligned_start": 0.9994421349211805
+      }
+    },
+    {
+      "image": "4-RH-侧位 ",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9761754064728149,
+        "gray_padding": 0.985712582930568,
+        "aligned_start": 0.9887297852712532
+      }
+    },
+    {
+      "image": "37-侧位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9992859488867157,
+        "gray_padding": 0.9994577447042763,
+        "aligned_start": 0.9984297238088427
+      }
+    },
+    {
+      "image": "17-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9994061606470894,
+        "gray_padding": 0.9989071739109825,
+        "aligned_start": 0.9998405609135617
+      }
+    },
+    {
+      "image": "59-侧位+正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9948674433466544,
+        "gray_padding": 0.9956872959109017,
+        "aligned_start": 0.9964214592711869
+      }
+    },
+    {
+      "image": "15-正位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9916618029503773,
+        "gray_padding": 0.9824861410641084,
+        "aligned_start": 0.9960957907980916
+      }
+    },
+    {
+      "image": "55-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.999997632772389,
+        "gray_padding": 0.9999978902023853,
+        "aligned_start": 0.9999971781376693
+      }
+    },
+    {
+      "image": "72-侧位 p1近端背内侧软骨碎片骨折",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9805593784915666,
+        "gray_padding": 0.9833442479077139,
+        "aligned_start": 0.9798654959422435
+      }
+    },
+    {
+      "image": "69-侧位 籽骨基底部骨折",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9970330484975479,
+        "gray_padding": 0.9961942651498904,
+        "aligned_start": 0.9924675508860183
+      }
+    },
+    {
+      "image": "44-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9999526892749966,
+        "gray_padding": 0.9999541929026065,
+        "aligned_start": 0.9999885771301684
+      }
+    },
+    {
+      "image": "14-LH-侧位+正位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9999601701425107,
+        "gray_padding": 0.9999374522831913,
+        "aligned_start": 0.99997441683084
+      }
+    },
+    {
+      "image": "48-正位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.999928798682258,
+        "gray_padding": 0.9998833643392832,
+        "aligned_start": 0.9999358985134864
+      }
+    },
+    {
+      "image": "36-RH-正+侧，P1骨折",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9756356806442484,
+        "gray_padding": 0.7763267993381012,
+        "aligned_start": 0.9351277966548245
+      }
+    },
+    {
+      "image": "11-LF-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9886412314545737,
+        "gray_padding": 0.9870508984401184,
+        "aligned_start": 0.9927794381399272
+      }
+    },
+    {
+      "image": "10-LF-侧位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9996791603752226,
+        "gray_padding": 0.9995364985327398,
+        "aligned_start": 0.9993511782450563
+      }
+    },
+    {
+      "image": "67-正位 p1骨折",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9990325542224606,
+        "gray_padding": 0.9988185352145863,
+        "aligned_start": 0.9986437176903689
+      }
+    },
+    {
+      "image": "21-RF-正位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9165899030711253,
+        "gray_padding": 0.9184653260549545,
+        "aligned_start": 0.9412999352165642
+      }
+    },
+    {
+      "image": "79-正位 外侧籽骨粉碎性横骨折",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.0700067178808882,
+        "gray_padding": 0.04707821956916311,
+        "aligned_start": 0.12049734128589272
+      }
+    },
+    {
+      "image": "40-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9992696816281176,
+        "gray_padding": 0.9922244196247003,
+        "aligned_start": 0.9991685473715938
+      }
+    },
+    {
+      "image": "5-LH-正位",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9995647645314945,
+        "gray_padding": 0.9993636694328866,
+        "aligned_start": 0.9985177866185486
+      }
+    },
+    {
+      "image": "63-LH-正位+斜位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9857865529775738,
+        "gray_padding": 0.9812604937628967,
+        "aligned_start": 0.9921950179522667
+      }
+    },
+    {
+      "image": "76-正位  p1骨折",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9962529363221548,
+        "gray_padding": 0.997010478883783,
+        "aligned_start": 0.9967738847075455
+      }
+    },
+    {
+      "image": "20-侧位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9999759802033901,
+        "gray_padding": 0.9998112004817159,
+        "aligned_start": 0.9999896253136942
+      }
+    },
+    {
+      "image": "52-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9943389856362062,
+        "gray_padding": 0.9912759689871034,
+        "aligned_start": 0.9949116234519809
+      }
+    },
+    {
+      "image": "68-侧位 籽骨基底部骨折",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9999279563290734,
+        "gray_padding": 0.9998702336304727,
+        "aligned_start": 0.9999904867478203
+      }
+    },
+    {
+      "image": "35-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9990575857260864,
+        "gray_padding": 0.9970644361662944,
+        "aligned_start": 0.9997151464032192
+      }
+    },
+    {
+      "image": "6-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9788735166160805,
+        "gray_padding": 0.9631804445263261,
+        "aligned_start": 0.9971755474572668
+      }
+    },
+    {
+      "image": "74-正位 外侧髁骨折",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9976683173401669,
+        "gray_padding": 0.9963364568916911,
+        "aligned_start": 0.9968886140838882
+      }
+    },
+    {
+      "image": "66-侧位 p1骨折",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9785091666238732,
+        "gray_padding": 0.9187168052344051,
+        "aligned_start": 0.9812959582057474
+      }
+    },
+    {
+      "image": "25-前肢-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9974933024981686,
+        "gray_padding": 0.9964977064146379,
+        "aligned_start": 0.9991246904919163
+      }
+    },
+    {
+      "image": "1-RF-正位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9596724005930662,
+        "gray_padding": 0.895211905967864,
+        "aligned_start": 0.9602865394363634
+      }
+    },
+    {
+      "image": "19-正位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9999896281472793,
+        "gray_padding": 0.9998992898175352,
+        "aligned_start": 0.9999665406549662
+      }
+    },
+    {
+      "image": "65-LF-正位+斜位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9951121216529127,
+        "gray_padding": 0.9942133403260522,
+        "aligned_start": 0.9982662127517857
+      }
+    },
+    {
+      "image": "30-LF-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9998859579577128,
+        "gray_padding": 0.9993560740116939,
+        "aligned_start": 0.9998922911475783
+      }
+    },
+    {
+      "image": "47-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9987533128451398,
+        "gray_padding": 0.99283138227741,
+        "aligned_start": 0.9991379567780331
+      }
+    },
+    {
+      "image": "13-RF-侧位",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.13605490473509896,
+        "gray_padding": 0.03295315054573189,
+        "aligned_start": 0.08056042760084507
+      }
+    },
+    {
+      "image": "71-侧位 P1近端跖外侧撕脱骨折",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9997217000064377,
+        "gray_padding": 0.999587568863432,
+        "aligned_start": 0.9995177017731165
+      }
+    },
+    {
+      "image": "33-正位",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9998603772344523,
+        "gray_padding": 0.9996173251515065,
+        "aligned_start": 0.9997983866544123
+      }
+    },
+    {
+      "image": "54-正+侧，P1 复杂骨折",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9910044906937647,
+        "gray_padding": 0.987454877056292,
+        "aligned_start": 0.9907440985837344
+      }
+    },
+    {
+      "image": "78-侧位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.3061298476794202,
+        "gray_padding": 0.08578647490119792,
+        "aligned_start": 0.672910306738443
+      }
+    },
+    {
+      "image": "64-RF-正位+斜位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9908709285844216,
+        "gray_padding": 0.9880563065888194,
+        "aligned_start": 0.9779153455734386
+      }
+    },
+    {
+      "image": "70-侧位 p1骨折",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.7148483385819899,
+        "gray_padding": 0.6729836346587416,
+        "aligned_start": 0.8559801026794699
+      }
+    },
+    {
+      "image": "51-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9994817271632725,
+        "gray_padding": 0.9989651714224571,
+        "aligned_start": 0.9996644855643688
+      }
+    },
+    {
+      "image": "2-LF-侧位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9985111612878582,
+        "gray_padding": 0.996461382336405,
+        "aligned_start": 0.9994518786568665
+      }
+    },
+    {
+      "image": "31-LF-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9835315580357894,
+        "gray_padding": 0.9783603793081214,
+        "aligned_start": 0.9914056884350431
+      }
+    },
+    {
+      "image": "28-LF-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9761982006883135,
+        "gray_padding": 0.9203762462578459,
+        "aligned_start": 0.9963171001791463
+      }
+    },
+    {
+      "image": "6-LF-侧位",
+      "truth": 0,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.0005178519059866982,
+        "gray_padding": 0.00041238273422516996,
+        "aligned_start": 0.0003979132082494392
+      }
+    },
+    {
+      "image": "13-LF-侧位",
+      "truth": 0,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.0026012268327616347,
+        "gray_padding": 0.0021325305064585067,
+        "aligned_start": 0.002436265515377567
+      }
+    },
+    {
+      "image": "18-LH-正位",
+      "truth": 0,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.003803977521566192,
+        "gray_padding": 0.0018566634666915432,
+        "aligned_start": 0.002190603672222538
+      }
+    },
+    {
+      "image": "20-RH-正位",
+      "truth": 0,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.010006622492453866,
+        "gray_padding": 0.004687416382582094,
+        "aligned_start": 0.0079886875913118
+      }
+    },
+    {
+      "image": "15-RF-侧位",
+      "truth": 0,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.0014624526075664379,
+        "gray_padding": 0.0017160475784052341,
+        "aligned_start": 0.0006522020903121965
+      }
+    },
+    {
+      "image": "11-RH-正位",
+      "truth": 0,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.061146249756672155,
+        "gray_padding": 0.013697722314164192,
+        "aligned_start": 0.030884043055347997
+      }
+    },
+    {
+      "image": "5-LF-正位",
+      "truth": 0,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.0011830312747516645,
+        "gray_padding": 0.000764350569050244,
+        "aligned_start": 0.0028406008983029077
+      }
+    },
+    {
+      "image": "2-正位",
+      "truth": 0,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.10332528273957534,
+        "gray_padding": 0.040781683922034434,
+        "aligned_start": 0.07232947135477755
+      }
+    },
+    {
+      "image": "12-RH-侧位",
+      "truth": 0,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.0008049594374795181,
+        "gray_padding": 0.0008771163903609627,
+        "aligned_start": 0.0023954364242407137
+      }
+    },
+    {
+      "image": "19-RH-侧位",
+      "truth": 0,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.33427455666588224,
+        "gray_padding": 0.08707444441487028,
+        "aligned_start": 0.3145248997418264
+      }
+    },
+    {
+      "image": "9-LH-正位",
+      "truth": 0,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.0014891644128378816,
+        "gray_padding": 0.0013714276833544183,
+        "aligned_start": 0.001328592644011666
+      }
+    },
+    {
+      "image": "73-侧位 p1骨折",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9975785739381355,
+        "gray_padding": 0.9976287221226539,
+        "aligned_start": 0.9981043885236985
+      }
+    },
+    {
+      "image": "57-LF-正+侧，近端籽骨顶端骨折",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.987714368568053,
+        "gray_padding": 0.9752659761217554,
+        "aligned_start": 0.9842653912376027
+      }
+    },
+    {
+      "image": "50-正位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9999774278237212,
+        "gray_padding": 0.9999381603486882,
+        "aligned_start": 0.9999816488913856
+      }
+    },
+    {
+      "image": "32-RF-正位",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9994780045781628,
+        "gray_padding": 0.9937491377655847,
+        "aligned_start": 0.9973578968627173
+      }
+    },
+    {
+      "image": "58-正位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9989950993489958,
+        "gray_padding": 0.9983001192231741,
+        "aligned_start": 0.9995959207101642
+      }
+    },
+    {
+      "image": "26-LF-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9981357187390877,
+        "gray_padding": 0.9968562609837616,
+        "aligned_start": 0.9964613717976564
+      }
+    },
+    {
+      "image": "29-RF-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9999063559628247,
+        "gray_padding": 0.999830588726014,
+        "aligned_start": 0.9999522786683938
+      }
+    },
+    {
+      "image": "39-正位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9998639265298659,
+        "gray_padding": 0.9995732688554249,
+        "aligned_start": 0.9999555877994569
+      }
+    },
+    {
+      "image": "41-侧位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.999521055295714,
+        "gray_padding": 0.9992422973549916,
+        "aligned_start": 0.9998919227979378
+      }
+    },
+    {
+      "image": "18-正位",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9999296138392053,
+        "gray_padding": 0.9979118427264839,
+        "aligned_start": 0.9999701507664808
+      }
+    },
+    {
+      "image": "1-侧位",
+      "truth": 0,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.026906351178809747,
+        "gray_padding": 0.031490265468614574,
+        "aligned_start": 0.06449188182579502
+      }
+    },
+    {
+      "image": "10-LH-侧位",
+      "truth": 0,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.0018624830830034633,
+        "gray_padding": 0.0010500611102850776,
+        "aligned_start": 0.00312125671294602
+      }
+    },
+    {
+      "image": "17-LH-侧位",
+      "truth": 0,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.004482792431328301,
+        "gray_padding": 0.00306894697322148,
+        "aligned_start": 0.0038201404683988437
+      }
+    },
+    {
+      "image": "62-RF-正位+侧位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9975095807643655,
+        "gray_padding": 0.9970972224728919,
+        "aligned_start": 0.9962405667606682
+      }
+    },
+    {
+      "image": "24-LH-侧位",
+      "truth": 1,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.9994590378181694,
+        "gray_padding": 0.9988939944233619,
+        "aligned_start": 0.9989898729293903
+      }
+    },
+    {
+      "image": "75-正位 p1骨折",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.998158668046405,
+        "gray_padding": 0.996006238110953,
+        "aligned_start": 0.9981607991766235
+      }
+    },
+    {
+      "image": "56-正位",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9985850137091781,
+        "gray_padding": 0.9967663128681293,
+        "aligned_start": 0.9994263812927563
+      }
+    },
+    {
+      "image": "7-LF-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9991158628411907,
+        "gray_padding": 0.9972321395602091,
+        "aligned_start": 0.9994427846304234
+      }
+    },
+    {
+      "image": "16-侧位",
+      "truth": 1,
+      "fold": 3,
+      "threshold": 0.08692375021026029,
+      "scores": {
+        "original": 0.9782276448786111,
+        "gray_padding": 0.9375648511968513,
+        "aligned_start": 0.9840610970722121
+      }
+    },
+    {
+      "image": "34-LF-正+侧，P1骨折",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9955864865650588,
+        "gray_padding": 0.9522496720424716,
+        "aligned_start": 0.9960278683850926
+      }
+    },
+    {
+      "image": "38-正位",
+      "truth": 1,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.9995869074625499,
+        "gray_padding": 0.9983746629360138,
+        "aligned_start": 0.9991400117612933
+      }
+    },
+    {
+      "image": "61-LF-正位+斜位",
+      "truth": 1,
+      "fold": 2,
+      "threshold": 0.41180588258479206,
+      "scores": {
+        "original": 0.9962952625045635,
+        "gray_padding": 0.9953348565800408,
+        "aligned_start": 0.9960964304614884
+      }
+    },
+    {
+      "image": "23-LF-正位",
+      "truth": 1,
+      "fold": 4,
+      "threshold": 0.5257464538512999,
+      "scores": {
+        "original": 0.9999375126714053,
+        "gray_padding": 0.9999269831942839,
+        "aligned_start": 0.9999140501425982
+      }
+    },
+    {
+      "image": "8-RF-侧位",
+      "truth": 0,
+      "fold": 1,
+      "threshold": 0.13351630424303185,
+      "scores": {
+        "original": 0.00010157540940897187,
+        "gray_padding": 0.0001017931021469385,
+        "aligned_start": 0.0001082815296584391
+      }
+    },
+    {
+      "image": "7-RF-正位",
+      "truth": 0,
+      "fold": 5,
+      "threshold": 0.24451850888896845,
+      "scores": {
+        "original": 0.007929976832985814,
+        "gray_padding": 0.007951568932975826,
+        "aligned_start": 0.006776782253951419
+      }
+    }
+  ]
+}

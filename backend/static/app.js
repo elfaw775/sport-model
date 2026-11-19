@@ -80,7 +80,7 @@ function login() {
       members.map(([account,name]) => '<option value="' + escapeHTML(account) + '">' + escapeHTML(name) + ' · ' + escapeHTML(account) + '</option>').join("") + '</select>'
     : '<input name="username" autocomplete="username" required placeholder="请输入账号">';
   page.innerHTML = `<div class="login-grid">
-    <section class="intro"><p class="eyebrow">EQUINE IMAGING</p><h1>运动马<br><span>影像工作台</span></h1><p>上传球节 X 线片，<br>查看模型候选区域并完成人工复核。</p>
+    <section class="intro"><p class="eyebrow">EQUINE IMAGING</p><h1>运动马<br><span>影像工作台</span></h1><p>上传球节 X 线片，<br>查看整片筛查和候选区域，完成人工复核。</p>
       <div class="intro-steps"><span><b>01</b>上传影像</span><span><b>02</b>模型检测</span><span><b>03</b>复核归档</span></div>
     </section>
     <section class="card login-card"><span class="tile-icon">${icon("mark")}</span><p class="eyebrow">WORKSPACE ACCESS</p><h2>登录工作台</h2><p class="sub">使用分配的账号进入影像诊疗与病例档案。</p>
@@ -288,8 +288,8 @@ function deleteVisits(records, complete) {
   });
 }
 const worklists = {
-  analysis: {title:"待分析", icon:"scan", description:"已上传主图，等待球节骨折检测。", action:"打开分析", empty:"目前没有等待分析的影像"},
-  reviews: {title:"人工复核", icon:"check", description:"查看模型候选区域、核对原片并签署报告。", action:"进入复核", empty:"目前没有待复核的病例"},
+  analysis: {title:"待分析", icon:"scan", description:"已上传主图，等待球节病灶筛查和定位。", action:"打开分析", empty:"目前没有等待分析的影像"},
+  reviews: {title:"人工复核", icon:"check", description:"核对整片筛查、定位结果与原片，签署报告。", action:"进入复核", empty:"目前没有待复核的病例"},
   filing: {title:"病例归档", icon:"folder", description:"办理归档，或查阅已经归档的病例及复核报告。", action:"办理归档", empty:"目前没有待归档的病例"}
 };
 
@@ -431,19 +431,30 @@ function enableAttachment(form, record, onSaved) {
   });
 }
 
+function screeningDecision(screening) {
+  return screening.predicted_positive ? "提示疑似病灶" : "未达到病灶提示门槛";
+}
+
+function screeningScores(screening) {
+  return `筛查分数 ${screening.score.toPrecision(5)} · 报警门槛 ${screening.threshold.toPrecision(5)}`;
+}
+
 function analysisSummary(record, analyzed, signed) {
   const boxes = record.detections || [];
-  const positive = boxes.length > 0;
-  const title = !analyzed ? "主图已上传，等待分析" : positive ? `发现 ${boxes.length} 个疑似骨折候选区域` : "未检出疑似骨折候选区域";
-  const lead = !analyzed ? "开始分析后可在这里查看模型分数和主图上的候选框。" : positive
-    ? `最高模型分数 ${pct(Math.max(...boxes.map(box => box.score)))}，已在主图上标出候选区域。AI 仅提供参考。`
-    : `模型已完成分析，没有达到 ${pct(record.threshold)} 分数阈值的候选框，仍需核对原片。若上传的是带工具栏的截图，请用导出的原片新建检查。`;
+  const screening = record.screening;
+  const title = !analyzed ? "主图已上传，等待分析" : screening ? `整片筛查 · ${screeningDecision(screening)}` : "历史主图定位结果";
+  const lead = !analyzed ? "DINOv2 筛查主图上是否有疑似病灶，YOLO11s 标出可疑区域，供人工复核。"
+    : screening ? `DINOv2 Small · ${screeningScores(screening)}` : "这次分析仅记录了 YOLO 定位结果。";
+  const localization = boxes.length
+    ? `发现 ${boxes.length} 个候选区域，最高模型分数 ${pct(Math.max(...boxes.map(box => box.score)))}。请在原片上核对。`
+    : `当前门槛（${pct(record.threshold)}）下未检出候选区域，请复核整张原片。`;
   const action = analyzed
     ? `<a href="${reportLink(record.id)}" id="open-report" class="primary">${icon("book")} ${signed ? "查看复核报告" : record.report?.revision ? "继续复核报告" : "编写复核报告"}</a>`
     : `<form id="analyze-form"><button class="primary" type="submit">${icon("scan")} 开始分析</button>${errorBox}</form>`;
-  return `<section class="case-result-strip ${analyzed ? positive ? "has-detections" : "no-detections" : "awaiting-analysis"}" id="analysis-summary" aria-labelledby="analysis-title">
+  return `<section class="case-result-strip ${analyzed ? boxes.length ? "has-detections" : "no-detections" : "awaiting-analysis"}" id="analysis-summary" aria-labelledby="analysis-title">
     <span class="tile-icon">${icon("scan")}</span><div><div class="result-meta"><b>主图模型结果</b><span id="analysis-state">${analyzed ? "分析完成 · "+escape(dateText(record.analyzed_at)) : "待分析"}</span></div>
-    <h2 id="analysis-title">${title}</h2><p id="analysis-lead">${lead}</p></div>${action}</section>`;
+    <h2 id="analysis-title">${title}</h2><p id="analysis-lead">${lead}</p>
+    ${analyzed ? `<p class="localization-summary"><strong>YOLO 病灶定位</strong> · ${localization}</p>` : ""}</div>${action}</section>`;
 }
 
 function detail(record) {
@@ -482,7 +493,7 @@ function detail(record) {
     summary.classList.remove("analysis-failed");
     byId("analysis-state").textContent = "分析中";
     byId("analysis-title").textContent = "正在分析主图…";
-    byId("analysis-lead").textContent = "正在运行球节骨折检测模型。";
+    byId("analysis-lead").textContent = "正在进行整片筛查和病灶定位。";
     let updated;
     try {
       updated = await api(base+"/analyze",{method:"POST"});
@@ -499,7 +510,7 @@ function detail(record) {
         throw error;
       }
     }
-    if (active()) { detail(updated); window.scrollTo(0,0); notify(updated.detections.length ? "分析完成，请核对主图候选区域。" : "分析完成，未检出候选区域。"); }
+    if (active()) { detail(updated); window.scrollTo(0,0); notify("分析完成，请核对原片与模型结果。"); }
   });
 }
 
@@ -528,13 +539,19 @@ function reportPage(record) {
     ${progressBar(signed ? (record.archived_at ? 6 : 5) : 3)}
     <div class="report-layout"><article class="card structured-report"><div class="report-topline"><span>EQUIVISION / 影像科</span>${record.archived_at ? archiveBadge(record) : signed ? statusBadge("reviewed") : '<span class="badge analyzed">待人工确认</span>'}</div>
       <h2>${escape(record.horse_name)} <span>· 球节影像检查</span></h2>
-      <div class="report-facts"><span>检查日期 <b>${escape(dateText(record.created_at))}</b></span><span>检查影像 <b>${images.length} 张</b></span><span>复核人 <b>${escape(signed ? record.reviewer : user.display_name)}</b></span></div>
+      <div class="report-facts"><span>检查日期 <b>${escape(dateText(record.created_at))}</b></span><span>检查影像 <b>${images.length} 张</b></span>
+        ${signed && report.author && report.author !== record.reviewer ? `<span>草稿作者 <b>${escape(report.author)}</b></span>` : ""}
+        <span>复核人 <b>${escape(signed ? record.reviewer : user.display_name)}</b></span></div>
       ${formBody}${record.archived_at ? `<p class="dim">归档时间 · ${escape(dateText(record.archived_at))}</p>` : ""}</article>
     <aside class="report-aside"><section class="card"><div class="panel-title"><h2>影像与测量</h2><a href="${caseLink(record.id)}">返回阅片</a></div>
       ${images.map((im,i)=>`<div class="report-evidence"><img src="${escape(im.url)}" alt=""><div><b>${i===0?"主图":"附图 "+i} · ${escape(im.projection)}</b><small>${escape(im.filename)}</small>
       ${(im.measurements || []).map(m=>`<span>${m.kind==="distance"?"距离":"角度"}　${Number(m.value).toFixed(1)} ${m.kind==="distance"?"px":"°"}</span>`).join("")}</div></div>`).join("")}</section>
-      <section class="card model-summary"><h2>AI 辅助结果</h2><p>${boxes.length ? boxes.map((box,i)=>`区域 ${i+1} · 置信分数 ${pct(box.score)}`).join("<br>") : "当前阈值下未检出候选区域。"}</p><p class="dim">仅供参考 · 检测对象为主图</p>
-      <details><summary>模型信息</summary><p>${escape(record.model)} · 阈值 ${pct(record.threshold)}</p></details></section></aside></div>`;
+      <section class="card model-summary"><h2>主图 AI 辅助结果</h2>
+      <h3>整片筛查</h3>${record.screening ? `<p class="film-screening"><b>${screeningDecision(record.screening)}</b><br>DINOv2 Small · ${screeningScores(record.screening)}</p>` : '<p class="dim">本次历史分析未记录整片筛查。</p>'}
+      <h3>YOLO 病灶定位</h3><p>${boxes.length ? boxes.map((box,i)=>`候选区域 ${i+1} · 模型分数 ${pct(box.score)}`).join("<br>") : "当前定位门槛下未检出候选区域。"}</p>
+      <p class="dim">请结合原片复核；筛查分数和候选框仅供参考。</p>
+      <details><summary>模型版本与门槛</summary>${record.screening ? `<p>筛查 · ${escape(record.screening.model)}<br>报警门槛 ${record.screening.threshold}</p>` : ""}
+      <p>定位 · ${escape(record.model)}<br>候选框门槛 ${pct(record.threshold)}</p></details></section></aside></div>`;
   archiveAction(record,reportPage);
   const form = byId("report-form");
   if (!form) return;

@@ -39,11 +39,22 @@ try {
   page.on("pageerror", error => errors.push(error.message));
   page.setDefaultTimeout(9000);
   const visible = selector => page.waitForSelector(selector, {visible:true});
+  const waitForAnalysis = () => page.waitForSelector("#open-report", {visible:true, timeout:60000});
   const click = async selector => { await visible(selector); await page.click(selector); };
   const findText = text => page.waitForFunction(value => document.body.innerText.includes(value), {}, text);
   const formSubmit = selector => click(selector + ' button[type="submit"]');
   const records = () => page.evaluate(async () => (await fetch("/api/cases")).json());
   const detail = id => page.evaluate(async key => (await fetch("/api/cases/" + key)).json(), id);
+  const checkScreening = async (record, selector) => {
+    const screening = record.screening;
+    assert.match(screening.model, /^DINOv2-Small-refit84@/);
+    assert.ok(Number.isFinite(screening.score) && Number.isFinite(screening.threshold));
+    assert.equal(screening.predicted_positive, screening.score >= screening.threshold);
+    const output = await page.$eval(selector, element => element.innerText);
+    assert.ok(output.includes(screening.predicted_positive ? "提示疑似病灶" : "未达到病灶提示门槛"));
+    assert.ok(output.includes(screening.score.toPrecision(5)));
+    assert.ok(output.includes(screening.threshold.toPrecision(5)));
+  };
   const home = async () => {
     await click("#nav-archive");
     await visible("#case-search");
@@ -53,6 +64,7 @@ try {
   const waitForArchive = id => page.waitForFunction(async key =>
     Boolean((await (await fetch("/api/cases/" + key)).json()).archived_at), {}, id);
   const openReport = async () => {
+    await waitForAnalysis();
     await click("#open-report");
     await visible("#report-form");
   };
@@ -142,7 +154,7 @@ try {
   await attach("23-LF-正位.jpg");
   const measurements = await checkCaseViewer(page, second);
   await formSubmit("#analyze-form");
-  await visible("#open-report");
+  await waitForAnalysis();
   const result = (await records()).find(record => record.id === second);
   assert.equal(result.detections.length, 2);
   assert.equal(result.threshold, 0.20);
@@ -152,10 +164,12 @@ try {
   assert.equal(result.archived_at, null);
   assert.equal(await page.$("#archive-visit"), null);
   assert.match(await page.$eval("#analysis-summary.has-detections", el => el.innerText), /最高模型分数/);
+  await checkScreening(result, "#analysis-summary");
   await screenshot("clinical-result");
   await click("#nav-reviews");
   await click(`#queue-list a[href="#report/${second}"]`);
   await visible("#report-form");
+  await checkScreening(result, ".film-screening");
   const findings = "已逐张核对主片与附片，距离和角度已记录。";
   const conclusion = "记录本次运动马球节复查结果。";
   await writeReport(findings, conclusion);
@@ -180,6 +194,9 @@ try {
   await findText(conclusion);
   const reviewed = await detail(second);
   assert.equal(reviewed.report.author, "朱诗嘉");
+  assert.deepEqual(reviewed.screening, result.screening);
+  await checkScreening(reviewed, ".film-screening");
+  await screenshot("clinical-reviewed");
   assert.equal(reviewed.reviewer, "王一伊");
   assert.ok(reviewed.reviewed_at);
   assert.deepEqual(reviewed.images[0].measurements, [measurements.distance]);
@@ -228,9 +245,13 @@ try {
   await click("#logout"); await loginMember("wangyiyi"); assert.deepEqual(await records(), []);
   const noFindingId = await uploadPrimary("零候选复核", "23-LF-正位.jpg");
   await formSubmit("#analyze-form");
-  await visible("#open-report");
+  await waitForAnalysis();
   const noFinding = (await records()).find(record => record.id === noFindingId);
   assert.equal(noFinding.detections.length, 0);
+  await checkScreening(noFinding, "#analysis-summary");
+  console.log("Verified persisted screening and detections:", JSON.stringify([result,noFinding].map(record => ({
+    film:record.images[0].filename, screening:record.screening, detector:record.model, boxes:record.detections.length
+  }))));
   assert.equal(await page.$eval("#analysis-summary.no-detections", el => {
     const bounds = el.getBoundingClientRect();
     return el.innerText.includes("未检出") && bounds.top >= 0 && bounds.bottom <= innerHeight

@@ -1,0 +1,17 @@
+{
+  "model_id": "DINOv2-Small-refit84@a5ab6ac7783c",
+  "file": "dinov2-fetlock-84.onnx",
+  "sha256": "a5ab6ac7783c32d266837c1aa871e968919c874f08fa39a2fa13cb94d0835e4d",
+  "bytes": 88426496,
+  "threshold": 0.17883443932013382,
+  "encoder": "facebook/dinov2-small",
+  "encoder_revision": "ed25f3a31f01632728cabb09d1542f84ab7b0056",
+  "encoder_license": "Apache-2.0",
+  "encoder_license_file": "DINOv2-LICENSE.txt",
+  "encoder_weights_sha256": "ae1e99fcefd534ed978cdeb8326f08030c96e28b7a81ffcbc98a857c84d14be1",
+  "head_sha256": "71dc95cdf63bd8a9e79899e0d30317596801d0f9e97c71f088b0e6651047296c",
+  "training_films": 84,
+  "task": "whole-film lesion screening",
+  "opset": 17,
+  "preprocessing": "EXIF transpose; grayscale; bicubic longest edge to 336; center on black 336 square; RGB NCHW float32 [0,1]; ImageNet mean and std"
+}
