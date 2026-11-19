@@ -15,21 +15,22 @@ SOURCE = ROOT / "training/data/sporthorse_v2"
 WORK = ROOT / "work/model-comparison"
 
 
-def prepare(work=WORK):
+def prepare(work=WORK, *, source_root=None):
     work = Path(work).resolve()
+    source_root = SOURCE if source_root is None else Path(source_root)
     converted = work / "rotation-aware"
     subprocess.run([sys.executable, str(Path(__file__).with_name("coco2yolo.py")),
                     str(ROOT / "training/source/coco/instances_default.json"),
                     "--out", str(converted), "--keep", "病变"], check=True)
     dataset = work / "dataset"
-    with (SOURCE / "split_manifest.tsv").open(encoding="utf-8") as stream:
+    with (source_root / "split_manifest.tsv").open(encoding="utf-8") as stream:
         rows = list(csv.DictReader(stream, delimiter="\t"))
     assert len({row["image"] for row in rows}) == len(rows) == 84
     assert Counter(row["split"] for row in rows) == dict(train=59, val=13, test=12)
     counts = Counter()
     for row in rows:
         stem, split = row["image"], row["split"]
-        matches = [file for file in (SOURCE / "images" / split).iterdir() if file.stem == stem]
+        matches = [file for file in (source_root / "images" / split).iterdir() if file.stem == stem]
         source, = matches
         label = (converted / (stem + ".txt")).read_text(encoding="utf-8") if row["category"] == "pos" else ""
         assert len(label.splitlines()) == int(row["class0_boxes"])

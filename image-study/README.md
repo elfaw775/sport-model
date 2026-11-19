@@ -65,21 +65,20 @@ The frozen encoder pass uses image pixels and one unit-normalized embedding per 
 ### Localization, perturbations and grouping
 
 ```powershell
-$env:SPORT_XRAY_DETECTOR_RUN = Join-Path $env:SPORT_XRAY_RUN 'detector-baseline'
-& $py training/scripts/prepare_comparison.py --work $env:SPORT_XRAY_DETECTOR_RUN
-& $py image-study/cv84/detection_folds.py
+& $py image-study/with_film_data.py -- $py image-study/cv84/detection_folds.py
 & $py image-study/cv84/detector_pairing.py
 & $py image-study/cv84/matched_budget.py
-& $py image-study/cv84/selected_stability.py
-& $py image-study/cv84/oof_occlusion.py
-& $py image-study/cv84/prefix_groups.py
+& $py image-study/with_film_data.py -- $py image-study/cv84/selected_stability.py
+& $py image-study/with_film_data.py -- $py image-study/cv84/prefix_groups.py
 & $py image-study/cv84/historical59.py
-& $py image-study/cv84/stability.py dino
+& $py image-study/with_film_data.py -- $py image-study/cv84/stability.py dino
 ```
 
-The preparation command regenerates rotation-corrected boxes from the repository's original COCO annotations. The detector can also prepare these automatically or accept `--labels PATH_TO_PREPARED_DATASET`. Its five 32-epoch GPU fits use a separate directory for each fold. The detector and frozen-embedding routes check the SHA-256 of the official COCO weights. If you already have the historical 59-film detector benchmark output, set `SPORT_XRAY_DETECTOR_RUN` to that directory to run the extra fitted detector perturbation check with `stability.py detector`. Rebuild that benchmark in a new directory with the linked training instructions and additional requirements. [Historical detector recipe](../training/docs/rfdetr-cuda.md)
+The five-fold detector regenerates the rotation-corrected labels from the repository's original COCO annotations. It stages the corrected dataset and each fold's training copies in temporary directories. Exiting the run or raising a Python exception cleans those directories. The work directory retains the checkpoints, logs and per-film results. You can also pass `--labels PATH_TO_PREPARED_DATASET` to reuse an existing corrected dataset that you manage. The detector and frozen-embedding routes check the SHA-256 of the official COCO weights.
 
-The dataset defaults to `training/data/sporthorse_v2`. Set `SPORT_XRAY_DATA` to point classification scripts to a byte-equivalent local copy with its original split manifest and image folders. The repository's annotation converter reads source images and COCO annotations from its standard training layout. Cache paths default to the current user's local app data on Windows or home cache on Linux. All Hugging Face encoders are identified by revision and file digests in the three asset loaders.
+The optional historical audits can reuse an existing detector benchmark. Set `SPORT_XRAY_DETECTOR_RUN` to its run directory. Run `image-study/cv84/oof_occlusion.py` with the corrected labels available under `dataset/labels`. The extra fitted-detector check `image-study/cv84/stability.py detector` also uses the historical checkpoint and corrected dataset. Both commands can use the temporary film helper above. [Historical detector recipe](../training/docs/rfdetr-cuda.md)
+
+The dataset defaults to `training/data/sporthorse_v2`. Both the classifiers and the five-fold detector accept `SPORT_XRAY_DATA` for a byte-equivalent local copy or the temporary dataset supplied by the helper. The annotation converter reads `training/source/coco/instances_default.json` from the checkout. Cache paths default to the current user's local app data on Windows or home cache on Linux. All Hugging Face encoders are identified by revision and file digests in the three asset loaders.
 
 The evidence ZIP contains the full outer prediction table, inner scores and thresholds, five seed-42 heads, detector boxes, paired comparisons, perturbation and occlusion audits, historical per-film predictions, feature provenance and original hash-bearing source files. The runnable copies adapt file locations for a checkout. Source hashes in the frozen experiment reports refer to the original files. Public encoder weights are fetched on demand.
 
