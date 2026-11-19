@@ -66,36 +66,52 @@ def select_operating_point(predictions, labels):
 
 def shipped():
     from backend import detector
-    detector.THRESHOLD = .01
+    import numpy as np
+    session = detector._session(ROOT / "public/models/model-accurate.onnx",
+                                "2174b21e3a81b740a07d7369ef5677a91fc097ffd4beb92b0d832a421d0825cb")
     folder = WORK / "shipped"
     folder.mkdir(exist_ok=True)
     for split in ("val","test"):
         records = {}
         for path in (WORK / "dataset/images" / split).iterdir():
             with Image.open(path) as image:
-                records[path.name] = detector.detect(image)
+                # Historical v2 used Pillow bilinear resizing before the ONNX forward pass.
+                scale = 640 / max(image.size)
+                size = tuple(max(1, int(v * scale + 0.5)) for v in image.size)
+                left, top = ((640 - v) // 2 for v in size)
+                canvas = Image.new("RGB", (640, 640), (114, 114, 114))
+                canvas.paste(image.convert("RGB").resize(size, Image.Resampling.BILINEAR), (left, top))
+                tensor = np.ascontiguousarray(np.asarray(canvas, dtype=np.float32).transpose(2, 0, 1)[None] / 255)
+                output, = session.run(None, {session.get_inputs()[0].name: tensor})
+                records[path.name] = detector._decode(output, scale, left, top, *image.size, threshold=.01)
         (folder / (split + "_predictions.json")).write_text(json.dumps(records,ensure_ascii=False))
 
 
+def score_run(folder, validation_filename="val_predictions.json"):
+    labels = {split: truth(split) for split in ("val", "test")}
+    filenames = {"val": validation_filename, "test": "test_predictions.json"}
+    predicted = {split: json.loads((folder / filenames[split]).read_text()) for split in labels}
+    threshold = select_operating_point(predicted["val"], labels["val"])
+    report = {"val_selected_cutoff": threshold}
+    for key, cutoff in (("fixed_0.15", .15), ("val_selected", threshold)):
+        report[key] = {split: counts(predicted[split], labels[split], cutoff) for split in labels}
+    return report
+
+
 def compare():
-    labels = {split:truth(split) for split in ("val","test")}
-    results = {}
-    for name in ("shipped","yolo","frcnn"):
-        files = dict(val="predictions.json" if name == "frcnn" else "val_predictions.json",test="test_predictions.json")
-        predicted = {split:json.loads((WORK / name / fname).read_text()) for split,fname in files.items()}
-        threshold = select_operating_point(predicted["val"], labels["val"])
-        results[name] = {"val_selected_cutoff":threshold}
-        for key,cutoff in (("fixed_0.15",.15),("val_selected",threshold)):
-            results[name][key] = {split:counts(predicted[split], labels[split], cutoff) for split in labels}
-    return results
+    return {name: score_run(WORK / name, "predictions.json" if name == "frcnn" else "val_predictions.json")
+            for name in ("shipped", "yolo", "frcnn")}
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shipped",action="store_true",help="Export shipped ONNX predictions (backend dependencies required)")
+    parser.add_argument("--candidate", type=Path, help="Score one training output directory and print its metrics as JSON")
     args = parser.parse_args()
     if args.shipped:
         shipped()
+    elif args.candidate:
+        print(json.dumps(score_run(args.candidate), indent=2))
     else:
         report = json.dumps(compare(), indent=2)
         (WORK / "comparison.json").write_text(report + "\n")

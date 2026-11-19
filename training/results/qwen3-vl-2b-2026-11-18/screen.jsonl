@@ -1,0 +1,25 @@
+{"split": "val", "filename": "1-侧位.png", "status": "negative", "score": 0.1405742336250924, "boxes": []}
+{"split": "val", "filename": "10-LH-侧位.jpg", "status": "negative", "score": 0.030067616047695415, "boxes": []}
+{"split": "val", "filename": "17-LH-侧位.jpg", "status": "negative", "score": 0.034400724018240285, "boxes": []}
+{"split": "val", "filename": "18-正位.jpg", "status": "positive", "score": 0.997269436232559, "boxes": []}
+{"split": "val", "filename": "26-LF-正位.jpg", "status": "positive", "score": 0.9963862553977237, "boxes": []}
+{"split": "val", "filename": "29-RF-正位.jpg", "status": "positive", "score": 0.9994214742461036, "boxes": []}
+{"split": "val", "filename": "32-RF-正位.jpg", "status": "positive", "score": 0.9997095338735277, "boxes": []}
+{"split": "val", "filename": "39-正位.jpg", "status": "positive", "score": 0.9985812077093313, "boxes": []}
+{"split": "val", "filename": "41-侧位.jpg", "status": "positive", "score": 0.9563845436884743, "boxes": []}
+{"split": "val", "filename": "50-正位.jpg", "status": "positive", "score": 0.9999787713988049, "boxes": []}
+{"split": "val", "filename": "57-LF-正+侧，近端籽骨顶端骨折.jpg", "status": "positive", "score": 0.9808662625687975, "boxes": []}
+{"split": "val", "filename": "58-正位.jpg", "status": "positive", "score": 0.9998190737191113, "boxes": []}
+{"split": "val", "filename": "73-侧位 p1骨折.jpg", "status": "positive", "score": 0.8678274774988164, "boxes": []}
+{"split": "test", "filename": "16-侧位.jpg", "status": "positive", "score": 0.9990988761677051, "boxes": []}
+{"split": "test", "filename": "23-LF-正位.jpg", "status": "positive", "score": 0.996375462568362, "boxes": []}
+{"split": "test", "filename": "24-LH-侧位.jpg", "status": "positive", "score": 0.9928758363160997, "boxes": []}
+{"split": "test", "filename": "34-LF-正+侧，P1骨折.jpg", "status": "positive", "score": 0.998917161256785, "boxes": []}
+{"split": "test", "filename": "38-正位.jpg", "status": "positive", "score": 0.9997294105468713, "boxes": []}
+{"split": "test", "filename": "56-正位.jpg", "status": "positive", "score": 0.9998111722941534, "boxes": []}
+{"split": "test", "filename": "61-LF-正位+斜位.jpg", "status": "positive", "score": 0.970269100973992, "boxes": []}
+{"split": "test", "filename": "62-RF-正位+侧位.jpg", "status": "positive", "score": 0.9884202619537135, "boxes": []}
+{"split": "test", "filename": "7-LF-正位.jpg", "status": "positive", "score": 0.9856264313028884, "boxes": []}
+{"split": "test", "filename": "7-RF-正位.jpg", "status": "negative", "score": 0.0070231783331443694, "boxes": []}
+{"split": "test", "filename": "75-正位 p1骨折.jpg", "status": "negative", "score": 0.44166821016339786, "boxes": []}
+{"split": "test", "filename": "8-RF-侧位.jpg", "status": "negative", "score": 0.008531421738257017, "boxes": []}

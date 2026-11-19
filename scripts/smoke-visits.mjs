@@ -6,6 +6,7 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
+import { checkCaseViewer } from "./check-case-viewer.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const qaRoot = path.join(root, "work", "qa");
@@ -42,6 +43,7 @@ try {
   const findText = text => page.waitForFunction(value => document.body.innerText.includes(value), {}, text);
   const formSubmit = selector => click(selector + ' button[type="submit"]');
   const records = () => page.evaluate(async () => (await fetch("/api/cases")).json());
+  const detail = id => page.evaluate(async key => (await fetch("/api/cases/" + key)).json(), id);
   const home = async () => {
     await click("#nav-archive");
     await visible("#case-search");
@@ -50,6 +52,14 @@ try {
   const screenshot = name => page.screenshot({path: path.join(qaRoot, name + ".png")});
   const waitForArchive = id => page.waitForFunction(async key =>
     Boolean((await (await fetch("/api/cases/" + key)).json()).archived_at), {}, id);
+  const openReport = async () => {
+    await click("#open-report");
+    await visible("#report-form");
+  };
+  const writeReport = async (findings, conclusion) => {
+    await page.locator('#report-form [name="findings"]').fill(findings);
+    await page.locator('#report-form [name="conclusion"]').fill(conclusion);
+  };
 
   await page.goto(base);
   const loginMember = async username => {
@@ -75,6 +85,8 @@ try {
     return (await records()).find(record => record.horse_name === name).id;
   };
   await loginMember("wangyiyi");
+  assert.deepEqual(await page.$$eval("#navigation nav a", links => links.map(link => link.textContent.trim())),
+    ["新建检查","待分析","人工复核","病例归档","历史记录"]);
   await screenshot("clinical-new");
   await page.setViewport({width:390,height:844});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
@@ -97,7 +109,7 @@ try {
   await click("#nav-work"); await visible("#visit-form");
   const second = await uploadPrimary("阅片用马", "16-侧位.jpg");
   const attach = async file => {
-    await click("#add-images");
+    await click("#viewer-upload");
     await visible("#attach-form");
     const uploader = await page.waitForSelector('#attach-form input[type="file"]');
     await uploader.uploadFile(path.join(root, "training/data/sporthorse_v2/images/test", file));
@@ -114,47 +126,82 @@ try {
   assert.equal(await page.$eval("#display-name", el => el.textContent), "朱诗嘉");
   await home();
   assert.deepEqual((await records()).map(record => record.id).sort(), [first, second].sort());
-  await click(`tr[data-id="${second}"] .horse-cell`);
+  await click("#nav-analysis");
+  await click(`#queue-list a[href="#case/${second}"]`);
   await findText("16-侧位.jpg");
-  const primaryImage = await page.$eval(".image-tile", async link => {
-    const response = await fetch(link.href);
+  const sharedRecord = (await records()).find(record => record.id === second);
+  const primaryImage = await page.evaluate(async url => {
+    const response = await fetch(url);
     const image = await createImageBitmap(await response.blob());
     return [response.status, image.width, image.height];
-  });
-  const sharedRecord = (await records()).find(record => record.id === second);
+  }, sharedRecord.images[0].url);
   assert.deepEqual(primaryImage, [200, sharedRecord.width, sharedRecord.height]);
   await click("#edit-visit"); await visible('#edit-form [name="comment"]');
   await page.locator('#edit-form [name="comment"]').fill("同事接诊，补片待复核");
   await formSubmit("#edit-form"); await findText("同事接诊，补片待复核");
   await attach("23-LF-正位.jpg");
+  const measurements = await checkCaseViewer(page, second);
   await formSubmit("#analyze-form");
-  await visible("#start-review");
+  await visible("#open-report");
   const result = (await records()).find(record => record.id === second);
-  assert.equal(result.detections.length, 1);
+  assert.equal(result.detections.length, 2);
+  assert.equal(result.threshold, 0.20);
+  assert.match(result.model, /^YOLO11s-fetlock-640@/);
   assert.equal(result.images.length, 2);
   assert.equal(result.status, "analyzed");
   assert.equal(result.archived_at, null);
   assert.equal(await page.$("#archive-visit"), null);
+  assert.match(await page.$eval("#analysis-summary.has-detections", el => el.innerText), /最高模型分数/);
   await screenshot("clinical-result");
-  await click("#start-review");
-  await visible("#review-note");
-  await page.type("#review-note", "测试复核完毕");
-  await formSubmit("#review-form");
+  await click("#nav-reviews");
+  await click(`#queue-list a[href="#report/${second}"]`);
+  await visible("#report-form");
+  const findings = "已逐张核对主片与附片，距离和角度已记录。";
+  const conclusion = "记录本次运动马球节复查结果。";
+  await writeReport(findings, conclusion);
+  await click("#save-report-draft");
+  await page.waitForFunction(async (id, text) =>
+    (await (await fetch("/api/cases/" + id)).json()).report.findings === text, {}, second, findings);
+  await page.reload();
+  await visible("#report-form");
+  assert.equal(await page.$eval('#report-form [name="findings"]', input => input.value), findings);
+  assert.equal(await page.$eval('#report-form [name="conclusion"]', input => input.value), conclusion);
+  const draft = await detail(second);
+  assert.equal(draft.report.author, "朱诗嘉");
+  assert.ok(draft.report.revision > 0); assert.equal(draft.archived_at, null);
+  assert.equal(draft.status, "analyzed");
+  await click("#logout"); await loginMember("wangyiyi");
+  await home(); await click(`tr[data-id="${second}"] .horse-cell`);
+  await openReport();
+  await click("#confirm-report");
   await visible("#archive-visit");
   await page.reload();
   await visible("#archive-visit");
-  await findText("测试复核完毕");
-  const reviewed = (await records()).find(record => record.id === second);
-  assert.equal(reviewed.reviewer, "朱诗嘉");
+  await findText(conclusion);
+  const reviewed = await detail(second);
+  assert.equal(reviewed.report.author, "朱诗嘉");
+  assert.equal(reviewed.reviewer, "王一伊");
+  assert.ok(reviewed.reviewed_at);
+  assert.deepEqual(reviewed.images[0].measurements, [measurements.distance]);
+  assert.deepEqual(reviewed.images[1].measurements, [measurements.angle]);
   assert.equal(reviewed.status, "reviewed");
   assert.equal(reviewed.archived_at, null);
+  await click("#nav-filing");
+  await visible(`#queue-list a[href="#report/${second}"]`);
+  await click('[data-filed="yes"]');
+  await visible(`#queue-list a[href="#case/${first}"]`);
+  assert.equal(await page.$(`#queue-list a[href="#report/${second}"]`), null);
+  await click('[data-filed="no"]');
+  await click(`#queue-list a[href="#report/${second}"]`);
   await click("#archive-visit");
   await waitForArchive(second);
 
   await click("#logout"); await loginMember("wangyiyi");
   await home(); await click(`tr[data-id="${second}"] .horse-cell`);
-  await findText("同事接诊，补片待复核"); await findText("朱诗嘉");
-  const signed = (await records()).find(record => record.id === second);
+  await findText("同事接诊，补片待复核");
+  await click("#open-report");
+  await findText("朱诗嘉"); await findText("王一伊"); await findText(conclusion);
+  const signed = await detail(second);
   assert.ok(signed.archived_at); assert.equal(signed.images.length, 2);
   await home(); await page.type("#case-search", "复查备注"); await visible(".row-select");
   await page.waitForFunction(() => document.querySelectorAll(".row-select").length === 1);
@@ -181,17 +228,38 @@ try {
   await click("#logout"); await loginMember("wangyiyi"); assert.deepEqual(await records(), []);
   const noFindingId = await uploadPrimary("零候选复核", "23-LF-正位.jpg");
   await formSubmit("#analyze-form");
-  await visible("#start-review");
+  await visible("#open-report");
   const noFinding = (await records()).find(record => record.id === noFindingId);
   assert.equal(noFinding.detections.length, 0);
-  await click("#start-review"); await visible("#review-note");
-  await page.type("#review-note", "已阅原图");
-  await formSubmit("#review-form"); await visible("#archive-visit");
+  assert.equal(await page.$eval("#analysis-summary.no-detections", el => {
+    const bounds = el.getBoundingClientRect();
+    return el.innerText.includes("未检出") && bounds.top >= 0 && bounds.bottom <= innerHeight
+      && bounds.bottom <= document.querySelector("#viewer-host").getBoundingClientRect().top;
+  }), true);
+  await openReport(); await writeReport("　", " ");
+  await click("#confirm-report"); await visible("#sign-empty-review");
+  assert.equal((await detail(noFindingId)).status, "analyzed");
+  await click("#cancel-empty-review");
+  assert.equal(await page.$eval("#record-dialog", element => element.open), false);
+  assert.equal((await detail(noFindingId)).reviewed_at, null);
+  await click("#confirm-report"); await visible("#sign-empty-review"); await page.keyboard.press("Escape");
+  await page.waitForFunction(() => !document.querySelector("#record-dialog").open);
+  assert.equal((await detail(noFindingId)).report.revision, 0);
+  await click("#confirm-report"); await click("#sign-empty-review"); await visible("#archive-visit");
+  await findText("复核人已确认留空提交");
+  assert.equal((await detail(noFindingId)).empty_review_confirmed, true);
   await click("#archive-visit"); await waitForArchive(noFindingId);
   await home(); await click(".row-delete"); await click("#confirm-delete");
   await page.waitForFunction(async () => (await (await fetch("/api/cases")).json()).length === 0);
+  await click("#nav-work"); await visible("#visit-form");
+  const singleFieldId = await uploadPrimary("单项复核", "23-LF-正位.jpg");
+  await formSubmit("#analyze-form"); await openReport();
+  await writeReport("", "需核对侧位片。");
+  await click("#confirm-report"); await visible("#archive-visit");
+  assert.equal((await detail(singleFieldId)).empty_review_confirmed, false);
+  assert.equal((await detail(singleFieldId)).review_note, "需核对侧位片。");
   assert.deepEqual(errors, []);
-  console.log("PASS: shared team visits, cross-member edit and image access, supplemental image, live inference, signed review, archive, search, mobile layout and shared deletion.");
+  console.log("PASS: shared visits, two-film comparison, transformed pixel and angle measurements, live inference, report draft recovery, author/reviewer signatures, archive, search, mobile layout and shared deletion.");
 } finally {
   try { await browser?.close(); }
   finally { service.kill(); await closed; await rm(db, {recursive:true,force:true}); }

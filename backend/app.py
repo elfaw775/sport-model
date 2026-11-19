@@ -2,6 +2,7 @@ import hashlib
 import io
 import json
 import logging
+import math
 import os
 import secrets
 import sqlite3
@@ -15,7 +16,7 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Respon
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from . import detector
 
@@ -27,20 +28,22 @@ MAX_BYTES = 10 * 1024 * 1024
 MIMES = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 TEAM = {"wangyiyi": "王一伊", "zhushijia": "朱诗嘉", "alimire": "阿里米热", "liqihang": "李其杭"}
 CASE_FIELDS = """number, owner AS created_by, horse_name, comment, created_at, archived_at, status,
-    detections, model, threshold, analyzed_at, reviewer, review_note, reviewed_at"""
+    detections, model, threshold, analyzed_at, reviewer, review_note, reviewed_at, empty_review_confirmed"""
 CASE_SCHEMA = """CREATE TABLE IF NOT EXISTS cases (
     number INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL,
     horse_name TEXT NOT NULL, comment TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,
     archived_at TEXT, status TEXT NOT NULL DEFAULT 'registered', detections TEXT NOT NULL DEFAULT '[]',
-    model TEXT, threshold REAL, analyzed_at TEXT, reviewer TEXT, review_note TEXT, reviewed_at TEXT
+    model TEXT, threshold REAL, analyzed_at TEXT, reviewer TEXT, review_note TEXT, reviewed_at TEXT,
+    empty_review_confirmed INTEGER NOT NULL DEFAULT 0
 )"""
 IMAGES_SCHEMA = """CREATE TABLE IF NOT EXISTS case_images (
     case_number INTEGER NOT NULL REFERENCES cases(number) ON DELETE CASCADE,
     position INTEGER NOT NULL, filename TEXT NOT NULL, projection TEXT NOT NULL,
     quality_confirmed INTEGER NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL,
+    quality TEXT NOT NULL DEFAULT '未确认', metadata_reviewer TEXT, metadata_reviewed_at TEXT,
     mime TEXT NOT NULL, original BLOB NOT NULL, PRIMARY KEY(case_number, position)
 )"""
-Projection = Literal["正位", "侧位", "斜位", "其他"]
+Projection = Literal["正位", "侧位", "斜位", "背内侧-掌外侧斜位", "背外侧-掌内侧斜位", "其他"]
 
 
 def prepare_database(database, team_mode):
@@ -52,6 +55,8 @@ def prepare_database(database, team_mode):
         high_water = database.execute("SELECT seq FROM sqlite_sequence WHERE name='cases'").fetchone()
         database.execute("ALTER TABLE cases RENAME TO cases_v1")
     database.execute(CASE_SCHEMA)
+    if "empty_review_confirmed" not in {row["name"] for row in database.execute("PRAGMA table_info(cases)")}:
+        database.execute("ALTER TABLE cases ADD COLUMN empty_review_confirmed INTEGER NOT NULL DEFAULT 0")
     database.execute(IMAGES_SCHEMA)
     if legacy:
         database.execute("""INSERT INTO cases(number, owner, horse_name, created_at, status, detections,
@@ -59,12 +64,26 @@ def prepare_database(database, team_mode):
             SELECT number, owner, horse_name, created_at, status, detections, model, threshold,
             analyzed_at, reviewer, review_note, reviewed_at, CASE WHEN status='reviewed' THEN reviewed_at END
             FROM cases_v1""")
-        database.execute("""INSERT INTO case_images SELECT number, 0, filename, projection,
+        database.execute("""INSERT INTO case_images(case_number, position, filename, projection,
+            quality_confirmed, width, height, mime, original) SELECT number, 0, filename, projection,
             quality_confirmed, width, height, mime, original FROM cases_v1""")
         database.execute("DROP TABLE cases_v1")
         if high_water:
             database.execute("UPDATE sqlite_sequence SET seq = max(seq, ?) WHERE name='cases'", (high_water["seq"],))
     database.execute("CREATE INDEX IF NOT EXISTS cases_owner ON cases(owner, number)")
+    image_columns = {row["name"] for row in database.execute("PRAGMA table_info(case_images)")}
+    if "quality" not in image_columns:
+        database.execute("ALTER TABLE case_images ADD COLUMN quality TEXT NOT NULL DEFAULT '未确认'")
+        database.execute("ALTER TABLE case_images ADD COLUMN metadata_reviewer TEXT")
+        database.execute("ALTER TABLE case_images ADD COLUMN metadata_reviewed_at TEXT")
+    database.execute("""CREATE TABLE IF NOT EXISTS image_measurements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, case_number INTEGER NOT NULL, position INTEGER NOT NULL,
+        kind TEXT NOT NULL, points TEXT NOT NULL, value REAL NOT NULL, created_by TEXT NOT NULL, created_at TEXT NOT NULL,
+        FOREIGN KEY (case_number,position) REFERENCES case_images(case_number,position) ON DELETE CASCADE)""")
+    database.execute("CREATE INDEX IF NOT EXISTS measurements_image ON image_measurements(case_number,position)")
+    database.execute("""CREATE TABLE IF NOT EXISTS case_reports (
+        case_number INTEGER PRIMARY KEY REFERENCES cases(number) ON DELETE CASCADE, findings TEXT NOT NULL,
+        conclusion TEXT NOT NULL, author TEXT NOT NULL, updated_at TEXT NOT NULL, revision INTEGER NOT NULL)""")
     if team_mode and database.execute("PRAGMA user_version").fetchone()[0] == 0:
         database.execute("UPDATE cases SET owner='wangyiyi' WHERE owner='demo'")
         for username, name in TEAM.items():
@@ -79,7 +98,49 @@ class Credentials(BaseModel):
 
 
 class Review(BaseModel):
-    note: str = Field(min_length=1, max_length=2000)
+    model_config = ConfigDict(extra="forbid")
+    note: str = Field(max_length=2000)
+    empty_review_confirmed: bool = Field(default=False, strict=True)
+
+
+class ReportDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    findings: str = Field(max_length=4000)
+    conclusion: str = Field(max_length=2000)
+    revision: int = Field(ge=0, strict=True)
+
+
+class ReportConfirmation(ReportDraft):
+    empty_review_confirmed: bool = Field(default=False, strict=True)
+
+
+class ImageReview(BaseModel):
+    projection: Projection | Literal["未确认"] | None = None
+    quality: Literal["未确认", "良好", "一般", "不适合"] | None = None
+
+
+class ImagePoint(BaseModel):
+    x: float = Field(ge=0, allow_inf_nan=False, strict=True)
+    y: float = Field(ge=0, allow_inf_nan=False, strict=True)
+
+
+class Measurement(BaseModel):
+    kind: Literal["distance", "angle"]
+    points: list[ImagePoint] = Field(min_length=2, max_length=3)
+
+    def value(self, width, height):
+        if any(p.x >= width or p.y >= height for p in self.points):
+            raise HTTPException(422, "测量点超出原图范围")
+        if len(self.points) != (2 if self.kind == "distance" else 3):
+            raise HTTPException(422, "距离需要两个点，角度需要三个点")
+        if any(a == b for a, b in zip(self.points, self.points[1:])):
+            raise HTTPException(422, "相邻测量点不能重合")
+        a, b = self.points[:2]
+        if self.kind == "distance":
+            return math.hypot(a.x - b.x, a.y - b.y)
+        c = self.points[2]
+        angle = abs(math.degrees(math.atan2(a.y - b.y, a.x - b.x) - math.atan2(c.y - b.y, c.x - b.x)))
+        return min(angle, 360 - angle)
 
 
 class Visit(BaseModel):
@@ -110,6 +171,14 @@ def case_number(identifier):
     return number
 
 
+def image_position(image_id):
+    if image_id == "primary":
+        return 0
+    if image_id.isascii() and image_id.isdecimal() and len(image_id) <= 18 and not image_id.startswith("0"):
+        return int(image_id)
+    raise HTTPException(404, "未找到此影像")
+
+
 def load_cases(database, owners, number=None):
     if not database.in_transaction:
         database.execute("BEGIN")
@@ -123,19 +192,38 @@ def load_cases(database, owners, number=None):
         case = dict(row)
         key = case.pop("number")
         case.update(id=f"EV-{key:06d}", detections=json.loads(case["detections"]), images=[],
+                    empty_review_confirmed=bool(case["empty_review_confirmed"]),
                     has_image=False, filename=None, projection=None, width=None, height=None, quality_confirmed=False)
+        case["report"] = {"findings": "", "conclusion": case["review_note"] or "", "author": case["reviewer"],
+                          "updated_at": case["reviewed_at"], "revision": 0}
         records[key] = case
-    for row in database.execute(f"""SELECT case_number, position, filename, projection, width, height, quality_confirmed
+    for row in database.execute(f"""SELECT case_number, findings, conclusion, author, updated_at, revision
+        FROM case_reports JOIN cases ON number=case_number WHERE {condition}""", params):
+        report = dict(row)
+        records[report.pop("case_number")]["report"] = report
+    images = {}
+    for row in database.execute(f"""SELECT case_number, position, filename, projection, width, height, quality_confirmed,
+        quality, metadata_reviewer, metadata_reviewed_at
         FROM case_images JOIN cases ON number=case_number WHERE {condition} ORDER BY case_number, position""", params):
         image = dict(row)
-        case = records[image.pop("case_number")]
+        key = image.pop("case_number")
+        case = records[key]
         position = image.pop("position")
         image["quality_confirmed"] = bool(image["quality_confirmed"])
         if position == 0:
             case.update(image, has_image=True)
         image["id"] = str(position) if position else "primary"
         image["url"] = f"/api/cases/{case['id']}/images/{image['id']}"
+        image["measurements"] = []
+        images[key, position] = image
         case["images"].append(image)
+    for row in database.execute(f"""SELECT case_number, position, id, kind, points, value, created_by,
+        image_measurements.created_at FROM image_measurements JOIN cases ON number=case_number
+        WHERE {condition} ORDER BY id""", params):
+        mark = dict(row)
+        image = images[mark.pop("case_number"), mark.pop("position")]
+        mark.update(id=str(mark["id"]), points=json.loads(mark["points"]), unit="px" if mark["kind"] == "distance" else "°")
+        image["measurements"].append(mark)
     return list(records.values())
 
 
@@ -154,6 +242,33 @@ def original(database, number, owner, position=0):
     if row is None:
         raise HTTPException(404, "未找到此影像")
     return row
+
+
+def editable_image(database, number, owner, position):
+    database.execute("BEGIN IMMEDIATE")
+    row = database.execute("""SELECT width, height, status FROM case_images JOIN cases ON number=case_number
+        WHERE number=? AND owner=? AND position=?""", (number, owner, position)).fetchone()
+    if row is None:
+        raise HTTPException(404, "未找到此影像")
+    if row["status"] == "reviewed":
+        raise HTTPException(409, "病例已复核，阅片记录只读")
+    return row
+
+
+def store_report(database, number, case, draft, author, *, confirmed_empty=False):
+    findings, conclusion = draft.findings.strip(), draft.conclusion.strip()
+    if not case["has_image"] or case["status"] == "reviewed":
+        raise HTTPException(409, "请在上传影像后、确认复核前编辑报告")
+    report = case["report"]
+    if draft.revision != report["revision"]:
+        raise HTTPException(409, "报告已更新，请重新读取病例后核对")
+    if not (findings or conclusion or confirmed_empty):
+        raise HTTPException(422, "请填写影像所见或人工结论")
+    if confirmed_empty or (findings, conclusion) != (report["findings"], report["conclusion"]):
+        database.execute("""INSERT INTO case_reports(case_number,findings,conclusion,author,updated_at,revision)
+            VALUES (?,?,?,?,?,?) ON CONFLICT(case_number) DO UPDATE SET findings=excluded.findings,
+            conclusion=excluded.conclusion, author=excluded.author, updated_at=excluded.updated_at,
+            revision=excluded.revision""", (number, findings, conclusion, author, timestamp(), draft.revision + 1))
 
 
 def inspect_image(payload):
@@ -239,7 +354,7 @@ def create_app(data_dir=None):
     async def protect_api(request: Request, call_next):
         if request.url.path.startswith("/api/"):
             origin = request.headers.get("origin")
-            if request.method in {"POST", "PATCH", "DELETE"} and origin and origin != str(request.base_url).rstrip("/"):
+            if request.method in {"POST", "PUT", "PATCH", "DELETE"} and origin and origin != str(request.base_url).rstrip("/"):
                 return JSONResponse({"detail": "仅接受同源操作"}, status_code=403)
             size = request.headers.get("content-length", "")
             if size.isdigit() and int(size) > MAX_BYTES + 65536:
@@ -370,15 +485,45 @@ def create_app(data_dir=None):
 
     @api.get("/api/cases/{identifier}/images/{image_id}")
     def visit_image(identifier: str, image_id: str, owner: str = Depends(record_owner)):
-        if image_id == "primary":
-            position = 0
-        elif image_id.isascii() and image_id.isdecimal() and 0 < len(image_id) <= 18 and not image_id.startswith("0"):
-            position = int(image_id)
-        else:
-            raise HTTPException(404, "未找到此影像")
         with connect() as database:
-            row = original(database, case_number(identifier), owner, position)
+            row = original(database, case_number(identifier), owner, image_position(image_id))
         return Response(row["original"], media_type=row["mime"])
+
+    @api.patch("/api/cases/{identifier}/images/{image_id}")
+    def review_image(identifier: str, image_id: str, update: ImageReview, owner: str = Depends(record_owner),
+                     user: str = Depends(current_user)):
+        if update.quality is None and update.projection is None:
+            raise HTTPException(422, "请选择体位或影像质量")
+        number, position = case_number(identifier), image_position(image_id)
+        with connect() as database:
+            editable_image(database, number, owner, position)
+            database.execute("""UPDATE case_images SET projection=COALESCE(?, projection), quality=COALESCE(?, quality),
+                metadata_reviewer=?, metadata_reviewed_at=? WHERE case_number=? AND position=?""",
+                (update.projection, update.quality, accounts[user][1], timestamp(), number, position))
+            return read_case(database, number, owner)
+
+    @api.post("/api/cases/{identifier}/images/{image_id}/measurements", status_code=201)
+    def add_measurement(identifier: str, image_id: str, measurement: Measurement, owner: str = Depends(record_owner),
+                        user: str = Depends(current_user)):
+        number, position = case_number(identifier), image_position(image_id)
+        with connect() as database:
+            image = editable_image(database, number, owner, position)
+            value = measurement.value(image["width"], image["height"])
+            points = json.dumps([p.model_dump() for p in measurement.points], allow_nan=False)
+            database.execute("""INSERT INTO image_measurements(case_number,position,kind,points,value,created_by,created_at)
+                VALUES (?,?,?,?,?,?,?)""", (number, position, measurement.kind, points, value, accounts[user][1], timestamp()))
+            return read_case(database, number, owner)
+
+    @api.delete("/api/cases/{identifier}/images/{image_id}/measurements/{measurement_id}")
+    def remove_measurement(identifier: str, image_id: str, measurement_id: str, owner: str = Depends(record_owner)):
+        number, position = case_number(identifier), image_position(image_id)
+        with connect() as database:
+            editable_image(database, number, owner, position)
+            changed = database.execute("DELETE FROM image_measurements WHERE case_number=? AND position=? AND id=?",
+                                       (number, position, measurement_id))
+            if not changed.rowcount:
+                raise HTTPException(404, "未找到此影像的测量记录")
+            return read_case(database, number, owner)
 
     @api.get("/api/cases/{identifier}/image")
     def case_image(identifier: str, owner: str = Depends(record_owner)):
@@ -410,20 +555,41 @@ def create_app(data_dir=None):
                 raise HTTPException(409, "本病例已有分析结果")
             return read_case(database, number, owner)
 
-    @api.post("/api/cases/{identifier}/review")
-    def review(identifier: str, review: Review, owner: str = Depends(record_owner), reviewer: str = Depends(current_user)):
-        if not review.note.strip():
-            raise HTTPException(422, "请填写复核意见")
+    @api.put("/api/cases/{identifier}/report")
+    def report_draft(identifier: str, draft: ReportDraft, owner: str = Depends(record_owner),
+                     user: str = Depends(current_user)):
         number = case_number(identifier)
         with connect() as database:
-            changed = database.execute("""
-                UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?
-                WHERE number=? AND owner=? AND status='analyzed'
-            """, (accounts[reviewer][1], review.note.strip(), timestamp(), number, owner))
+            database.execute("BEGIN IMMEDIATE")
             case = read_case(database, number, owner)
-            if not changed.rowcount:
+            store_report(database, number, case, draft, accounts[user][1])
+            return read_case(database, number, owner)
+
+    @api.post("/api/cases/{identifier}/review")
+    def review(identifier: str, review: ReportConfirmation | Review, owner: str = Depends(record_owner),
+               reviewer: str = Depends(current_user)):
+        number = case_number(identifier)
+        with connect() as database:
+            database.execute("BEGIN IMMEDIATE")
+            case = read_case(database, number, owner)
+            if case["status"] != "analyzed":
                 raise HTTPException(409, "仅待复核病例可以提交复核")
-            return case
+            name = accounts[reviewer][1]
+            if isinstance(review, ReportConfirmation):
+                note = review.conclusion.strip()
+                empty = not (review.findings.strip() or note)
+            else:
+                if case["report"]["revision"]:
+                    raise HTTPException(409, "已有结构化草稿，请核对最新报告后提交")
+                note = review.note.strip()
+                empty = not note
+            if empty and not review.empty_review_confirmed:
+                raise HTTPException(422, "复核内容为空，请再次确认留空提交")
+            if isinstance(review, ReportConfirmation):
+                store_report(database, number, case, review, name, confirmed_empty=empty)
+            database.execute("""UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?,
+                empty_review_confirmed=? WHERE number=? AND owner=?""", (name, note, timestamp(), empty, number, owner))
+            return read_case(database, number, owner)
 
     api.mount("/static", StaticFiles(directory=ROOT / "backend/static"), name="assets")
     api.mount("/", StaticFiles(directory=ROOT / "backend/static", html=True), name="workstation")

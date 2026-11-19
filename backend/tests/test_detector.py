@@ -14,13 +14,22 @@ def test_decode_suppresses_duplicate_and_restores_non_square_coordinates():
     assert [result[0][axis] for axis in ("x1", "y1", "x2", "y2")] == [120, 60, 200, 100]
 
 
-def test_shipped_weights_on_two_repository_radiographs():
-    examples = Path(__file__).resolve().parents[2] / "training/data/sporthorse_v2/images/test"
-    with Image.open(examples / "16-侧位.jpg") as image:
-        boxes = detector.detect(image)
-        assert len(boxes) == 1
-        assert 0.20 < boxes[0]["score"] < 0.23
-        assert 0 <= boxes[0]["x1"] < boxes[0]["x2"] <= image.width
-        assert 0 <= boxes[0]["y1"] < boxes[0]["y2"] <= image.height
-    with Image.open(examples / "23-LF-正位.jpg") as image:
-        assert detector.detect(image) == []
+def test_released_onnx_matches_reference_pt_predictions_on_all_evaluation_films():
+    import json
+    from zipfile import ZipFile
+
+    root = Path(__file__).resolve().parents[2] / "training"
+    assert detector.THRESHOLD == .20
+    with ZipFile(root / "results/comparison-2026-11-18/predictions.zip") as reference:
+        for split, count in (("val", 13), ("test", 12)):
+            predictions = json.loads(reference.read(f"yolo/{split}_predictions.json"))
+            assert len(predictions) == count
+            for name, all_boxes in predictions.items():
+                expected = [box for box in all_boxes if box["score"] >= .20]
+                with Image.open(root / "data/sporthorse_v2/images" / split / name) as image:
+                    actual = detector.detect(image)
+                assert len(actual) == len(expected), name
+                for box, target in zip(actual, expected):
+                    assert abs(box["score"] - target["score"]) < 1e-4, name
+                    for key in ("x1", "y1", "x2", "y2"):
+                        assert abs(box[key] - target[key]) < .1, name

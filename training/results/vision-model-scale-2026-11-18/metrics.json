@@ -1,0 +1,1569 @@
+{
+  "unit": "one film per horse, following project assumption",
+  "splits": {
+    "train": 59,
+    "val": 13,
+    "test": 12
+  },
+  "iou_min": 0.5,
+  "models": {
+    "qwen3-2b-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 10,
+          "fp": 3,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 15,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 16
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 9,
+          "fp": 2,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 1,
+            "inference_error": 0
+          },
+          "unresolved_positive": 1,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.9,
+          "specificity": 0.0,
+          "accuracy": 0.75,
+          "balanced_accuracy": 0.45
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 12,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 12
+        }
+      },
+      "predictions_sha256": "aa0d2de44780edb9b76e49234a8cb4472ecf32bc36a4af6c54ae5b214cf3fb77",
+      "checkpoint": "mlx-community/Qwen3-VL-2B-Instruct-4bit",
+      "median_seconds_held_out": 1.8437999999999999
+    },
+    "qwen3-2b-adapted": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 9,
+          "fp": 3,
+          "tn": 0,
+          "fn": 1,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.9,
+          "specificity": 0.0,
+          "accuracy": 0.6923076923076923,
+          "balanced_accuracy": 0.45
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 13,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 13
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 7,
+          "fp": 1,
+          "tn": 1,
+          "fn": 3,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.7,
+          "specificity": 0.5,
+          "accuracy": 0.6666666666666666,
+          "balanced_accuracy": 0.6
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 7,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 8
+        }
+      },
+      "predictions_sha256": "182219e96a2b45293547d6ffc50076f2c1547e324c020dc59984142e71a9e5d7",
+      "checkpoint": "mlx-community/Qwen3-VL-2B-Instruct-4bit",
+      "median_seconds_held_out": 1.10825
+    },
+    "qwen25-vl-7b-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 0,
+          "fp": 0,
+          "tn": 3,
+          "fn": 10,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.23076923076923078,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 0,
+          "fp": 0,
+          "tn": 2,
+          "fn": 10,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.16666666666666666,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "predictions_sha256": "f44b4dc6671032aec8ad61fa355a6fe5ef0ff1ec138fafffd515bf8cbdb79703",
+      "checkpoint": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
+      "inference_seconds": 122.406,
+      "peak_memory_gb": 6.3966,
+      "median_seconds_held_out": 5.2866
+    },
+    "qwen25-vl-7b-native": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 0,
+          "fp": 0,
+          "tn": 3,
+          "fn": 10,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.23076923076923078,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 0,
+          "fp": 0,
+          "tn": 2,
+          "fn": 10,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.16666666666666666,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "predictions_sha256": "ab79c3889f9ba3bfc3361661b3091cdc0bd86abb3f32503bff40cfeb8dad4649",
+      "checkpoint": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
+      "inference_seconds": 98.0813,
+      "peak_memory_gb": 6.3966,
+      "median_seconds_held_out": 6.0906
+    },
+    "qwen25-vl-7b-bf16-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 0,
+          "fp": 0,
+          "tn": 3,
+          "fn": 10,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.23076923076923078,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 0,
+          "fp": 0,
+          "tn": 2,
+          "fn": 10,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.16666666666666666,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "predictions_sha256": "6645d9a3997ee7d21633647cae88af49e4e8adc0f42f276b5cdd6310ebe7621e",
+      "checkpoint": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
+      "inference_seconds": 104.2558,
+      "peak_memory_gb": 6.3966,
+      "median_seconds_held_out": 4.3179
+    },
+    "qwen25-vl-7b-adapted": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 1,
+          "fp": 0,
+          "tn": 3,
+          "fn": 9,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.1,
+          "specificity": 1.0,
+          "accuracy": 0.3076923076923077,
+          "balanced_accuracy": 0.55
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 1
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 1,
+          "fp": 0,
+          "tn": 2,
+          "fn": 9,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.1,
+          "specificity": 1.0,
+          "accuracy": 0.25,
+          "balanced_accuracy": 0.55
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 1
+        }
+      },
+      "predictions_sha256": "e615f13319c7d22d0273a662fa99e82a839c176ddd0fa08e1f3a6670e0bc4866",
+      "checkpoint": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
+      "inference_seconds": 101.8302,
+      "peak_memory_gb": 6.398,
+      "median_seconds_held_out": 4.38235
+    },
+    "qwen3-vl-8b-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 2,
+          "fp": 0,
+          "tn": 3,
+          "fn": 8,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.2,
+          "specificity": 1.0,
+          "accuracy": 0.38461538461538464,
+          "balanced_accuracy": 0.6
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 2
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 2,
+          "fp": 0,
+          "tn": 2,
+          "fn": 7,
+          "unresolved": {
+            "uncertain": 1,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 1,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.2,
+          "specificity": 1.0,
+          "accuracy": 0.3333333333333333,
+          "balanced_accuracy": 0.6
+        },
+        "lesion_level_iou50": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 10,
+          "reference_lesions": 12,
+          "predicted_boxes": 2
+        }
+      },
+      "predictions_sha256": "bab54c9b59567a4098944a4e1069d805212ef4adc2c25a054e980698c0b76d55",
+      "checkpoint": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
+      "inference_seconds": 106.6088,
+      "peak_memory_gb": 6.7577,
+      "median_seconds_held_out": 4.3968
+    },
+    "qwen3-vl-8b-adapted": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 5,
+          "fp": 0,
+          "tn": 3,
+          "fn": 5,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.5,
+          "specificity": 1.0,
+          "accuracy": 0.6153846153846154,
+          "balanced_accuracy": 0.75
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 5,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 5
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 4,
+          "fp": 0,
+          "tn": 2,
+          "fn": 6,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.4,
+          "specificity": 1.0,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.7
+        },
+        "lesion_level_iou50": {
+          "tp": 2,
+          "fp": 2,
+          "fn": 10,
+          "reference_lesions": 12,
+          "predicted_boxes": 4
+        }
+      },
+      "predictions_sha256": "585399808c163639936cfb036ef96087920f276ce96685b5715c74bc6acd87d0",
+      "checkpoint": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
+      "inference_seconds": 103.1687,
+      "peak_memory_gb": 6.7594,
+      "median_seconds_held_out": 3.9680999999999997
+    },
+    "deepseek-vision-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 10,
+          "fp": 3,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 23,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 23
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 10,
+          "fp": 2,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.8333333333333334,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 22,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 22
+        }
+      },
+      "predictions_sha256": "576d10fb8c97a44566585bde8fddb4b0a40d56a38173826432dc636de1bb57f9",
+      "checkpoint": "mlx-community/deepseek-vl2-tiny-4bit",
+      "inference_seconds": 59.423,
+      "peak_memory_gb": 3.7531,
+      "median_seconds_held_out": 2.79155
+    },
+    "deepseek-vision-grounding": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 0,
+          "fp": 0,
+          "tn": 3,
+          "fn": 6,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 4,
+            "inference_error": 0
+          },
+          "unresolved_positive": 4,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.23076923076923078,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 0,
+          "fp": 0,
+          "tn": 2,
+          "fn": 7,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 3,
+            "inference_error": 0
+          },
+          "unresolved_positive": 3,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.16666666666666666,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "predictions_sha256": "9adf0e1c9e8dd2718ade8864a7499b10c8888daac02eb1da064e986dec4e7d94",
+      "checkpoint": "mlx-community/deepseek-vl2-tiny-4bit",
+      "inference_seconds": 49.9925,
+      "peak_memory_gb": 3.7531,
+      "median_seconds_held_out": 2.0595
+    },
+    "mimo-vl-7b-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 0,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 13,
+            "inference_error": 0
+          },
+          "unresolved_positive": 10,
+          "unresolved_negative": 3,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 0.0,
+          "accuracy": 0.0,
+          "balanced_accuracy": 0.0
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 0,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 12,
+            "inference_error": 0
+          },
+          "unresolved_positive": 10,
+          "unresolved_negative": 2,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 0.0,
+          "accuracy": 0.0,
+          "balanced_accuracy": 0.0
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "predictions_sha256": "f36fafcfd4129ae770a0be390f815cf40958a95f54af40ae610883a313f6299b",
+      "checkpoint": "mlx-community/MiMo-VL-7B-RL-4bit",
+      "inference_seconds": 403.6467,
+      "peak_memory_gb": 6.5285,
+      "median_seconds_held_out": 16.9657
+    },
+    "mimo-vl-7b-parsed-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 0,
+          "fp": 0,
+          "tn": 3,
+          "fn": 6,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 4,
+            "inference_error": 0
+          },
+          "unresolved_positive": 4,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.23076923076923078,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 0,
+          "fp": 0,
+          "tn": 2,
+          "fn": 6,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 4,
+            "inference_error": 0
+          },
+          "unresolved_positive": 4,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.16666666666666666,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "predictions_sha256": "da3749c8fd7f65ec5ffff149a57bd487a145f6369dd6d58d50d8d96da0a436b1",
+      "checkpoint": "mlx-community/MiMo-VL-7B-RL-4bit",
+      "inference_seconds": 403.6467,
+      "peak_memory_gb": 6.5285,
+      "median_seconds_held_out": 16.9657
+    },
+    "qwen35-9b-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 0,
+          "fp": 0,
+          "tn": 3,
+          "fn": 3,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 7,
+            "inference_error": 0
+          },
+          "unresolved_positive": 7,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.23076923076923078,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 0,
+          "fp": 0,
+          "tn": 2,
+          "fn": 6,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 4,
+            "inference_error": 0
+          },
+          "unresolved_positive": 4,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.0,
+          "specificity": 1.0,
+          "accuracy": 0.16666666666666666,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 0
+        }
+      },
+      "predictions_sha256": "93cf57f5cc932f6b6f25c03fe5818c9d2f134bf8e4562ff9bdaad64312a30499",
+      "checkpoint": "mlx-community/Qwen3.5-9B-4bit",
+      "inference_seconds": 139.4054,
+      "peak_memory_gb": 7.1519,
+      "median_seconds_held_out": 5.87435
+    },
+    "qwen35-9b-parsed-direct": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 7,
+          "fp": 0,
+          "tn": 3,
+          "fn": 3,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.7,
+          "specificity": 1.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.85
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 6,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 7
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 4,
+          "fp": 0,
+          "tn": 2,
+          "fn": 6,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.4,
+          "specificity": 1.0,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.7
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 4,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 4
+        }
+      },
+      "predictions_sha256": "c5f517f0455a1c57d8779eceb6610b54a8c5dd0323b338dce42bea742530a71a",
+      "checkpoint": "mlx-community/Qwen3.5-9B-4bit",
+      "inference_seconds": 139.4054,
+      "peak_memory_gb": 7.1519,
+      "median_seconds_held_out": 5.87435
+    },
+    "mimo-vl-7b-final-answer": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 2,
+          "fp": 0,
+          "tn": 3,
+          "fn": 7,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 1,
+            "inference_error": 0
+          },
+          "unresolved_positive": 1,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.2,
+          "specificity": 1.0,
+          "accuracy": 0.38461538461538464,
+          "balanced_accuracy": 0.6
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 2
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 2,
+          "fp": 0,
+          "tn": 2,
+          "fn": 8,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.2,
+          "specificity": 1.0,
+          "accuracy": 0.3333333333333333,
+          "balanced_accuracy": 0.6
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 2
+        }
+      },
+      "predictions_sha256": "74ecff94894b8b29dacf9647079680fc18ca2d76c0d02443395095a74fda2047",
+      "checkpoint": "mlx-community/MiMo-VL-7B-RL-4bit",
+      "inference_seconds": 551.7461,
+      "peak_memory_gb": 6.5285,
+      "median_seconds_held_out": 17.302599999999998
+    },
+    "yolo-qwen-crop-review": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 7,
+          "fp": 0,
+          "tn": 3,
+          "fn": 3,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.7,
+          "specificity": 1.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.85
+        },
+        "lesion_level_iou50": {
+          "tp": 5,
+          "fp": 6,
+          "fn": 7,
+          "reference_lesions": 12,
+          "predicted_boxes": 11
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 3,
+          "fp": 0,
+          "tn": 2,
+          "fn": 7,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.3,
+          "specificity": 1.0,
+          "accuracy": 0.4166666666666667,
+          "balanced_accuracy": 0.65
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 2,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 5
+        }
+      },
+      "predictions_sha256": "28a08759157308b04d8bea2ab90f5fba9a7f96a4f2b9c126e7f6cebd74a3db5f"
+    },
+    "deployed_yolo": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 9,
+          "fp": 0,
+          "tn": 3,
+          "fn": 1,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.9,
+          "specificity": 1.0,
+          "accuracy": 0.9230769230769231,
+          "balanced_accuracy": 0.95
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 15,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 18
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 6,
+          "fp": 0,
+          "tn": 2,
+          "fn": 4,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.6,
+          "specificity": 1.0,
+          "accuracy": 0.6666666666666666,
+          "balanced_accuracy": 0.8
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 9,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 12
+        }
+      }
+    },
+    "corrected_yolo640": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 8,
+          "fp": 0,
+          "tn": 3,
+          "fn": 2,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.8,
+          "specificity": 1.0,
+          "accuracy": 0.8461538461538461,
+          "balanced_accuracy": 0.9
+        },
+        "lesion_level_iou50": {
+          "tp": 5,
+          "fp": 11,
+          "fn": 7,
+          "reference_lesions": 12,
+          "predicted_boxes": 16
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 4,
+          "fp": 0,
+          "tn": 2,
+          "fn": 6,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.4,
+          "specificity": 1.0,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.7
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 5,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 8
+        }
+      }
+    },
+    "corrected_yolo640_val_selected": {
+      "val": {
+        "cutoff": 0.2,
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 7,
+          "fp": 0,
+          "tn": 3,
+          "fn": 3,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.7,
+          "specificity": 1.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.85
+        },
+        "lesion_level_iou50": {
+          "tp": 5,
+          "fp": 6,
+          "fn": 7,
+          "reference_lesions": 12,
+          "predicted_boxes": 11
+        }
+      },
+      "test": {
+        "cutoff": 0.2,
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 3,
+          "fp": 0,
+          "tn": 2,
+          "fn": 7,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.3,
+          "specificity": 1.0,
+          "accuracy": 0.4166666666666667,
+          "balanced_accuracy": 0.65
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 2,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 5
+        }
+      }
+    },
+    "train_median_box": {
+      "val": {
+        "normalized_xyxy": [
+          0.37883249999999996,
+          0.3596525,
+          0.688947,
+          0.734849
+        ],
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 10,
+          "fp": 3,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 12,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 13
+        }
+      },
+      "test": {
+        "normalized_xyxy": [
+          0.37883249999999996,
+          0.3596525,
+          0.688947,
+          0.734849
+        ],
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 10,
+          "fp": 2,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.8333333333333334,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 11,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 12
+        }
+      }
+    },
+    "always_positive_image_only": {
+      "val": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 10,
+          "fp": 3,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 13,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.5
+        }
+      },
+      "test": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 10,
+          "fp": 2,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 12,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.8333333333333334,
+          "balanced_accuracy": 0.5
+        }
+      }
+    }
+  },
+  "paired": {
+    "qwen3-2b-direct vs qwen3-vl-8b-direct": {
+      "val": {
+        "paired_lesions": {
+          "retained": 0,
+          "both_missed": 10,
+          "gained": [
+            "18-正位.jpg#1"
+          ],
+          "lost": [
+            "39-正位.jpg#1"
+          ]
+        },
+        "paired_correct_films": {
+          "retained": 2,
+          "both_missed": 0,
+          "gained": [
+            "1-侧位.png",
+            "10-LH-侧位.jpg",
+            "17-LH-侧位.jpg"
+          ],
+          "lost": [
+            "26-LF-正位.jpg",
+            "29-RF-正位.jpg",
+            "39-正位.jpg",
+            "41-侧位.jpg",
+            "50-正位.jpg",
+            "57-LF-正+侧，近端籽骨顶端骨折.jpg",
+            "58-正位.jpg",
+            "73-侧位 p1骨折.jpg"
+          ]
+        }
+      },
+      "test": {
+        "paired_lesions": {
+          "retained": 0,
+          "both_missed": 10,
+          "gained": [
+            "16-侧位.jpg#1",
+            "34-LF-正+侧，P1骨折.jpg#2"
+          ],
+          "lost": []
+        },
+        "paired_correct_films": {
+          "retained": 1,
+          "both_missed": 0,
+          "gained": [
+            "34-LF-正+侧，P1骨折.jpg",
+            "7-RF-正位.jpg",
+            "8-RF-侧位.jpg"
+          ],
+          "lost": [
+            "23-LF-正位.jpg",
+            "24-LH-侧位.jpg",
+            "38-正位.jpg",
+            "56-正位.jpg",
+            "61-LF-正位+斜位.jpg",
+            "62-RF-正位+侧位.jpg",
+            "7-LF-正位.jpg",
+            "75-正位 p1骨折.jpg"
+          ]
+        }
+      }
+    },
+    "qwen3-2b-adapted vs qwen3-vl-8b-adapted": {
+      "val": {
+        "paired_lesions": {
+          "retained": 0,
+          "both_missed": 12,
+          "gained": [],
+          "lost": []
+        },
+        "paired_correct_films": {
+          "retained": 5,
+          "both_missed": 1,
+          "gained": [
+            "1-侧位.png",
+            "10-LH-侧位.jpg",
+            "17-LH-侧位.jpg"
+          ],
+          "lost": [
+            "26-LF-正位.jpg",
+            "41-侧位.jpg",
+            "50-正位.jpg",
+            "58-正位.jpg"
+          ]
+        }
+      },
+      "test": {
+        "paired_lesions": {
+          "retained": 1,
+          "both_missed": 10,
+          "gained": [
+            "16-侧位.jpg#1"
+          ],
+          "lost": []
+        },
+        "paired_correct_films": {
+          "retained": 5,
+          "both_missed": 3,
+          "gained": [
+            "8-RF-侧位.jpg"
+          ],
+          "lost": [
+            "24-LH-侧位.jpg",
+            "38-正位.jpg",
+            "56-正位.jpg"
+          ]
+        }
+      }
+    },
+    "qwen25-vl-7b-bf16-direct vs qwen25-vl-7b-adapted": {
+      "val": {
+        "paired_lesions": {
+          "retained": 0,
+          "both_missed": 12,
+          "gained": [],
+          "lost": []
+        },
+        "paired_correct_films": {
+          "retained": 3,
+          "both_missed": 9,
+          "gained": [
+            "18-正位.jpg"
+          ],
+          "lost": []
+        }
+      },
+      "test": {
+        "paired_lesions": {
+          "retained": 0,
+          "both_missed": 12,
+          "gained": [],
+          "lost": []
+        },
+        "paired_correct_films": {
+          "retained": 2,
+          "both_missed": 9,
+          "gained": [
+            "16-侧位.jpg"
+          ],
+          "lost": []
+        }
+      }
+    },
+    "qwen3-vl-8b-direct vs qwen3-vl-8b-adapted": {
+      "val": {
+        "paired_lesions": {
+          "retained": 0,
+          "both_missed": 11,
+          "gained": [],
+          "lost": [
+            "18-正位.jpg#1"
+          ]
+        },
+        "paired_correct_films": {
+          "retained": 5,
+          "both_missed": 5,
+          "gained": [
+            "39-正位.jpg",
+            "57-LF-正+侧，近端籽骨顶端骨折.jpg",
+            "73-侧位 p1骨折.jpg"
+          ],
+          "lost": []
+        }
+      },
+      "test": {
+        "paired_lesions": {
+          "retained": 2,
+          "both_missed": 10,
+          "gained": [],
+          "lost": []
+        },
+        "paired_correct_films": {
+          "retained": 4,
+          "both_missed": 6,
+          "gained": [
+            "61-LF-正位+斜位.jpg",
+            "7-LF-正位.jpg"
+          ],
+          "lost": []
+        }
+      }
+    }
+  },
+  "training": {
+    "qwen25-vl-7b": {
+      "base_model": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
+      "base_revision": "fdcc572e8b05ba9daeaf71be8c9e4267c826ff9b",
+      "rank": 8,
+      "alpha": 16,
+      "bf16_compute": true,
+      "trainable_parameters": 360448,
+      "epochs": 1,
+      "batch_size": 1,
+      "optimizer": "AdamW",
+      "learning_rate": 0.00015,
+      "weight_decay": 0,
+      "seed": 42,
+      "loss": "mean cross-entropy over assistant JSON and end token only",
+      "max_pixels": 1048576,
+      "prompt": "Examine this equine fetlock radiograph for visible evidence of a fracture, including fracture lines or detached fracture fragments. Some images contain multiple views. Return JSON only, with fields \"status\" and \"boxes\". Use \"positive\" if you see a suspected fracture, \"negative\" if you see none, or \"uncertain\" if you cannot judge. For each suspected fracture, put one tight bounding box around the visible lesion, not the whole joint. Coordinates must be [xmin,ymin,xmax,ymax], integers on a 0 to 1000 scale relative to the full image, origin at the top left. With no localized fracture return an empty list for \"boxes\".",
+      "training_seconds": 231.70429399999557,
+      "adapter_sha256": "5562a2027105698ff409bab4da87ca064f3f98f122d2e91746bd469fe9f6fc83",
+      "peak_memory_gb": 8.235885066
+    },
+    "qwen3-vl-8b": {
+      "base_model": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
+      "base_revision": "defcdea7cc7a4b0858fea563cbbce171d328e457",
+      "rank": 8,
+      "alpha": 16,
+      "trainable_parameters": 425984,
+      "epochs": 1,
+      "batch_size": 1,
+      "optimizer": "AdamW",
+      "learning_rate": 0.00015,
+      "weight_decay": 0,
+      "seed": 42,
+      "loss": "mean cross-entropy over assistant JSON and end token only",
+      "max_pixels": 1048576,
+      "prompt": "Examine this equine fetlock radiograph for visible evidence of a fracture, including fracture lines or detached fracture fragments. Some images contain multiple views. Return JSON only, with fields \"status\" and \"boxes\". Use \"positive\" if you see a suspected fracture, \"negative\" if you see none, or \"uncertain\" if you cannot judge. For each suspected fracture, put one tight bounding box around the visible lesion, not the whole joint. Coordinates must be [xmin,ymin,xmax,ymax], integers on a 0 to 1000 scale relative to the full image, origin at the top left. With no localized fracture return an empty list for \"boxes\".",
+      "training_seconds": 241.55655091698281,
+      "adapter_sha256": "63f21957c8b681d61f379208f573fb76ccf46d4453ef345e5d6cf6eb09bd2251",
+      "peak_memory_gb": 8.12357113
+    }
+  }
+}

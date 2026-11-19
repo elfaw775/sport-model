@@ -1,5 +1,6 @@
 import io
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from fastapi.testclient import TestClient
@@ -342,6 +343,175 @@ def test_startup_migrates_legacy_database_and_preserves_history(tmp_path, monkey
             assert case["created_at"] == case["reviewed_at"] == case["archived_at"] == previous_time
             assert (case["status"], case["reviewer"], case["review_note"], case["model"], case["detections"]) == (
                 "reviewed", "旧复核人", "旧意见", "original-model", [{"score": 0.45}])
+            assert case["report"] == {"findings": "", "conclusion": "旧意见", "author": "旧复核人",
+                                      "updated_at": previous_time, "revision": 0}
+            assert case["images"][0]["quality"] == "未确认" and case["images"][0]["measurements"] == []
     with TestClient(create_app(tmp_path)) as migrated:
         login(migrated)
         assert migrated.post("/api/visits", json={"horse_name": "新病例"}).json()["id"] == "EV-000012"
+
+
+def test_image_measurements_use_each_image_coordinates_and_server_computed_values(team, tmp_path):
+    sign_in_member(team, "wangyiyi")
+    path = "/api/cases/" + upload(team).json()["id"]
+    images = append_image(team, path, picture(100, 80)).json()["images"]
+    primary, secondary = [image["url"] for image in images]
+    other = upload(team).json()["images"][0]["url"]
+    assert images[0]["quality"] == "未确认" and images[0]["metadata_reviewer"] is None
+    sign_in_member(team, "zhushijia")
+    meta = team.patch(secondary, json={"quality": "一般", "projection": "背内侧-掌外侧斜位"}).json()["images"]
+    assert meta[0] == images[0]
+    assert (meta[1]["quality"], meta[1]["projection"], meta[1]["metadata_reviewer"]) == ("一般", "背内侧-掌外侧斜位", "朱诗嘉")
+    assert meta[1]["metadata_reviewed_at"] and team.patch(secondary, json={}).status_code == 422
+    distance = {"kind": "distance", "points": [{"x": 60, "y": 40}, {"x": 63, "y": 44}]}
+    angle = {"kind": "angle", "points": [{"x": 6, "y": 7}, {"x": 6, "y": 4}, {"x": 2, "y": 4}]}
+    for body in [distance, {"kind": "distance", "points": angle["points"][:1]}, {"kind": "angle", "points": angle["points"][:2]},
+                 {"kind": "angle", "points": [*angle["points"][:2], angle["points"][1]]},
+                 {"kind": "distance", "points": [angle["points"][0], {"x": 32, "y": 3}]},
+                 {"kind": "distance", "points": [angle["points"][0], {"x": 3, "y": 48}]},
+                 {"kind": "distance", "points": [angle["points"][0], {"x": -1, "y": 2}]}]:
+        assert team.post(primary + "/measurements", json=body).status_code == 422
+    for invalid_id in ("0", "01", "9", "wrong"):
+        assert team.post(path + f"/images/{invalid_id}/measurements", json=angle).status_code == 404
+    with ThreadPoolExecutor(2) as pool:
+        added = list(pool.map(lambda m: team.post(secondary + "/measurements", json=m), (distance, angle)))
+    assert [r.status_code for r in added] == [201, 201]
+    with TestClient(create_app(tmp_path)) as restarted:
+        sign_in_member(restarted, "liqihang")
+        stored = restarted.get(path).json()["images"]
+        assert stored[0]["measurements"] == [] and stored[1]["quality"] == "一般"
+        marks = {m["kind"]: m for m in stored[1]["measurements"]}
+        for kind, expected, value, unit in (("distance", distance, 5, "px"), ("angle", angle, 90, "°")):
+            mark = marks[kind]
+            assert mark["points"] == expected["points"] and mark["value"] == pytest.approx(value) and mark["unit"] == unit
+            assert mark["created_by"] == "朱诗嘉" and mark["created_at"]
+        suffix = "/measurements/" + marks["distance"]["id"]
+        assert restarted.delete(primary + suffix).status_code == restarted.delete(other + suffix).status_code == 404
+        with ThreadPoolExecutor(2) as pool:
+            deleting = pool.submit(restarted.delete, secondary + suffix)
+            adding = pool.submit(restarted.post, secondary + "/measurements", json=angle)
+            assert deleting.result().status_code == 200 and adding.result().status_code == 201
+        remaining = restarted.get(path).json()["images"][1]["measurements"]
+        assert len(remaining) == 2 and marks["angle"] in remaining
+        assert all(mark["kind"] == "angle" for mark in remaining) and restarted.delete(secondary + suffix).status_code == 404
+        assert restarted.delete(path).status_code == 204
+    with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
+        assert database.execute("SELECT COUNT(*) FROM image_measurements").fetchone() == (0,)
+
+
+def test_shared_structured_report_conflicts_signatures_and_read_only_history(team, tmp_path, monkeypatch):
+    sign_in_member(team, "wangyiyi")
+    visit = team.post("/api/visits", json={"horse_name": "追风"}).json()
+    path = "/api/cases/" + visit["id"]
+    draft = {"findings": "左前球节侧位已核对", "conclusion": "", "revision": 0}
+    assert team.put(path + "/report", json=draft).status_code == 409
+    primary = append_image(team, path, picture()).json()["images"][0]["url"]
+    assert team.put(path + "/report", json=draft, headers={"Origin": "https://other.example"}).status_code == 403
+    assert team.put(path + "/report", json=draft | {"findings": " "}).status_code == 422
+    competing = [draft | {"findings": finding} for finding in ("已核对正位", "已核对侧位")]
+    with ThreadPoolExecutor(2) as pool:
+        results = list(pool.map(lambda body: team.put(path + "/report", json=body), competing))
+    assert sorted(r.status_code for r in results) == [200, 409]
+    first = team.get(path).json()["report"]
+    assert first["revision"] == 1 and first["author"] == "王一伊" and first["updated_at"]
+    report = {"findings": first["findings"], "conclusion": "结合随访复查", "revision": 1}
+    saved = team.put(path + "/report", json=report).json()["report"]
+    assert saved["revision"] == 2
+    assert team.post(path + "/review", json=report | {"revision": 2}).status_code == 409
+    with TestClient(create_app(tmp_path)) as restarted:
+        sign_in_member(restarted, "alimire")
+        assert restarted.get(path).json()["report"] == saved
+        monkeypatch.setattr(detector, "detect", lambda _: [])
+        assert restarted.post(path + "/analyze").status_code == 200
+        assert restarted.post(path + "/review", json=report).status_code == 409
+        assert restarted.post(path + "/review", json={"note": "旧客户端"}).status_code == 409
+        assert restarted.post(path + "/review", json={"findings": "", "conclusion": " ", "revision": 2}).status_code == 422
+        mark = {"kind": "distance", "points": [{"x": 3, "y": 4}, {"x": 0, "y": 0}]}
+        mark_id = restarted.post(primary + "/measurements", json=mark).json()["images"][0]["measurements"][0]["id"]
+        confirmed = restarted.post(path + "/review", json=report | {"revision": 2}).json()
+        assert confirmed["status"] == "reviewed" and confirmed["report"] == saved and confirmed["archived_at"] is None
+        assert confirmed["reviewer"] == "阿里米热" and confirmed["reviewed_at"] and confirmed["review_note"] == report["conclusion"]
+        assert restarted.post(path + "/archive").json()["archived_at"]
+        assert restarted.put(path + "/report", json=report | {"revision": 2}).status_code == 409
+        assert restarted.patch(primary, json={"quality": "一般"}).status_code == 409
+        assert restarted.post(primary + "/measurements", json=mark).status_code == 409
+        assert restarted.delete(primary + "/measurements/" + mark_id).status_code == 409
+        assert restarted.get(path).json()["report"] == saved
+
+
+@pytest.mark.parametrize(("findings", "conclusion"), [("已观察正位片", ""), ("", "建议核对侧位")])
+def test_one_review_field_signs_directly(team, monkeypatch, findings, conclusion):
+    sign_in_member(team, "wangyiyi")
+    path = "/api/cases/" + upload(team).json()["id"]
+    monkeypatch.setattr(detector, "detect", lambda _: [])
+    assert team.post(path + "/analyze").status_code == 200
+    signed = team.post(path + "/review", json={"findings": findings, "conclusion": conclusion, "revision": 0}).json()
+    assert signed["report"]["findings"] == findings and signed["report"]["conclusion"] == conclusion
+    assert signed["status"] == "reviewed" and signed["reviewer"] == "王一伊"
+    assert signed["empty_review_confirmed"] is False and signed["archived_at"] is None
+
+
+def test_blank_review_requires_acknowledgement_of_current_draft_and_persists(team, tmp_path, monkeypatch):
+    sign_in_member(team, "wangyiyi")
+    path = "/api/cases/" + upload(team).json()["id"]
+    monkeypatch.setattr(detector, "detect", lambda _: [])
+    team.post(path + "/analyze")
+    blank = {"findings": "\n ", "conclusion": "　", "revision": 0}
+    for flag in ({}, {"empty_review_confirmed": False}, {"empty_review_confirmed": "true"}):
+        assert team.post(path + "/review", json=blank | flag).status_code == 422
+    unchanged = team.get(path).json()
+    assert unchanged["status"] == "analyzed" and unchanged["report"]["revision"] == 0
+    assert unchanged["empty_review_confirmed"] is False and unchanged["reviewed_at"] is None
+
+    team.put(path + "/report", json=blank | {"findings": "同事已填写草稿"})
+    acknowledged = blank | {"empty_review_confirmed": True}
+    assert team.post(path + "/review", json=acknowledged).status_code == 409
+    assert team.post(path + "/review", json={"note": "", "empty_review_confirmed": True}).status_code == 409
+    assert team.get(path).json()["report"]["findings"] == "同事已填写草稿"
+    sign_in_member(team, "zhushijia")
+    signed = team.post(path + "/review", json=acknowledged | {"revision": 1}).json()
+    assert signed["status"] == "reviewed" and signed["empty_review_confirmed"] is True
+    assert signed["report"]["findings"] == signed["report"]["conclusion"] == signed["review_note"] == ""
+    assert signed["report"]["revision"] == 2 and signed["reviewer"] == "朱诗嘉" and signed["reviewed_at"]
+    assert signed["archived_at"] is None and team.post(path + "/review", json=acknowledged).status_code == 409
+    with TestClient(create_app(tmp_path)) as restarted:
+        sign_in_member(restarted, "alimire")
+        assert restarted.get(path).json() == signed
+
+
+def test_viewer_writes_stay_within_shared_workspace(team, tmp_path, monkeypatch):
+    sign_in_member(team, "wangyiyi")
+    case = upload(team).json()
+    path = "/api/cases/" + case["id"]
+    image = case["images"][0]["url"]
+    monkeypatch.setenv("SPORT_MODEL_USERNAME", "external")
+    monkeypatch.setenv("SPORT_MODEL_PASSWORD", "test-password")
+    with TestClient(create_app(tmp_path)) as stranger:
+        login(stranger, "external")
+        assert stranger.patch(image, json={"quality": "良好"}).status_code == 404
+        assert stranger.post(image + "/measurements", json={"kind": "distance",
+                            "points": [{"x": 3, "y": 4}, {"x": 0, "y": 0}]}).status_code == 404
+        assert stranger.delete(image + "/measurements/1").status_code == 404
+        assert stranger.put(path + "/report", json={"findings": "无权限", "conclusion": "", "revision": 0}).status_code == 404
+    assert team.get(path).json() == case
+
+
+def test_existing_multi_image_database_upgrades_without_guessing_quality_or_changing_blobs(client, tmp_path):
+    login(client)
+    first, second = picture(), picture(61, 80)
+    case = upload(client, first).json()
+    path = "/api/cases/" + case["id"]
+    images = append_image(client, path, second).json()["images"]
+    with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
+        database.execute("ALTER TABLE cases DROP COLUMN empty_review_confirmed")
+        for column in ("metadata_reviewed_at", "metadata_reviewer", "quality"):
+            database.execute(f"ALTER TABLE case_images DROP COLUMN {column}")
+        database.execute("DROP TABLE image_measurements")
+        database.execute("DROP TABLE case_reports")
+    for _ in range(2):
+        with TestClient(create_app(tmp_path)) as upgraded:
+            login(upgraded)
+            case = upgraded.get(path).json()
+            assert case["empty_review_confirmed"] is False
+            assert case["images"] == images and case["report"]["revision"] == 0
+            assert [upgraded.get(image["url"]).content for image in images] == [first, second]

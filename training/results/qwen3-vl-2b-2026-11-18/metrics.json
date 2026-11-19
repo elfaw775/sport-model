@@ -1,0 +1,603 @@
+{
+  "splits": {
+    "val": {
+      "deployed_yolo": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 9,
+          "fp": 0,
+          "tn": 3,
+          "fn": 1,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.9,
+          "specificity": 1.0,
+          "accuracy": 0.9230769230769231,
+          "balanced_accuracy": 0.95
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 15,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 18
+        }
+      },
+      "corrected_yolo640": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 8,
+          "fp": 0,
+          "tn": 3,
+          "fn": 2,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.8,
+          "specificity": 1.0,
+          "accuracy": 0.8461538461538461,
+          "balanced_accuracy": 0.9
+        },
+        "lesion_level_iou50": {
+          "tp": 5,
+          "fp": 11,
+          "fn": 7,
+          "reference_lesions": 12,
+          "predicted_boxes": 16
+        }
+      },
+      "always_positive_image_only": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 10,
+          "fp": 3,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 13,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.5
+        }
+      },
+      "train_median_box": {
+        "normalized_xyxy": [
+          0.37883249999999996,
+          0.3596525,
+          0.688947,
+          0.734849
+        ],
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 10,
+          "fp": 3,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 12,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 13
+        }
+      },
+      "deployed_yolo_val_selected": {
+        "cutoff": 0.3,
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 5,
+          "fp": 0,
+          "tn": 3,
+          "fn": 5,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.5,
+          "specificity": 1.0,
+          "accuracy": 0.6153846153846154,
+          "balanced_accuracy": 0.75
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 5,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 8
+        }
+      },
+      "corrected_yolo640_val_selected": {
+        "cutoff": 0.2,
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 7,
+          "fp": 0,
+          "tn": 3,
+          "fn": 3,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.7,
+          "specificity": 1.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.85
+        },
+        "lesion_level_iou50": {
+          "tp": 5,
+          "fp": 6,
+          "fn": 7,
+          "reference_lesions": 12,
+          "predicted_boxes": 11
+        }
+      },
+      "direct": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 10,
+          "fp": 3,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.7692307692307693,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 15,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 16
+        }
+      },
+      "qlora": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 9,
+          "fp": 3,
+          "tn": 0,
+          "fn": 1,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.9,
+          "specificity": 0.0,
+          "accuracy": 0.6923076923076923,
+          "balanced_accuracy": 0.45
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 13,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 13
+        }
+      },
+      "localization_head": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 8,
+          "fp": 0,
+          "tn": 3,
+          "fn": 2,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.8,
+          "specificity": 1.0,
+          "accuracy": 0.8461538461538461,
+          "balanced_accuracy": 0.9
+        },
+        "lesion_level_iou50": {
+          "tp": 2,
+          "fp": 9,
+          "fn": 10,
+          "reference_lesions": 12,
+          "predicted_boxes": 11
+        }
+      },
+      "screening_head": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 3,
+          "tp": 10,
+          "fp": 0,
+          "tn": 3,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 10,
+          "sensitivity": 1.0,
+          "specificity": 1.0,
+          "accuracy": 1.0,
+          "balanced_accuracy": 1.0
+        }
+      }
+    },
+    "test": {
+      "deployed_yolo": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 6,
+          "fp": 0,
+          "tn": 2,
+          "fn": 4,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.6,
+          "specificity": 1.0,
+          "accuracy": 0.6666666666666666,
+          "balanced_accuracy": 0.8
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 9,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 12
+        }
+      },
+      "corrected_yolo640": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 4,
+          "fp": 0,
+          "tn": 2,
+          "fn": 6,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.4,
+          "specificity": 1.0,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.7
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 5,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 8
+        }
+      },
+      "always_positive_image_only": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 10,
+          "fp": 2,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 12,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.8333333333333334,
+          "balanced_accuracy": 0.5
+        }
+      },
+      "train_median_box": {
+        "normalized_xyxy": [
+          0.37883249999999996,
+          0.3596525,
+          0.688947,
+          0.734849
+        ],
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 10,
+          "fp": 2,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 1.0,
+          "specificity": 0.0,
+          "accuracy": 0.8333333333333334,
+          "balanced_accuracy": 0.5
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 11,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 12
+        }
+      },
+      "deployed_yolo_val_selected": {
+        "cutoff": 0.3,
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 3,
+          "fp": 0,
+          "tn": 2,
+          "fn": 7,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.3,
+          "specificity": 1.0,
+          "accuracy": 0.4166666666666667,
+          "balanced_accuracy": 0.65
+        },
+        "lesion_level_iou50": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 10,
+          "reference_lesions": 12,
+          "predicted_boxes": 3
+        }
+      },
+      "corrected_yolo640_val_selected": {
+        "cutoff": 0.2,
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 3,
+          "fp": 0,
+          "tn": 2,
+          "fn": 7,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.3,
+          "specificity": 1.0,
+          "accuracy": 0.4166666666666667,
+          "balanced_accuracy": 0.65
+        },
+        "lesion_level_iou50": {
+          "tp": 3,
+          "fp": 2,
+          "fn": 9,
+          "reference_lesions": 12,
+          "predicted_boxes": 5
+        }
+      },
+      "direct": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 9,
+          "fp": 2,
+          "tn": 0,
+          "fn": 0,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 1,
+            "inference_error": 0
+          },
+          "unresolved_positive": 1,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.9,
+          "specificity": 0.0,
+          "accuracy": 0.75,
+          "balanced_accuracy": 0.45
+        },
+        "lesion_level_iou50": {
+          "tp": 0,
+          "fp": 12,
+          "fn": 12,
+          "reference_lesions": 12,
+          "predicted_boxes": 12
+        }
+      },
+      "qlora": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 7,
+          "fp": 1,
+          "tn": 1,
+          "fn": 3,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.7,
+          "specificity": 0.5,
+          "accuracy": 0.6666666666666666,
+          "balanced_accuracy": 0.6
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 7,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 8
+        }
+      },
+      "localization_head": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 5,
+          "fp": 0,
+          "tn": 2,
+          "fn": 5,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 0,
+          "sensitivity": 0.5,
+          "specificity": 1.0,
+          "accuracy": 0.5833333333333334,
+          "balanced_accuracy": 0.75
+        },
+        "lesion_level_iou50": {
+          "tp": 1,
+          "fp": 8,
+          "fn": 11,
+          "reference_lesions": 12,
+          "predicted_boxes": 9
+        }
+      },
+      "screening_head": {
+        "image_level": {
+          "reference_positive": 10,
+          "reference_negative": 2,
+          "tp": 9,
+          "fp": 0,
+          "tn": 2,
+          "fn": 1,
+          "unresolved": {
+            "uncertain": 0,
+            "parse_error": 0,
+            "inference_error": 0
+          },
+          "unresolved_positive": 0,
+          "unresolved_negative": 0,
+          "positive_without_box": 9,
+          "sensitivity": 0.9,
+          "specificity": 1.0,
+          "accuracy": 0.9166666666666666,
+          "balanced_accuracy": 0.95
+        }
+      }
+    }
+  },
+  "exploratory_height_control": {
+    "train_negative_modal_height_px": 768,
+    "train_negative_heights": {
+      "768": 10,
+      "743": 1
+    },
+    "splits": {
+      "train": {
+        "tp": 47,
+        "fp": 1,
+        "tn": 10,
+        "fn": 1
+      },
+      "val": {
+        "tp": 10,
+        "fp": 1,
+        "tn": 2,
+        "fn": 0
+      },
+      "test": {
+        "tp": 10,
+        "fp": 0,
+        "tn": 2,
+        "fn": 0
+      }
+    }
+  }
+}

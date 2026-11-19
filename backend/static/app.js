@@ -1,3 +1,5 @@
+import { mountViewer } from "./viewer.js";
+
 const page = document.querySelector("#page");
 const byId = (id) => document.getElementById(id);
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
@@ -13,6 +15,7 @@ let user = null;
 let revision = 0;
 let noticeTimer;
 let loginOptions = {};
+let unmountViewer;
 
 function notify(message) {
   clearTimeout(noticeTimer);
@@ -189,7 +192,7 @@ async function attachFiles(id, files, projection, quality) {
 }
 
 function createVisit() {
-  page.innerHTML = heading("新建检查", "上传检查影像", "选择本次检查的 X 线片，上传后即可开始模型分析。") + progressBar(0) + `
+  page.innerHTML = heading("新建检查", "上传检查影像", "请选择设备导出的 X 线原片。带工具栏、缩略图或桌面边框的截图会缩小模型看到的病灶。") + progressBar(0) + `
     <form class="card intake" id="visit-form">
       <section class="intake-image"><div class="panel-title"><h2>检查影像</h2><span>首张为分析主图</span></div>
         <div class="image-drop">
@@ -284,6 +287,64 @@ function deleteVisits(records, complete) {
     if(active()) { dialog.close();complete(removed,failed); }
   });
 }
+const worklists = {
+  analysis: {title:"待分析", icon:"scan", description:"已上传主图，等待球节骨折检测。", action:"打开分析", empty:"目前没有等待分析的影像"},
+  reviews: {title:"人工复核", icon:"check", description:"查看模型候选区域、核对原片并签署报告。", action:"进入复核", empty:"目前没有待复核的病例"},
+  filing: {title:"病例归档", icon:"folder", description:"办理归档，或查阅已经归档的病例及复核报告。", action:"办理归档", empty:"目前没有待归档的病例"}
+};
+
+function navRoute(record) {
+  if (record.archived_at || record.status === "reviewed") return "filing";
+  if (record.status === "uploaded") return "analysis";
+  if (record.status === "analyzed") return "reviews";
+  return "dashboard";
+}
+
+function selectNav(route) {
+  for (const link of byId("navigation").querySelectorAll("nav a")) {
+    const current = link.hash === "#" + route;
+    link.classList.toggle("selected", current);
+    if (current) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
+}
+
+function worklist(route, records) {
+  const queue = worklists[route];
+  const filing = route === "filing";
+  const pending = records.filter(r => !r.archived_at && (
+    filing ? r.status === "reviewed" || r.status === "registered" : r.status === (route === "analysis" ? "uploaded" : "analyzed")
+  ));
+  const archived = filing ? records.filter(r => r.archived_at) : [];
+  let showArchived = filing && !pending.length && archived.length > 0;
+  page.innerHTML = heading("临床工作台", queue.title, queue.description, newLink) + `
+    <section class="card queue-card"><header class="queue-header"><div class="queue-tabs">
+      ${filing ? '<button type="button" data-filed="no">待归档 <b>'+pending.length+'</b></button><button type="button" data-filed="yes">已归档 <b>'+archived.length+'</b></button>'
+        : '<h2>待处理病例 <span class="count-tag">'+pending.length+'</span></h2>'}</div>
+      <label class="search-field">${icon("search")}<input type="search" id="queue-search" placeholder="搜索马匹或就诊编号" aria-label="搜索当前队列"></label></header>
+      <div id="queue-list"></div></section>`;
+  const query = byId("queue-search");
+  const renderRows = () => {
+    const term = query.value.trim().toLowerCase();
+    const list = showArchived ? archived : pending;
+    const shown = list.filter(r => [r.id, r.horse_name].some(s => String(s).toLowerCase().includes(term)));
+    byId("queue-list").innerHTML = shown.length ? shown.map(r => {
+      const openReport = route === "reviews" || (filing && r.status === "reviewed");
+      const action = showArchived ? (openReport ? "查看报告" : "查看病例") : queue.action;
+      const status = showArchived ? "已归档" : filing ? (r.status === "registered" ? "仅登记" : "已确认复核") : route === "reviews" && r.report?.revision ? "已有复核草稿" : statusNames[r.status];
+      const time = showArchived ? r.archived_at : r.reviewed_at || r.analyzed_at || r.created_at;
+      return `<article class="queue-row"><span class="horse-avatar" aria-hidden="true">${escape(Array.from(r.horse_name)[0])}</span><div class="queue-person"><strong>${escape(r.horse_name)}</strong><small>${escape(r.id)}</small></div>
+        <div class="queue-meta"><span>${escape(status)}</span><small>${r.images.length} 张影像 · ${escape(dateText(time))}</small></div>
+        <a class="secondary" href="${openReport ? reportLink(r.id) : caseLink(r.id)}">${action} ${icon("arrow")}</a></article>`;
+    }).join("") : `<div class="empty large-empty"><span class="tile-icon">${icon(queue.icon)}</span><h3>${term ? "没有匹配的病例" : showArchived ? "目前没有已归档的病例" : queue.empty}</h3>${term ? '<button class="secondary" id="clear-queue">清除搜索</button>' : '<a class="secondary" href="#dashboard">查看历史记录</a>'}</div>`;
+    byId("clear-queue")?.addEventListener("click", () => { query.value=""; renderRows(); query.focus(); });
+    for (const tab of page.querySelectorAll("[data-filed]")) tab.setAttribute("aria-pressed", String((tab.dataset.filed === "yes") === showArchived));
+  };
+  query.oninput = renderRows;
+  for (const tab of page.querySelectorAll("[data-filed]")) tab.onclick = () => { showArchived = tab.dataset.filed === "yes"; renderRows(); };
+  renderRows();
+}
+
 function archive(records) {
   const selected = new Set(), perPage=8;
   const stats = [
@@ -340,151 +401,183 @@ function archive(records) {
   refresh();
 }
 
-function imageViewer(record) {
-  const boxes = record.detections || [];
-  const labelWidth = Math.max(record.width / 18, record.height / 14);
-  const boxLayer = boxes.map((box, index) => {
-    const left = Number(box.x1), top = Number(box.y1);
-    const tag = String(index + 1).padStart(2, "0");
-    return `<rect x="${left}" y="${top}" width="${Number(box.x2) - left}" height="${Number(box.y2) - top}"/>
-      <svg x="${left}" y="${top}" width="${labelWidth}" height="${labelWidth * .55}" viewBox="0 0 40 22"><rect class="tag-bg" width="40" height="22"/><text x="20" y="16" text-anchor="middle">${tag}</text></svg>`;
-  }).join("");
-  return `<section class="card image-card"><div class="panel-title"><h2>检查主图</h2><span>球节 · ${escape(record.projection)}</span></div>
-    <div class="viewer"><svg class="radiograph" viewBox="0 0 ${Number(record.width)} ${Number(record.height)}" role="img" aria-label="原始 X 线影像及模型候选区域">
-      <image width="100%" height="100%" href="${casePath(record.id)}/image"/><g id="boxes">${boxLayer}</g></svg></div>
-    <div class="viewer-foot"><span>${escape(record.filename)} · ${Number(record.width)} × ${Number(record.height)}</span>
-    ${boxes.length ? '<label class="overlay-switch"><input id="overlay" type="checkbox" checked>候选框</label>' : ""}</div></section>`;
-}
+const archiveButton = '<button id="archive-visit" class="primary" type="button">' + icon("folder") + ' 归档病例</button>';
+const reportLink = id => "#report/" + encodeURIComponent(id);
 
-const archiveButton = '<button id="archive-visit" class="primary wide" type="button">' + icon("folder") + ' 归档病例</button>';
-
-function analysisPanel(record) {
-  const analyzed = ["analyzed", "reviewed"].includes(record.status);
-  const boxes = record.detections || [];
-  const findings = boxes.length
-    ? `<ul class="findings">${boxes.map((box,index) => `<li><span>疑似骨折 · 区域 ${String(index + 1).padStart(2,"0")}</span><b>置信分数 ${pct(box.score)}</b></li>`).join("")}</ul>`
-    : '<p class="sub">当前阈值下未检出疑似骨折区域，仍需结合原片进行复核。</p>';
-  const modelInfo = `<details class="model-info"><summary>模型信息</summary><dl><dt>模型版本</dt><dd class="mono">${escape(record.model)}</dd><dt>检测阈值</dt><dd>${pct(record.threshold)}</dd><dt>分析时间</dt><dd>${escape(dateText(record.analyzed_at))}</dd></dl></details>`;
-  let controls;
-  if (!analyzed) {
-    controls = `<form id="analyze-form">${errorBox}<button class="primary wide" type="submit">${icon("scan")} 开始分析</button><p class="inference-status" role="status">模型正在处理主图，请稍候…</p></form>`;
-  } else if (record.status === "analyzed") {
-    controls = `<button class="primary wide" id="start-review" aria-expanded="false" aria-controls="review-form">${icon("user")} 人工复核</button>
-      <form id="review-form" hidden><label for="review-note">人工复核意见</label>
-      <textarea id="review-note" name="note" rows="3" required maxlength="2000" placeholder="核对原片与候选区域，记录您的判断"></textarea>
-      <small class="dim">复核人 · ${escape(user.display_name)}</small>${errorBox}
-      <button class="primary wide" type="submit">确认复核 ${icon("check")}</button></form>`;
-  } else {
-    controls = `<div class="reviewed-note"><h3>人工复核意见</h3><p>${escape(record.review_note)}</p>
-      <small>复核人：${escape(record.reviewer)} · ${escape(dateText(record.reviewed_at))}</small></div>
-      ${record.archived_at ? '<a class="secondary wide" href="#dashboard">查找历史记录</a>' : archiveButton}`;
-  }
-  return `<section class="card results" tabindex="-1"><div class="panel-title"><h2>${analyzed ? "模型分析结果" : "模型分析"}</h2>${record.archived_at && record.status === "reviewed" ? archiveBadge(record) : statusBadge(record.status)}</div>
-    ${analyzed ? `<p class="count"><strong>${boxes.length}</strong> 个候选区域</p>${findings}${modelInfo}` :
-      '<div class="analysis-ready"><span class="ready-icon">' + icon("scan") + '</span><div><strong>主图已就绪</strong><p>检测球节 X 线片中的疑似骨折区域。</p></div></div>'}
-    <p class="model-note">AI 仅提供参考。置信分数表示模型对候选区域的评分，诊疗结论由人工复核。</p>
-    ${controls}</section>`;
-}
-
-function detail(record) {
-  const base = casePath(record.id);
-  byId("nav-work").classList.toggle("selected", !record.archived_at);
-  byId("nav-archive").classList.toggle("selected", Boolean(record.archived_at));
-  const images = record.images || [];
-  const warning = uploadMessage?.id === record.id ? uploadMessage.message : "";
-  if (warning) uploadMessage = null;
-  const reviewerConfirmed = record.status === "reviewed";
-  const stage = reviewerConfirmed ? (record.archived_at ? 6 : 5) : record.status === "analyzed" ? 2 : 1;
-  const creator = loginOptions[record.created_by] || (user.username === record.created_by ? user.display_name : record.created_by);
-  const title = heading("检查工作台", escape(record.horse_name), escape(record.id) + "　·　" + escape(dateText(record.created_at)),
-    '<a href="#dashboard" class="secondary">历史记录</a>');
-  const matchesLegacy = record.has_image && record.archived_at && !reviewerConfirmed;
-  page.innerHTML = title +
-    (record.has_image ? progressBar(stage) : "") +
-    (warning ? `<p class="error" role="alert">${escape(warning)}</p>` : "") +
-    (matchesLegacy ? '<p class="legacy-note">这是一条已归档的历史病例，人工复核尚待完成。</p>' : "") +
-    (record.has_image ? `<div class="report-grid">${imageViewer(record)}${analysisPanel(record)}</div>` : "") + `
-    <section class="card visit-summary"><div class="spread"><div class="panel-title"><h2>就诊信息</h2>${archiveBadge(record)}</div>
-      <div class="row-actions"><button id="edit-visit" class="secondary">编辑记录</button>${!record.has_image && !record.archived_at ? archiveButton : ""}</div></div>
-      <p class="visit-comment">${escape(record.comment || "暂无就诊备注")}</p>
-      <div class="detail-meta"><span>${icon("user")} 登记人：${escape(creator || "未记录")}</span><span>${icon("image")} ${images.length} 张影像</span>
-      ${record.archived_at ? `<span>${icon("folder")} 归档于 ${escape(dateText(record.archived_at))}</span>` : ""}</div></section>
-    <section class="card media-card"><div class="spread"><div class="panel-title"><h2>就诊影像</h2><span class="count-tag">${images.length}</span></div>
-      <button class="secondary" id="add-images" aria-expanded="false" aria-controls="attach-form">${icon("upload")} 补充影像</button></div>
-      ${images.length ? `<div class="image-tray">${images.map(image => `<a class="image-tile" href="${escape(image.url)}" target="_blank" rel="noopener" aria-label="查看原图 ${escape(image.filename)}">
-        <img loading="lazy" src="${escape(image.url)}" alt=""><span><strong>${image.id === "primary" ? "主图" : "附图"} · ${escape(image.projection)}</strong><small>${escape(image.filename)}</small></span>${icon("arrow")}</a>`).join("")}</div>` :
-        '<p class="dim media-placeholder">尚未上传影像，补充主图后即可开始模型分析。</p>'}
-      <form id="attach-form" hidden>${imageFields()}${errorBox}<button class="primary" type="submit">保存影像</button></form></section>`;
-
-  function displayNextStage(updated, message) {
-    detail(updated);
-    const results = page.querySelector(".results");
-    if (results) results.focus({preventScroll:true});
-    if (results && window.matchMedia("(max-width: 800px)").matches) results.scrollIntoView({block:"start"});
-    else window.scrollTo(0, 0);
-    notify(message);
-  }
-  byId("edit-visit").onclick = () => editVisit(record, detail);
+function archiveAction(record, refresh) {
   byId("archive-visit")?.addEventListener("click", async event => {
     const button = event.currentTarget;
     const ticket = revision;
     button.disabled = true;
     try {
-      const updated = await api(base + "/archive", {method:"POST"});
-      if (ticket === revision) displayNextStage(updated, "病例已归档。");
-    } catch (error) {
-      if (ticket === revision) notify(formatError(error));
-    } finally { button.disabled = false; }
+      const updated = await api(casePath(record.id) + "/archive", {method:"POST"});
+      if (ticket === revision) { refresh(updated); notify("病例已归档。"); }
+    } catch (error) { if (ticket === revision) notify(formatError(error)); }
+    finally { button.disabled = false; }
   });
-  const attach = byId("attach-form");
-  byId("add-images").onclick = event => {
-    attach.hidden = !attach.hidden;
-    event.currentTarget.setAttribute("aria-expanded", String(!attach.hidden));
-    if (!attach.hidden) attach.elements.image.focus();
-  };
-  wireImages(attach);
-  action(attach, "正在上传…", async active => {
-    const message = await attachFiles(record.id, Array.from(attach.elements.image.files), attach.elements.projection.value, attach.elements.quality_confirmed.checked);
-    const updated = await api(base);
+}
+
+function enableAttachment(form, record, onSaved) {
+  wireImages(form);
+  action(form, "正在上传…", async active => {
+    const message = await attachFiles(record.id, Array.from(form.elements.image.files), form.elements.projection.value, form.elements.quality_confirmed.checked);
+    const updated = await api(casePath(record.id));
     if (active()) {
       if (message) uploadMessage = {id:record.id, message};
-      if (!record.has_image && updated.has_image) displayNextStage(updated, "主图已保存，可开始分析。");
-      else {
-        detail(updated);
-        if (!message) notify("影像已保存。");
-      }
+      if (dialog.open) dialog.close();
+      onSaved(updated);
+      if (!message) notify("影像已保存。");
     }
   });
-  byId("overlay")?.addEventListener("change", event => { byId("boxes").style.display = event.target.checked ? "" : "none"; });
-  const analyzeForm = byId("analyze-form");
-  if (analyzeForm) action(analyzeForm, "模型分析中…", async active => {
-    const result = await api(base + "/analyze", {method:"POST"});
-    if (active()) displayNextStage(result, "模型分析完成，请核对影像与结果。");
-  });
-  const reviewForm = byId("review-form");
-  if (!reviewForm) return;
-  function showStep(index) {
-    page.querySelector(".flow-progress").outerHTML = progressBar(index);
-  }
-  byId("start-review").onclick = event => {
-    event.currentTarget.hidden = true;
-    event.currentTarget.setAttribute("aria-expanded", "true");
-    reviewForm.hidden = false;
-    showStep(3);
-    byId("review-note").focus();
+}
+
+function analysisSummary(record, analyzed, signed) {
+  const boxes = record.detections || [];
+  const positive = boxes.length > 0;
+  const title = !analyzed ? "主图已上传，等待分析" : positive ? `发现 ${boxes.length} 个疑似骨折候选区域` : "未检出疑似骨折候选区域";
+  const lead = !analyzed ? "开始分析后可在这里查看模型分数和主图上的候选框。" : positive
+    ? `最高模型分数 ${pct(Math.max(...boxes.map(box => box.score)))}，已在主图上标出候选区域。AI 仅提供参考。`
+    : `模型已完成分析，没有达到 ${pct(record.threshold)} 分数阈值的候选框，仍需核对原片。若上传的是带工具栏的截图，请用导出的原片新建检查。`;
+  const action = analyzed
+    ? `<a href="${reportLink(record.id)}" id="open-report" class="primary">${icon("book")} ${signed ? "查看复核报告" : record.report?.revision ? "继续复核报告" : "编写复核报告"}</a>`
+    : `<form id="analyze-form"><button class="primary" type="submit">${icon("scan")} 开始分析</button>${errorBox}</form>`;
+  return `<section class="case-result-strip ${analyzed ? positive ? "has-detections" : "no-detections" : "awaiting-analysis"}" id="analysis-summary" aria-labelledby="analysis-title">
+    <span class="tile-icon">${icon("scan")}</span><div><div class="result-meta"><b>主图模型结果</b><span id="analysis-state">${analyzed ? "分析完成 · "+escape(dateText(record.analyzed_at)) : "待分析"}</span></div>
+    <h2 id="analysis-title">${title}</h2><p id="analysis-lead">${lead}</p></div>${action}</section>`;
+}
+
+function detail(record) {
+  unmountViewer?.();
+  unmountViewer = undefined;
+  const base = casePath(record.id);
+  const analyzed = ["analyzed", "reviewed"].includes(record.status);
+  const signed = record.status === "reviewed";
+  const creator = loginOptions[record.created_by] || record.created_by;
+  const hasImage = record.has_image;
+  const stage = signed ? (record.archived_at ? 6 : 5) : analyzed ? 2 : 1;
+  selectNav(navRoute(record));
+  const notice = uploadMessage?.id === record.id ? uploadMessage.message : "";
+  if (notice) uploadMessage = null;
+  page.innerHTML = `<div class="clinical-page-head"><div><a class="back-link" href="#dashboard">‹ 历史记录</a>
+    <div class="case-heading"><h1>${escape(record.horse_name)}</h1><span>${hasImage ? "影像工作台" : "就诊登记"}</span><code>${escape(record.id)}</code></div></div></div>
+    ${notice ? `<p class="error" role="alert">${escape(notice)}</p>` : ""}
+    ${record.archived_at && !signed && hasImage ? '<p class="legacy-note">历史病例已归档，人工复核尚待完成。</p>' : ""}
+    ${hasImage ? progressBar(stage) + analysisSummary(record, analyzed, signed) + '<div id="viewer-host"></div>' : ""}
+    <section class="card visit-summary"><div class="spread"><div class="panel-title"><h2>就诊信息</h2>${archiveBadge(record)}</div>
+      <div class="row-actions"><button id="edit-visit" class="secondary">编辑记录</button>${!hasImage && !record.archived_at ? archiveButton : ""}</div></div>
+      <p class="visit-comment">${escape(record.comment || "暂无就诊备注")}</p><div class="detail-meta"><span>${icon("user")} 登记人：${escape(creator)}</span><span>${escape(dateText(record.created_at))}</span>${record.archived_at ? `<span>归档于 ${escape(dateText(record.archived_at))}</span>` : ""}</div>
+      ${!hasImage ? '<button class="secondary" id="add-images">上传首张影像</button>' : ""}</section>`;
+  const add = () => {
+    openDialog(`<h2 id="dialog-title">补充就诊影像</h2><p class="dim">${escape(record.id)} · ${escape(record.horse_name)}</p>
+      <form id="attach-form">${imageFields()}${errorBox}<div class="dialog-actions"><button type="button" class="secondary" id="cancel-attach">取消</button><button type="submit" class="primary">保存影像</button></div></form>`, "cancel-attach");
+    enableAttachment(byId("attach-form"),record,detail);
   };
-  byId("review-note").oninput = event => showStep(event.currentTarget.value.trim() ? 4 : 3);
-  action(reviewForm, "正在确认…", async active => {
-    const note = reviewForm.elements.note.value.trim();
-    if (!note) throw new Error("请填写复核意见。");
-    const result = await api(base + "/review", json({note}));
-    if (active()) displayNextStage(result, "复核意见已确认。");
+  byId("edit-visit").onclick = () => editVisit(record,detail);
+  byId("add-images")?.addEventListener("click",add);
+  archiveAction(record,detail);
+  if (hasImage) unmountViewer = mountViewer(byId("viewer-host"), record, {api,onUpload:add,
+    onReport:() => { if (analyzed) location.hash = reportLink(record.id); else byId("analyze-form").requestSubmit(); }});
+  if (byId("analyze-form")) action(byId("analyze-form"),"模型分析中…",async active => {
+    const summary = byId("analysis-summary");
+    summary.classList.remove("analysis-failed");
+    byId("analysis-state").textContent = "分析中";
+    byId("analysis-title").textContent = "正在分析主图…";
+    byId("analysis-lead").textContent = "正在运行球节骨折检测模型。";
+    let updated;
+    try {
+      updated = await api(base+"/analyze",{method:"POST"});
+    } catch (error) {
+      if (!active()) return;
+      // A concurrent analysis or a lost response can leave a completed result on the server.
+      updated = await api(base).catch(() => null);
+      if (!active()) return;
+      if (!updated || !["analyzed","reviewed"].includes(updated.status)) {
+        summary.classList.add("analysis-failed");
+        byId("analysis-state").textContent = "可重试";
+        byId("analysis-title").textContent = "暂未取得分析结果";
+        byId("analysis-lead").textContent = "已上传的主图保留在病例中，可再次点击「开始分析」。";
+        throw error;
+      }
+    }
+    if (active()) { detail(updated); window.scrollTo(0,0); notify(updated.detections.length ? "分析完成，请核对主图候选区域。" : "分析完成，未检出候选区域。"); }
+  });
+}
+
+function reportPage(record) {
+  selectNav(navRoute(record));
+  if (!["analyzed","reviewed"].includes(record.status)) {
+    location.replace(caseLink(record.id));
+    return;
+  }
+  const signed = record.status === "reviewed";
+  const report = record.report || {};
+  const images = record.images || [];
+  const boxes = record.detections || [];
+  const priorFindings = report.findings || "";
+  const priorConclusion = report.conclusion || (signed ? record.review_note : "") || "";
+  const formBody = signed ? `<section class="signed-section">${record.empty_review_confirmed
+    ? '<p>复核人已确认留空提交，未填写人工所见或结论。</p>'
+    : `<h3>影像所见</h3><p>${escape(priorFindings || "未填写")}</p><h3>复核结论</h3><p>${escape(priorConclusion || "未填写")}</p>`}
+    <div class="report-signature">${icon("check")} ${escape(record.reviewer)} 已确认 <time>${escape(dateText(record.reviewed_at))}</time></div></section>` : `<form id="report-form">
+    <label>影像所见（选填）<textarea name="findings" rows="4" maxlength="4000" placeholder="记录不同投照位观察到的影像特征、位置与测量情况">${escape(priorFindings)}</textarea></label>
+    <label>复核结论（选填）<textarea name="conclusion" rows="3" maxlength="2000" placeholder="记录人工判断及需要进一步核查的内容">${escape(priorConclusion)}</textarea></label>
+    <p class="dim" id="draft-status" role="status">${report.updated_at ? "最近保存 · "+escape(report.author)+" · "+escape(dateText(report.updated_at)) : "草稿可保存，下次打开时继续编辑。"}</p>
+    ${errorBox}<div class="report-buttons"><button class="secondary" type="submit" id="save-report-draft">保存草稿</button><button class="primary" id="confirm-report" type="submit">${icon("check")} 确认复核</button></div></form>`;
+  page.innerHTML = `<header class="clinical-page-head"><div><a class="back-link" href="${caseLink(record.id)}">‹ 返回阅片</a><div class="case-heading">
+    <h1>人工复核报告</h1><code>${escape(record.id)}</code></div></div>${signed ? (record.archived_at ? '<a href="#dashboard" class="secondary">查找历史记录</a>' : archiveButton) : ""}</header>
+    ${progressBar(signed ? (record.archived_at ? 6 : 5) : 3)}
+    <div class="report-layout"><article class="card structured-report"><div class="report-topline"><span>EQUIVISION / 影像科</span>${record.archived_at ? archiveBadge(record) : signed ? statusBadge("reviewed") : '<span class="badge analyzed">待人工确认</span>'}</div>
+      <h2>${escape(record.horse_name)} <span>· 球节影像检查</span></h2>
+      <div class="report-facts"><span>检查日期 <b>${escape(dateText(record.created_at))}</b></span><span>检查影像 <b>${images.length} 张</b></span><span>复核人 <b>${escape(signed ? record.reviewer : user.display_name)}</b></span></div>
+      ${formBody}${record.archived_at ? `<p class="dim">归档时间 · ${escape(dateText(record.archived_at))}</p>` : ""}</article>
+    <aside class="report-aside"><section class="card"><div class="panel-title"><h2>影像与测量</h2><a href="${caseLink(record.id)}">返回阅片</a></div>
+      ${images.map((im,i)=>`<div class="report-evidence"><img src="${escape(im.url)}" alt=""><div><b>${i===0?"主图":"附图 "+i} · ${escape(im.projection)}</b><small>${escape(im.filename)}</small>
+      ${(im.measurements || []).map(m=>`<span>${m.kind==="distance"?"距离":"角度"}　${Number(m.value).toFixed(1)} ${m.kind==="distance"?"px":"°"}</span>`).join("")}</div></div>`).join("")}</section>
+      <section class="card model-summary"><h2>AI 辅助结果</h2><p>${boxes.length ? boxes.map((box,i)=>`区域 ${i+1} · 置信分数 ${pct(box.score)}`).join("<br>") : "当前阈值下未检出候选区域。"}</p><p class="dim">仅供参考 · 检测对象为主图</p>
+      <details><summary>模型信息</summary><p>${escape(record.model)} · 阈值 ${pct(record.threshold)}</p></details></section></aside></div>`;
+  archiveAction(record,reportPage);
+  const form = byId("report-form");
+  if (!form) return;
+  let version = report.revision || 0;
+  const save = async (confirm) => {
+    const findings = form.elements.findings.value.trim(), conclusion = form.elements.conclusion.value.trim();
+    const body = {findings,conclusion,revision:version};
+    if (!findings && !conclusion) {
+      if (!confirm) throw new Error("请先填写一项草稿内容。");
+      openDialog(`<h2 id="dialog-title">留空提交复核？</h2><p class="sub">影像所见和复核结论均为空。继续将以${escape(user.display_name)}的姓名签署此报告，并记录留空确认。</p>
+        <div class="dialog-actions"><button class="secondary" type="button" id="cancel-empty-review" autofocus>返回填写</button><button class="primary" type="button" id="sign-empty-review">确认留空提交</button></div>`, "cancel-empty-review");
+      const confirmed = await new Promise(resolve => {
+        let accepted = false;
+        byId("sign-empty-review").onclick = () => { accepted = true; dialog.close(); };
+        dialog.addEventListener("close", () => resolve(accepted), {once:true});
+      });
+      if (!confirmed || !form.isConnected) return;
+      body.empty_review_confirmed = true;
+    }
+    const updated = await api(casePath(record.id)+(confirm?"/review":"/report"),{...json(body),method:confirm?"POST":"PUT"});
+    if (!form.isConnected) return;
+    if (confirm) { reportPage(updated); window.scrollTo(0,0); notify("复核人及签署时间已记录。"); }
+    else { version=updated.report.revision; byId("draft-status").textContent="草稿已保存 · "+updated.report.author+" · "+dateText(updated.report.updated_at); }
+  };
+  form.addEventListener("submit",async event => {
+    event.preventDefault();
+    if (form.getAttribute("aria-busy")==="true") return;
+    const confirm = event.submitter?.id !== "save-report-draft";
+    const error = form.querySelector(".error");
+    const controls=[byId("save-report-draft"),byId("confirm-report")];
+    error.hidden=true; form.setAttribute("aria-busy","true");
+    controls.forEach(button => button.disabled=true);
+    try { await save(confirm); }
+    catch (err) { error.textContent=formatError(err); error.hidden=false; }
+    finally { form.removeAttribute("aria-busy"); controls.forEach(button => button.disabled=false); }
   });
 }
 
 async function render() {
   const ticket = ++revision;
   clearPreview();
+  unmountViewer?.();
+  unmountViewer = undefined;
   if(dialog.open) dialog.close();
   byId("navigation").hidden = byId("identity").hidden = !user;
   byId("display-name").textContent = user?.display_name || "";
@@ -492,18 +585,23 @@ async function render() {
   if (!user) { login(); return; }
   if (!location.hash) history.replaceState(null, "", "#new");
   const route = location.hash.slice(1);
-  const isCase = route.startsWith("case/");
-  const archived = route === "dashboard" || route === "archive";
-  byId("crumb").textContent = archived ? "历史记录" : isCase ? "检查详情" : route === "manual" ? "手动登记" : "新建检查";
-  byId("nav-work").classList.toggle("selected", !archived);
-  byId("nav-archive").classList.toggle("selected", archived);
+  const isReport = route.startsWith("report/");
+  const isCase = route.startsWith("case/") || isReport;
+  const historyPage = route === "dashboard" || route === "archive";
+  const queue = Object.hasOwn(worklists, route);
+  byId("crumb").textContent = historyPage ? "历史记录" : queue ? worklists[route].title : isReport ? "复核报告" : isCase ? "阅片工作台" : route === "manual" ? "手动登记" : "新建检查";
+  selectNav(historyPage ? "dashboard" : queue ? route : isCase ? "" : "new");
   if (route === "manual") { manualVisit(); return; }
-  if (!archived && !isCase) { createVisit(); return; }
+  if (!historyPage && !isCase && !queue) { createVisit(); return; }
   page.innerHTML = '<p class="sub">正在读取病例…</p>';
   page.setAttribute("aria-busy","true");
   try {
-    const result = await api(archived ? "/api/cases" : casePath(decodeURIComponent(route.slice(5))));
-    if (ticket === revision) archived ? archive(result) : detail(result);
+    const result = await api(historyPage || queue ? "/api/cases" : casePath(decodeURIComponent(route.slice(route.indexOf("/")+1))));
+    if (ticket !== revision) return;
+    if (historyPage) archive(result);
+    else if (queue) worklist(route, result);
+    else if (isReport) reportPage(result);
+    else detail(result);
   } catch (error) {
     if (ticket === revision) {
       page.innerHTML = `<div class="card"><h2>暂时无法读取</h2><p class="error" role="alert">${escapeHTML(formatError(error))}</p><button class="secondary" id="retry" type="button">重试</button> <a href="#archive">返回病例档案</a></div>`;
