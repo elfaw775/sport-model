@@ -160,5 +160,77 @@
     "max_coordinate_delta_pixels": 5.464553834144681e-05,
     "min_pt_onnx_iou": 0.9999985694979605,
     "onnx_sha256": "61286f939c6a6c4a591d5034e33794ba0af99b5f1f29aac279bb15974c025b0a"
+  },
+  "yolo11s-36epochs": {
+    "weight_source_or_matching_release": "https://huggingface.co/Ultralytics/YOLO11/blob/8b8ac7d1fae7468f85dbf89670dd66f41f485aab/yolo11s.pt",
+    "val_selected_cutoff": 0.075,
+    "fixed_0.15": {
+      "val": {
+        "tp": 4,
+        "fp": 4,
+        "fn": 8
+      },
+      "test": {
+        "tp": 1,
+        "fp": 4,
+        "fn": 11
+      }
+    },
+    "val_selected": {
+      "val": {
+        "tp": 5,
+        "fp": 6,
+        "fn": 7
+      },
+      "test": {
+        "tp": 1,
+        "fp": 6,
+        "fn": 11
+      }
+    },
+    "initial_sha256": "85a76fe86dd8afe384648546b56a7a78580c7cb7b404fc595f97969322d502d5",
+    "checkpoint_sha256": "6ac6dfdbedf8d826d40b4c7358358c16f86e22d7cafdcc359b67436065f67298",
+    "training_seconds": 209.39213108300464
+  },
+  "wrist-yolo26s": {
+    "weight_source_or_matching_release": "https://huggingface.co/Ultralytics/YOLO26/blob/070ac3c51435984d992ba92eb3f234daf4e4500d/yolo26s.pt",
+    "val_selected_cutoff": 0.1,
+    "fixed_0.15": {
+      "val": {
+        "tp": 3,
+        "fp": 4,
+        "fn": 9
+      },
+      "test": {
+        "tp": 1,
+        "fp": 6,
+        "fn": 11
+      }
+    },
+    "val_selected": {
+      "val": {
+        "tp": 3,
+        "fp": 4,
+        "fn": 9
+      },
+      "test": {
+        "tp": 2,
+        "fp": 8,
+        "fn": 10
+      }
+    },
+    "initial_sha256": "646f8bc3fe0a656803d95c294f7852321748cb29d13466a1af8862e2db384a1b",
+    "checkpoint_sha256": "974cf7bafbc78428ad293bbfb666819fa3fc5d6fcea9843fcc8e29f98da409d1",
+    "training_seconds": 65.40677879098803,
+    "wrist_initialization": {
+      "repository": "Crimson-Dawn/grazpedwri-yolo26-checkpoints",
+      "revision": "01213afe2b4e978585339b3a0d5c6e23b38d538b",
+      "file": "runs/baseline_yolo26s_640_100epochs_seed42_from50_20260917_163013_311680Z/epoch_100/best.pt",
+      "sha256": "83589efd0ddc7929a3132289db359d03b107c70f5a26bc3da13b6a81b8b71971",
+      "checkpoint_epoch_index": 54,
+      "source_label": "fracture",
+      "transferred_tensors": 552,
+      "class_branch_tensors_left_at_baseline": 156
+    }
   }
 }

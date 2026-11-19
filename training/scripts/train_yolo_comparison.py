@@ -1,4 +1,4 @@
-"""Train a COCO-initialized YOLO on corrected labels and export per-image predictions."""
+"""Train a YOLO detector on corrected labels and export per-image predictions."""
 import argparse
 import hashlib
 import json
@@ -15,6 +15,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, default=WORK / "dataset/data.yaml")
     parser.add_argument("--weights", type=Path, default=WORK / "pretrained/yolo11s.pt")
+    parser.add_argument("--wrist-checkpoint", type=Path, help="Use the pinned GRAZPEDWRI weights with official YOLO26s")
     parser.add_argument("--output", type=Path, default=WORK / "yolo")
     parser.add_argument("--device", default="mps")
     parser.add_argument("--epochs", default=12, type=int)
@@ -44,9 +45,17 @@ def main():
     if not dataset_root.is_absolute():
         dataset_root = data.parent / dataset_root
     torch.set_num_threads(2)
+    initial_hash = hashlib.sha256(weights.read_bytes()).hexdigest()
+    if args.wrist_checkpoint:
+        from wrist_initialization import COCO_SHA256, initialize_from_wrist
+        if initial_hash != COCO_SHA256:
+            parser.error("腕片迁移实验必须使用指定的官方 YOLO26s COCO 权重作为结构模板")
     model = YOLO(str(weights))
     if len(model.names) != 80:
         raise ValueError("本实验要求 COCO 80 类检测初始权重；不能使用训练过的马片单类权重")
+    transfer = None
+    if args.wrist_checkpoint:
+        transfer = initialize_from_wrist(model.model, args.wrist_checkpoint.resolve(strict=True))
     trainer = None
     if args.optimizer_profile == "fetlock-box":
         from fetlock_optimizer import FetlockBoxTrainer
@@ -79,11 +88,13 @@ def main():
             ]
         (output / f"{split}_predictions.json").write_text(json.dumps(predictions, ensure_ascii=False), encoding="utf-8")
         counts[split] = len(predictions)
-    metadata = {"initial_weights": weights.name, "initial_sha256": hashlib.sha256(weights.read_bytes()).hexdigest(),
+    metadata = {"initial_weights": weights.name, "initial_sha256": initial_hash,
                 "checkpoint": "fit/weights/last.pt", "epochs": args.epochs, "batch": args.batch, "seed": 42,
                 "imgsz": args.imgsz, "optimizer_profile": args.optimizer_profile,
                 "training_seconds": elapsed, "image_counts": counts,
                 "torch": str(torch.__version__), "ultralytics": ultralytics.__version__, "device": args.device}
+    if transfer:
+        metadata["wrist_initialization"] = transfer
     (output / "run.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
 

@@ -9,7 +9,7 @@ RTX 4070 Laptop 的 [RF-DETR Small 对照实验](docs/rfdetr-cuda.md)复用修�
 
 [多款视觉模型的马片实测](results/vision-model-scale-2026-11-18/README.md)在相同划分上比较 Qwen 2B 至 9B、MiMo 和 DeepSeek，记录每款模型框中的病灶、误报、人工标注样本上的微调结果及本机资源用量。
 
-[YOLO640 发布与候选实测](results/yolo-family-2026-11-19/README.md)给出 Python 工作台当前权重，并比较 YOLO11m、YOLO26s、针对精细定位的 AdamW 配置和 Hugging Face 骨折模型。
+从一张片的两个候选框入手，了解标签修正、数据划分、腕片迁移训练、阈值选择，以及本期保留 YOLO11s 的原因。[从 84 张马片到工作台中的病灶框](results/yolo-family-2026-11-19/README.md)
 
 ## 标签转换版本（2026-11-18）
 

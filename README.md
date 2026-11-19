@@ -49,7 +49,7 @@ python3.12 -m venv .venv
 | `training/` | **模型训练全过程**：数据、转换/拆分/评估脚本、训练权重、实验指标 |
 | `.github/workflows/` | GitHub Pages 自动构建部署 |
 
-训练部分详见 [training/README.md](training/README.md)。
+第一次了解这个模型，可以从一张侧位片读起。[选模型、修标签、训练与评估全过程](training/results/yolo-family-2026-11-19/README.md) · [训练目录](training/README.md)
 
 > 为什么不能用原来的 Flask + PyTorch？GitHub Pages 只托管静态文件，跑不了 Python/PyTorch。
 > 所以把模型导出成 ONNX，推理搬到浏览器。
