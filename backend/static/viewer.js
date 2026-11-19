@@ -39,7 +39,7 @@ function toolButton(name, label, attribute, text = false) {
   return `<button type="button" data-${attribute}="${name}" aria-label="${label}" title="${label}">${icon(name)}${text ? `<span>${label}</span>` : ""}</button>`;
 }
 
-export function mountViewer(container, record, {api, onUpload, onReport}) {
+export function mountViewer(container, record, {api, onUpload, onReport, reviewButton}) {
   const signals = new AbortController();
   const listen = (event, fn) => container.addEventListener(event, fn, {signal:signals.signal});
   const find = sel => container.querySelector(sel);
@@ -120,7 +120,7 @@ export function mountViewer(container, record, {api, onUpload, onReport}) {
       const image = imageById(panes[pane]);
       const sourceTag = image.id === "primary" ? "主图" : "附图";
       return `<div class="film-stage" data-pane="${pane}" data-image-id="${escape(image.id)}" tabindex="0" aria-label="${sourceTag} ${escape(image.filename)}">
-        <svg class="radiograph" aria-label="原始影像与测量" role="img"><g class="image-space">
+        <svg class="radiograph" aria-label="影像与阅片标记" role="img"><g class="image-space">
           <image href="${escape(image.url)}" width="${Number(image.width)}" height="${Number(image.height)}"/>
           <g class="detection-boxes"${image.id === "primary" ? ' id="boxes"' : ""}></g><g class="manual-marks"></g><g class="measured-lines"></g></g></svg>
         <div class="evidence-labels" aria-hidden="true"></div>
@@ -144,11 +144,12 @@ export function mountViewer(container, record, {api, onUpload, onReport}) {
   function positionLabels(stage) {
     const matrix = stage.querySelector(".image-space").getScreenCTM();
     if (!matrix) return;
-    const origin = stage.querySelector(".evidence-labels").getBoundingClientRect();
+    // The overlay is hidden when returning from original view. The canvas still has a valid origin.
+    const origin = stage.getBoundingClientRect();
     for (const label of stage.querySelectorAll(".evidence-labels span")) {
       const point = new DOMPoint(Number(label.dataset.x), Number(label.dataset.y)).matrixTransform(matrix);
-      label.style.left = (point.x - origin.left) + "px";
-      label.style.top = (point.y - origin.top) + "px";
+      label.style.left = (point.x - origin.left - stage.clientLeft) + "px";
+      label.style.top = (point.y - origin.top - stage.clientTop) + "px";
     }
   }
   function drawOverlays(pane) {
@@ -156,7 +157,7 @@ export function mountViewer(container, record, {api, onUpload, onReport}) {
     const boxes = image.id === "primary" ? (record.detections || []) : [];
     const boxLayer = stage.querySelector(".detection-boxes");
     boxLayer.style.display = showBoxes ? "" : "none";
-    boxLayer.innerHTML = boxes.map((box,i) => `<rect x="${Number(box.x1)}" y="${Number(box.y1)}" width="${Number(box.x2)-Number(box.x1)}" height="${Number(box.y2)-Number(box.y1)}"><title>区域 ${i+1} · ${Math.round(box.score * 1000)/10}%</title></rect>`).join("");
+    boxLayer.innerHTML = boxes.map((box,i) => `<rect x="${Number(box.x1)}" y="${Number(box.y1)}" width="${Number(box.x2)-Number(box.x1)}" height="${Number(box.y2)-Number(box.y1)}"><title>AI 候选 ${sequence(i)} · 定位分数 ${Number(box.score).toFixed(3)}</title></rect>`).join("");
     const drawing = annotationTool(tool) && pane === active;
     const draft = !drawing && pane === active && points.length ? [{points, draft:true}] : [];
     const annotations = showAnnotations ? image.annotations || [] : [];
@@ -174,8 +175,8 @@ export function mountViewer(container, record, {api, onUpload, onReport}) {
       const anchor = m.points[1];
       return `<span class="mark-label" data-x="${Number(anchor.x)}" data-y="${Number(anchor.y)}">${sequence(i)} · ${Number(m.value).toFixed(1)} ${escape(m.unit)}</span>`;
     });
-    const tags = showBoxes ? boxes.map((box, i) => `<span class="box-label" data-x="${Number(box.x1)}" data-y="${Number(box.y1)}">区域 ${sequence(i)} · ${Math.round(box.score*1000)/10}%</span>`) : [];
-    const manual = annotations.map(a=>`<span class="manual-label" data-x="${Number(a.points[0].x)}" data-y="${Number(a.points[0].y)}">人工 · ${escape(a.label)}</span>`);
+    const tags = showBoxes ? boxes.map((box, i) => `<span class="box-label" data-x="${Number(box.x1)}" data-y="${Number(box.y1)}">AI 候选 ${sequence(i)}</span>`) : [];
+    const manual = annotations.map(a=>`<span class="manual-label" data-x="${Number(a.points[0].x)}" data-y="${Number(a.points[0].y)}">人工标注 · ${escape(a.label)}</span>`);
     stage.querySelector(".evidence-labels").innerHTML = [...tags, ...marks, ...manual].join("");
     positionLabels(stage);
   }
@@ -189,7 +190,7 @@ export function mountViewer(container, record, {api, onUpload, onReport}) {
       <label>影像质量<select name="quality"${locked}>${choices(qualities,quality)}</select></label>
       ${readonly() ? "" : '<button type="submit" class="metadata-save">保存影像信息</button>'}</form>
       ${image.metadata_reviewer ? `<small class="metadata-by">核对人 · ${escape(image.metadata_reviewer)}</small>` : ""}
-      ${image.id === "primary" && record.detections?.length ? `<label class="overlay-switch"><input type="checkbox" id="viewer-boxes" ${showBoxes ? "checked" : ""}> 显示模型候选框</label>` : ""}`;
+      ${image.id === "primary" && record.detections?.length ? `<label class="overlay-switch"><input type="checkbox" id="viewer-boxes" ${showBoxes ? "checked" : ""}> 显示 AI 候选框</label>` : ""}`;
     const saved = image.measurements || [];
     const annotations = image.annotations || [];
     find(".inspector-annotations").innerHTML = `<div class="viewer-section-title"><h2>人工标注</h2><span class="film-count">${annotations.length}</span></div>
@@ -207,6 +208,7 @@ export function mountViewer(container, record, {api, onUpload, onReport}) {
   function syncTools() {
     const view = state(active);
     const drawing = annotationTool(tool), draftActive = drawing && (points.length || editRevision || find("#viewer-annotation-form").elements.label.value.trim());
+    if (reviewButton) reviewButton.disabled = Boolean(pending || draftActive || points.length);
     const form = find("#viewer-annotation-form");
     form.hidden = !drawing;
     form.elements.label.disabled = pending;
@@ -305,6 +307,18 @@ export function mountViewer(container, record, {api, onUpload, onReport}) {
     if (key === "reset") Object.assign(view, newView());
     applyView(active);syncTools();
   }
+  reviewButton?.addEventListener("click", () => {
+    if (reviewButton.disabled) return;
+    const pane = compare && panes.right === "primary" ? "right" : "left";
+    tool = "pan";
+    showBoxes = Boolean(record.detections?.length);
+    originalOnly = !showBoxes;
+    views.set("primary", newView());
+    choose(pane, "primary");
+    const stage = paneNode(pane);
+    stage.scrollIntoView({block:"center"});
+    stage.focus({preventScroll:true});
+  }, {signal:signals.signal});
   const toPoint = (event, el) => new DOMPoint(event.clientX, event.clientY).matrixTransform(el.getScreenCTM().inverse());
   listen("pointerdown", event => {
     const stage = event.target.closest(".film-stage");

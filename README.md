@@ -6,6 +6,14 @@
 
 Python 工作台支持登录、整片筛查、疑似病灶定位、人工复核和团队病例归档。病例分析由服务所在机器用 CPU 运行 DINOv2 Small 和 YOLO11s，两个推理权重随仓库提供。独立的 [GitHub Pages 演示](https://elfaw775.github.io/sport-model/) 使用访问者浏览器里的 YOLO，病例记录存在该浏览器。
 
+## 后端改动会影响模型吗？
+
+病例、登录、签署和人工标注由 Python 工作台处理。服务在同一进程中读取两个 ONNX 文件并核对 SHA-256，然后用 CPU 推理。修改表单、病例逻辑或保存医生画的框，都不会写入权重。训练和导出须另行运行。文件与代码可以分别更新，部署时由同一套工作台加载。[已部署的模型文件及 DINO 门槛](backend/models) · [加载与校验](backend/onnx_models.py)
+
+改动缩放、补边、输入顺序、门槛或候选框过滤，即使权重完全相同，也可能改变医生看到的结果。涉及这些改动时，用固定参考片对比整片分数、报警和候选框。阅片页提供「查看候选框」和「核对主图」，可以从文字提示直接回到原图。[整片推理](backend/screening.py) · [候选框推理](backend/detector.py) · [回归用例](backend/tests/test_detector.py)
+
+[病灶框监督实验](image-study/published/cv84/box-token/README.md) · [奖励训练与公开方法借鉴](image-study/published/cv84/one-step-reward/README.md)
+
 ## 一期工作台：本地运行
 
 在仓库根目录使用 Python 3.12：

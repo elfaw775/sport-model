@@ -6,6 +6,14 @@
 
 The Python workbench supports team case files, image review, whole-film screening, lesion localization and signed reports. Both inference models are included in the repository and run on the server's CPU. A separate GitHub Pages site runs YOLO in the visitor's browser and stores its history in that browser. [Research workbench models](backend/models) · [Browser demo](https://elfaw775.github.io/sport-model/)
 
+## How backend edits affect model output
+
+The Python workbench handles visits, sign-in, report signing and manual annotations. The same server process loads two ONNX files, verifies their SHA-256 hashes and runs inference on CPU. Editing forms, case logic or saving an annotation does not write model weights. Training and export run separately. [Deployed files and DINO threshold](backend/models) · [Model loader](backend/onnx_models.py)
+
+Changing resizing, padding, input layout, operating thresholds or box filtering can change results with identical weight files. Compare scores, screening calls and boxes on fixed reference films when editing inference. The reader can open numbered AI boxes or return to the original primary film directly from the analysis guidance. [Screening](backend/screening.py) · [Localization](backend/detector.py) · [Regression tests](backend/tests/test_detector.py)
+
+[Box-supervised experiment](image-study/published/cv84/box-token/README.md#english) · [Reward experiment and lessons from published methods](image-study/published/cv84/one-step-reward/README.md#english)
+
 ## Run the case workbench
 
 From the repository root, create a Python environment and start FastAPI on the loopback interface.

@@ -4,6 +4,10 @@
 
 The image classifier answers “does this film contain an annotated lesion?” A positive film has at least one lesion annotation. The public archive contains 68 positive films, 16 negative films and 81 lesion boxes. The downloadable research head returns one score per JPG or PNG. A separate YOLO detector produces locations.
 
+## Can different training targets reduce errors?
+
+Using the same test films and calibration budget, we fitted a DINO patch classifier on lesion boxes and independently tuned the existing whole-film head on a class-balanced reward for a correct decision. The studies report missed positive films, false alarms and which decisions changed. The box study also checks where the highest-scoring point falls. [Box supervision](published/cv84/box-token/README.md#english) · [One-step reward and source notes](published/cv84/one-step-reward/README.md#english)
+
 ## Padding sensitivity
 
 On ten fixed canvas conditions, the existing DINOv2 method correctly classified 82/84 films on its normal centered black canvas. Training a candidate with four mild padding variants per fitting film raised that particular score to 83/84. Both methods correctly classified the same 81/84 films under every condition. Each decision used a model and threshold fitted outside that film's test fold. These repeated decisions test sensitivity to padding in the same 84 films. The workbench uses the previously verified model. [Bilingual results, figures by condition and reproduction command](published/cv84/canvas-round2/README.md) · [Per-film scores](published/cv84/canvas-round2/scores.csv)

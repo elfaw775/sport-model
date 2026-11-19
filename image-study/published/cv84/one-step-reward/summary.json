@@ -1,0 +1,65 @@
+{
+  "films": 84,
+  "positives": 68,
+  "negatives": 16,
+  "models": {
+    "supervised": {
+      "correct": 82,
+      "missed": 2,
+      "false_alarms": 0
+    },
+    "reward": {
+      "correct": 82,
+      "missed": 2,
+      "false_alarms": 0
+    }
+  },
+  "fits": [
+    {
+      "fold": 1,
+      "threshold": 0.08113077002931508,
+      "initial_loss": 0.0033002531714250273,
+      "final_loss": 0.0022384126238456556,
+      "weight_change_l2": 0.14110766727783675,
+      "iterations": 12
+    },
+    {
+      "fold": 2,
+      "threshold": 0.3883134579579025,
+      "initial_loss": 0.002669594029592444,
+      "final_loss": 0.0017957365264340904,
+      "weight_change_l2": 0.1258741034944054,
+      "iterations": 11
+    },
+    {
+      "fold": 3,
+      "threshold": 0.05546449355520901,
+      "initial_loss": 0.002565168271140472,
+      "final_loss": 0.0017082917297282683,
+      "weight_change_l2": 0.12317781754041036,
+      "iterations": 11
+    },
+    {
+      "fold": 4,
+      "threshold": 0.5098089169690498,
+      "initial_loss": 0.0028916708018271475,
+      "final_loss": 0.0019656709987721614,
+      "weight_change_l2": 0.13274461665986717,
+      "iterations": 12
+    },
+    {
+      "fold": 5,
+      "threshold": 0.16671561766406517,
+      "initial_loss": 0.0025320139856361617,
+      "final_loss": 0.0016899997479190426,
+      "weight_change_l2": 0.12313629516703231,
+      "iterations": 11
+    }
+  ],
+  "changed": [],
+  "baseline_max_score_drift": 3.3056692309851865e-05,
+  "device": "cuda",
+  "plan_sha256": "62df4ad445b67626d534add645cb221c3f9ab3251882234a399f29c9d5485eaa",
+  "scores_sha256": "977b868a8253f7f4ae4aa7b249b9351da7fad707fcc0f768b026ea97c5abc6f4",
+  "weights_sha256": "1965c0e9c90ed0abdc6db6e82807431de61cad7bbfc0f10b8ddde8e5593728d6"
+}

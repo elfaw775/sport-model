@@ -1,0 +1,167 @@
+{
+  "views": {
+    "black_center": {
+      "models": {
+        "global": {
+          "correct": 82,
+          "tp": 66,
+          "tn": 16,
+          "fp": 0,
+          "fn": 2,
+          "fixed_vs_global": 0,
+          "lost_vs_global": 0
+        },
+        "local": {
+          "correct": 73,
+          "tp": 61,
+          "tn": 12,
+          "fp": 4,
+          "fn": 7,
+          "fixed_vs_global": 2,
+          "lost_vs_global": 11
+        },
+        "fusion": {
+          "correct": 83,
+          "tp": 67,
+          "tn": 16,
+          "fp": 0,
+          "fn": 1,
+          "fixed_vs_global": 1,
+          "lost_vs_global": 0
+        }
+      },
+      "localization_positive_films": {
+        "point_aabb": 55,
+        "center_aabb": 29,
+        "random_aabb": 8.836280926997839,
+        "point_rotated": 49,
+        "center_rotated": 25,
+        "random_rotated": 6.0798950708877175
+      }
+    },
+    "gray32_center": {
+      "models": {
+        "global": {
+          "correct": 81,
+          "tp": 65,
+          "tn": 16,
+          "fp": 0,
+          "fn": 3,
+          "fixed_vs_global": 0,
+          "lost_vs_global": 0
+        },
+        "local": {
+          "correct": 72,
+          "tp": 60,
+          "tn": 12,
+          "fp": 4,
+          "fn": 8,
+          "fixed_vs_global": 3,
+          "lost_vs_global": 12
+        },
+        "fusion": {
+          "correct": 81,
+          "tp": 65,
+          "tn": 16,
+          "fp": 0,
+          "fn": 3,
+          "fixed_vs_global": 0,
+          "lost_vs_global": 0
+        }
+      },
+      "localization_positive_films": {
+        "point_aabb": 54,
+        "center_aabb": 29,
+        "random_aabb": 8.836280926997839,
+        "point_rotated": 48,
+        "center_rotated": 25,
+        "random_rotated": 6.0798950708877175
+      }
+    },
+    "black_start": {
+      "models": {
+        "global": {
+          "correct": 83,
+          "tp": 67,
+          "tn": 16,
+          "fp": 0,
+          "fn": 1,
+          "fixed_vs_global": 0,
+          "lost_vs_global": 0
+        },
+        "local": {
+          "correct": 70,
+          "tp": 57,
+          "tn": 13,
+          "fp": 3,
+          "fn": 11,
+          "fixed_vs_global": 1,
+          "lost_vs_global": 14
+        },
+        "fusion": {
+          "correct": 83,
+          "tp": 67,
+          "tn": 16,
+          "fp": 0,
+          "fn": 1,
+          "fixed_vs_global": 0,
+          "lost_vs_global": 0
+        }
+      },
+      "localization_positive_films": {
+        "point_aabb": 53,
+        "center_aabb": 29,
+        "random_aabb": 8.796625171509914,
+        "point_rotated": 50,
+        "center_rotated": 25,
+        "random_rotated": 6.262795794197228
+      }
+    }
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "fit": 50,
+      "calibration": 17,
+      "held": 17,
+      "nearest_fit_fallback_boxes": 0
+    },
+    {
+      "fold": 2,
+      "fit": 50,
+      "calibration": 17,
+      "held": 17,
+      "nearest_fit_fallback_boxes": 0
+    },
+    {
+      "fold": 3,
+      "fit": 50,
+      "calibration": 17,
+      "held": 17,
+      "nearest_fit_fallback_boxes": 0
+    },
+    {
+      "fold": 4,
+      "fit": 50,
+      "calibration": 17,
+      "held": 17,
+      "nearest_fit_fallback_boxes": 0
+    },
+    {
+      "fold": 5,
+      "fit": 51,
+      "calibration": 17,
+      "held": 16,
+      "nearest_fit_fallback_boxes": 0
+    }
+  ],
+  "n": 84,
+  "positives": 68,
+  "boxes": 81,
+  "plan_sha256": "995a5f91e253b739e1d312a6fe4bb73cf467ccb0440f50387da75c9b3d10f02c",
+  "annotations_sha256": "868262739dfd91bcc0c67c05d5522d12e8f39012e9b206f6d0fcac6ccf37f382",
+  "predictions_sha256": "135b80e1b5ba824975e2e0298c93b491c89eb4ad1cefa8cd9cf5d6bc2eace7f5",
+  "weights_sha256": "bbab13b9192bff049622ff072e537a529fcb82732e546cb0f14e76f8ce1afde5",
+  "encoder": "facebook/dinov2-small",
+  "device": "NVIDIA GeForce RTX 4070 Laptop GPU"
+}
