@@ -144,7 +144,9 @@ try {
   await formSubmit("#analyze-form");
   await visible("#open-report");
   const result = (await records()).find(record => record.id === second);
-  assert.equal(result.detections.length, 1);
+  assert.equal(result.detections.length, 2);
+  assert.equal(result.threshold, 0.20);
+  assert.match(result.model, /^YOLO11s-fetlock-640@/);
   assert.equal(result.images.length, 2);
   assert.equal(result.status, "analyzed");
   assert.equal(result.archived_at, null);

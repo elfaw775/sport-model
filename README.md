@@ -35,17 +35,11 @@ python3.12 -m venv .venv
 - Chrome 流程验收：`pnpm install --frozen-lockfile` 后运行 `node scripts/smoke-visits.mjs`。脚本启动隔离的临时数据库，测试建档、编辑、多图、模型推理、人工复核、查询及批量删除，不会删除实际病例。非 macOS 环境用 `CHROME_BIN` 指定 Chrome、用 `PYTHON` 指定装有后端依赖的 Python。
 - 更新时自动迁移旧病例库，保留编号、原图及复核历史。现有人工复核过的旧记录沿用原复核时间作为归档时间；手动归档不会标记为已复核。
 
-**模型对照：** [实际训练结果、候选权重和复现说明](training/results/comparison-2026-11-18/README.md)；[架构选型依据](training/docs/候选模型与对照试验.md)。两种方案均已训练，候选权重不自动上线，工作台病例不自动加入训练集。
+**Python 工作台当前使用修正旋转框后重训的 YOLO11s，输入为 640 × 640，候选框阈值为 0.20。** 该版本仅用于研究马球节疑似骨折。历史留出集 12 处病灶中命中 3 处、误报 2 框。工作台按病例保存产生检测结果的模型版本和阈值。可用 [16 号侧位片](training/data/sporthorse_v2/images/test/16-侧位.jpg)复验界面，当前版本输出两个候选框，最高分约 0.434。候选框分数不能直接换算成患病概率。[推理权重](backend/models/yolo11s-fetlock-640.onnx) · [可继续训练的 PyTorch 权重](training/results/comparison-2026-11-18/yolo11s-epoch12.pt)
 
-[960 像素重训实验](training/results/yolo11s-960-2026-11-18/README.md)使用与 640 像素候选一致的数据、初始化和训练设置。固定阈值 0.15 时，历史留出集的 12 个标注病灶中，960 命中 2 个、有 28 个误报框；640 命中 3 个、有 5 个误报框。本机仍使用原 v2 权重。可用仓库的[原始正位示例](training/data/sporthorse_v2/images/val/58-正位.jpg)核对当前模型的显示流程，该片在 v2 下有一个分数约 0.31 的候选框。
+[修正标签与训练对照](training/results/comparison-2026-11-18/README.md)说明阈值的选择方法，并提供逐片预测。另有 [960 像素重训](training/results/yolo11s-960-2026-11-18/README.md)与 [多款视觉模型的实测](training/results/vision-model-scale-2026-11-18/README.md)。这些历史报告中的“现役”指当次实验时使用的 v2 权重。
 
-一期真实模型只支持马球节疑似骨折定位。0.15 是在用模型的候选框筛选阈值，分数不是患病概率；未检出不能排除骨折。工作台保留原 v2 权重，本轮候选在修正标签上另行训练和评估。[训练归档](training/README.md) 记录了版本和已知限制。
-
-以下是原静态演示的开发与发布说明：
-
-[Qwen 实测与微调](training/results/qwen3-vl-2b-2026-11-18/README.md)沿用相同 84 匹马。历史留出 12 处病灶中，Qwen3-VL-2B 直接读片命中 0 处，QLoRA 微调命中 1 处。现役 YOLO 命中 3 处，工作台继续使用该模型。
-
-后续实验在同一批马片上加入更大的 Qwen 和小米、DeepSeek 的视觉模型，并记录了 M5 MacBook Air 的实际耗时和内存。[跨模型比较与复算材料](training/results/vision-model-scale-2026-11-18/README.md)
+以下为原 GitHub Pages 浏览器端演示的开发与发布说明。
 
 ## 仓库结构
 

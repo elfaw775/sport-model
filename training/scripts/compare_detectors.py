@@ -57,14 +57,24 @@ def counts(predictions, labels, cutoff):
 
 def shipped():
     from backend import detector
-    detector.THRESHOLD = .01
+    import numpy as np
+    session = detector._session(ROOT / "public/models/model-accurate.onnx",
+                                "2174b21e3a81b740a07d7369ef5677a91fc097ffd4beb92b0d832a421d0825cb")
     folder = WORK / "shipped"
     folder.mkdir(exist_ok=True)
     for split in ("val","test"):
         records = {}
         for path in (WORK / "dataset/images" / split).iterdir():
             with Image.open(path) as image:
-                records[path.name] = detector.detect(image)
+                # Historical v2 used Pillow bilinear resizing before the ONNX forward pass.
+                scale = 640 / max(image.size)
+                size = tuple(max(1, int(v * scale + 0.5)) for v in image.size)
+                left, top = ((640 - v) // 2 for v in size)
+                canvas = Image.new("RGB", (640, 640), (114, 114, 114))
+                canvas.paste(image.convert("RGB").resize(size, Image.Resampling.BILINEAR), (left, top))
+                tensor = np.ascontiguousarray(np.asarray(canvas, dtype=np.float32).transpose(2, 0, 1)[None] / 255)
+                output, = session.run(None, {session.get_inputs()[0].name: tensor})
+                records[path.name] = detector._decode(output, scale, left, top, *image.size, threshold=.01)
         (folder / (split + "_predictions.json")).write_text(json.dumps(records,ensure_ascii=False))
 
 
