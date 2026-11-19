@@ -1,4 +1,4 @@
-"""Train a COCO-initialized YOLO11s on corrected labels, then write validation predictions."""
+"""Train a COCO-initialized YOLO on corrected labels and export per-image predictions."""
 import argparse
 import hashlib
 import json
@@ -20,6 +20,7 @@ def main():
     parser.add_argument("--epochs", default=12, type=int)
     parser.add_argument("--batch", default=4, type=int)
     parser.add_argument("--imgsz", default=640, type=int, help="Square training and inference size, in pixels")
+    parser.add_argument("--optimizer-profile", choices=("baseline", "fetlock-box"), default="baseline")
     args = parser.parse_args()
     output = args.output.resolve()
     data = args.data.resolve(strict=True)
@@ -46,9 +47,13 @@ def main():
     model = YOLO(str(weights))
     if len(model.names) != 80:
         raise ValueError("本实验要求 COCO 80 类检测初始权重；不能使用训练过的马片单类权重")
+    trainer = None
+    if args.optimizer_profile == "fetlock-box":
+        from fetlock_optimizer import FetlockBoxTrainer
+        trainer = FetlockBoxTrainer
     started = monotonic()
     model.train(
-        data=str(data), device=args.device, project=str(output), name="fit",
+        trainer=trainer, data=str(data), device=args.device, project=str(output), name="fit",
         epochs=args.epochs, patience=0, batch=args.batch, imgsz=args.imgsz, seed=42,
         workers=0, amp=False, cache=False, plots=False, freeze=10,
         optimizer="AdamW", lr0=0.001, lrf=0.1, warmup_epochs=1, nbs=8,
@@ -76,7 +81,8 @@ def main():
         counts[split] = len(predictions)
     metadata = {"initial_weights": weights.name, "initial_sha256": hashlib.sha256(weights.read_bytes()).hexdigest(),
                 "checkpoint": "fit/weights/last.pt", "epochs": args.epochs, "batch": args.batch, "seed": 42,
-                "imgsz": args.imgsz, "training_seconds": elapsed, "image_counts": counts,
+                "imgsz": args.imgsz, "optimizer_profile": args.optimizer_profile,
+                "training_seconds": elapsed, "image_counts": counts,
                 "torch": str(torch.__version__), "ultralytics": ultralytics.__version__, "device": args.device}
     (output / "run.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 

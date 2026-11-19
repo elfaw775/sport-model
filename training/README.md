@@ -7,6 +7,8 @@
 
 [多款视觉模型的马片实测](results/vision-model-scale-2026-11-18/README.md)在相同划分上比较 Qwen 2B 至 9B、MiMo 和 DeepSeek，记录每款模型框中的病灶、误报、人工标注样本上的微调结果及本机资源用量。
 
+[YOLO640 发布与候选实测](results/yolo-family-2026-11-19/README.md)给出 Python 工作台当前权重，并比较 YOLO11m、YOLO26s、针对精细定位的 AdamW 配置和 Hugging Face 骨折模型。
+
 ## 标签转换版本（2026-11-18）
 
 历史 v1/v2 的转换器忽略了 CVAT 的 `attributes.rotation`。当前转换器将四个顶点绕矩形中心旋转，取轴对齐外接矩形，最后裁剪到图像边界。已发布的 v1/v2 标签、模型和下文历史指标按原版本保留。修正标签后的实验分别记录在 [640 像素 YOLO 与 Faster R-CNN 对照](results/comparison-2026-11-18/README.md) 和 [960 像素 YOLO 重训](results/yolo11s-960-2026-11-18/README.md)。

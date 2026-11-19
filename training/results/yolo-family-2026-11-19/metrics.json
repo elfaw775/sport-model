@@ -1,0 +1,164 @@
+{
+  "yolo11s": {
+    "weight_source_or_matching_release": "https://huggingface.co/Ultralytics/YOLO11/blob/8b8ac7d1fae7468f85dbf89670dd66f41f485aab/yolo11s.pt",
+    "val_selected_cutoff": 0.2,
+    "fixed_0.15": {
+      "val": {
+        "tp": 5,
+        "fp": 11,
+        "fn": 7
+      },
+      "test": {
+        "tp": 3,
+        "fp": 5,
+        "fn": 9
+      }
+    },
+    "val_selected": {
+      "val": {
+        "tp": 5,
+        "fp": 6,
+        "fn": 7
+      },
+      "test": {
+        "tp": 3,
+        "fp": 2,
+        "fn": 9
+      }
+    },
+    "initial_sha256": "85a76fe86dd8afe384648546b56a7a78580c7cb7b404fc595f97969322d502d5",
+    "checkpoint_sha256": "99c7c79b1bb695c87f6e55f70ed3b61a4928f8351d288bf9316ffed139ca1559",
+    "training_seconds": 160.0669646669994
+  },
+  "yolo11s-fetlock-box": {
+    "weight_source_or_matching_release": "https://huggingface.co/Ultralytics/YOLO11/blob/8b8ac7d1fae7468f85dbf89670dd66f41f485aab/yolo11s.pt",
+    "val_selected_cutoff": 0.25,
+    "fixed_0.15": {
+      "val": {
+        "tp": 6,
+        "fp": 20,
+        "fn": 6
+      },
+      "test": {
+        "tp": 3,
+        "fp": 11,
+        "fn": 9
+      }
+    },
+    "val_selected": {
+      "val": {
+        "tp": 6,
+        "fp": 11,
+        "fn": 6
+      },
+      "test": {
+        "tp": 3,
+        "fp": 5,
+        "fn": 9
+      }
+    },
+    "initial_sha256": "85a76fe86dd8afe384648546b56a7a78580c7cb7b404fc595f97969322d502d5",
+    "checkpoint_sha256": "33128bb932c68d32238b3c4787b93d29a0dee94de6e4c687b50c65c5802c58e0",
+    "training_seconds": 105.20583666599123
+  },
+  "yolo11m": {
+    "weight_source_or_matching_release": "https://huggingface.co/Ultralytics/YOLO11/blob/8b8ac7d1fae7468f85dbf89670dd66f41f485aab/yolo11m.pt",
+    "val_selected_cutoff": 0.075,
+    "fixed_0.15": {
+      "val": {
+        "tp": 2,
+        "fp": 5,
+        "fn": 10
+      },
+      "test": {
+        "tp": 1,
+        "fp": 1,
+        "fn": 11
+      }
+    },
+    "val_selected": {
+      "val": {
+        "tp": 4,
+        "fp": 12,
+        "fn": 8
+      },
+      "test": {
+        "tp": 1,
+        "fp": 6,
+        "fn": 11
+      }
+    },
+    "initial_sha256": "d5ffc1a674953a08e11a8d21e022781b1b23a19b730afc309290bd9fb5305b95",
+    "checkpoint_sha256": "22c2bf1889e56a63ba128804553b6f0552de16a847612671ea92021a8d4e35c7",
+    "training_seconds": 97.3399502079701
+  },
+  "yolo26s": {
+    "weight_source_or_matching_release": "https://huggingface.co/Ultralytics/YOLO26/blob/070ac3c51435984d992ba92eb3f234daf4e4500d/yolo26s.pt",
+    "val_selected_cutoff": 0.075,
+    "fixed_0.15": {
+      "val": {
+        "tp": 6,
+        "fp": 5,
+        "fn": 6
+      },
+      "test": {
+        "tp": 0,
+        "fp": 5,
+        "fn": 12
+      }
+    },
+    "val_selected": {
+      "val": {
+        "tp": 7,
+        "fp": 11,
+        "fn": 5
+      },
+      "test": {
+        "tp": 3,
+        "fp": 13,
+        "fn": 9
+      }
+    },
+    "initial_sha256": "646f8bc3fe0a656803d95c294f7852321748cb29d13466a1af8862e2db384a1b",
+    "checkpoint_sha256": "40a111b7c8d3c630869a7961fd2a02a90360828ec01e6f50467fd0658aab1c9b",
+    "training_seconds": 125.44842970801983
+  },
+  "hf-fracture": {
+    "weight_source_or_matching_release": "https://huggingface.co/Jesteban247/yolo11-fracture-onnx/blob/8227dbcdcf80f3cd06f052a8295ee42657989deb/best.onnx",
+    "val_selected_cutoff": 0.15,
+    "fixed_0.15": {
+      "val": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 12
+      },
+      "test": {
+        "tp": 0,
+        "fp": 3,
+        "fn": 12
+      }
+    },
+    "val_selected": {
+      "val": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 12
+      },
+      "test": {
+        "tp": 0,
+        "fp": 3,
+        "fn": 12
+      }
+    },
+    "source_sha256": "5f16fff48dc54a5ca2b4c625a8df4d55c2beaef18b202fc8dba6e1117a112686"
+  },
+  "release_parity": {
+    "files": 25,
+    "threshold": 0.2,
+    "boxes": 16,
+    "max_score_delta": 1.1920928955078125e-06,
+    "max_coordinate_delta_pixels": 5.464553834144681e-05,
+    "min_pt_onnx_iou": 0.9999985694979605,
+    "onnx_sha256": "61286f939c6a6c4a591d5034e33794ba0af99b5f1f29aac279bb15974c025b0a"
+  }
+}
