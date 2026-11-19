@@ -1,4 +1,5 @@
 import { mountViewer } from "./viewer.js";
+import { readingGuide } from "./reading-guide.js";
 
 const page = document.querySelector("#page");
 const byId = (id) => document.getElementById(id);
@@ -7,7 +8,6 @@ const icon = (name) => '<svg aria-hidden="true"><use href="#' + name + '"/></svg
 const statusNames = {registered:"仅登记",uploaded:"待分析", analyzed:"待复核", reviewed:"已复核"};
 const statusBadge = (status) => '<span class="badge ' + (status in statusNames ? status : "") + '">' + escapeHTML(statusNames[status]) + '</span>';
 const dateText = (value) => value ? new Intl.DateTimeFormat("zh-CN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Shanghai",hour12:false}).format(new Date(value)) : "—";
-const pct = (value) => (Number(value) * 100).toFixed(1).replace(/\.0$/, "") + "%";
 const casePath = (id) => "/api/cases/" + encodeURIComponent(id);
 const caseLink = (id) => "#case/" + encodeURIComponent(id);
 const json = (data) => ({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
@@ -431,30 +431,16 @@ function enableAttachment(form, record, onSaved) {
   });
 }
 
-function screeningDecision(screening) {
-  return screening.predicted_positive ? "提示疑似病灶" : "未达到病灶提示门槛";
-}
-
-function screeningScores(screening) {
-  return `筛查分数 ${screening.score.toPrecision(5)} · 报警门槛 ${screening.threshold.toPrecision(5)}`;
-}
-
 function analysisSummary(record, analyzed, signed) {
   const boxes = record.detections || [];
-  const screening = record.screening;
-  const title = !analyzed ? "主图已上传，等待分析" : screening ? `整片筛查 · ${screeningDecision(screening)}` : "历史主图定位结果";
-  const lead = !analyzed ? "DINOv2 筛查主图上是否有疑似病灶，YOLO11s 标出可疑区域，供人工复核。"
-    : screening ? `DINOv2 Small · ${screeningScores(screening)}` : "这次分析仅记录了 YOLO 定位结果。";
-  const localization = boxes.length
-    ? `发现 ${boxes.length} 个候选区域，最高模型分数 ${pct(Math.max(...boxes.map(box => box.score)))}。请在原片上核对。`
-    : `当前门槛（${pct(record.threshold)}）下未检出候选区域，请复核整张原片。`;
+  const needsReview = !signed && (record.screening?.predicted_positive || boxes.length > 0);
   const action = analyzed
-    ? `<a href="${reportLink(record.id)}" id="open-report" class="primary">${icon("book")} ${signed ? "查看复核报告" : record.report?.revision ? "继续复核报告" : "编写复核报告"}</a>`
+    ? `<nav class="reading-actions" aria-label="阅片操作">${signed ? "" : `<button type="button" id="go-to-primary" class="primary">${boxes.length ? "查看候选框" : "核对主图"}</button>`}
+       <a href="${reportLink(record.id)}" id="open-report" class="${signed ? "primary" : "secondary"}">${icon("book")} ${signed ? "查看复核报告" : record.report?.revision ? "继续复核报告" : "编写复核报告"}</a></nav>`
     : `<form id="analyze-form"><button class="primary" type="submit">${icon("scan")} 开始分析</button>${errorBox}</form>`;
-  return `<section class="case-result-strip ${analyzed ? boxes.length ? "has-detections" : "no-detections" : "awaiting-analysis"}" id="analysis-summary" aria-labelledby="analysis-title">
-    <span class="tile-icon">${icon("scan")}</span><div><div class="result-meta"><b>主图模型结果</b><span id="analysis-state">${analyzed ? "分析完成 · "+escape(dateText(record.analyzed_at)) : "待分析"}</span></div>
-    <h2 id="analysis-title">${title}</h2><p id="analysis-lead">${lead}</p>
-    ${analyzed ? `<p class="localization-summary"><strong>YOLO 病灶定位</strong> · ${localization}</p>` : ""}</div>${action}</section>`;
+  return `<section class="case-result-strip ${analyzed ? boxes.length ? "has-detections" : "no-detections" : "awaiting-analysis"} ${needsReview ? "review-prompt" : ""}" id="analysis-summary" aria-label="主图阅片提示">
+    <span class="tile-icon">${icon("scan")}</span><div><div class="result-meta"><b>主图阅片提示</b><span id="analysis-state">${analyzed ? "分析完成 · "+escape(dateText(record.analyzed_at)) : "待分析"}</span></div>
+    ${analyzed ? readingGuide(record, escapeHTML) : '<h2 id="analysis-title">主图已上传，等待分析</h2><p id="analysis-lead">分析后可查看整片是否提示可疑，以及主图上的候选区域。</p>'}</div>${action}</section>`;
 }
 
 function detail(record) {
@@ -486,7 +472,7 @@ function detail(record) {
   byId("edit-visit").onclick = () => editVisit(record,detail);
   byId("add-images")?.addEventListener("click",add);
   archiveAction(record,detail);
-  if (hasImage) unmountViewer = mountViewer(byId("viewer-host"), record, {api,onUpload:add,
+  if (hasImage) unmountViewer = mountViewer(byId("viewer-host"), record, {api,onUpload:add,reviewButton:byId("go-to-primary"),
     onReport:() => { if (analyzed) location.hash = reportLink(record.id); else byId("analyze-form").requestSubmit(); }});
   if (byId("analyze-form")) action(byId("analyze-form"),"模型分析中…",async active => {
     const summary = byId("analysis-summary");
@@ -523,7 +509,6 @@ function reportPage(record) {
   const signed = record.status === "reviewed";
   const report = record.report || {};
   const images = record.images || [];
-  const boxes = record.detections || [];
   const priorFindings = report.findings || "";
   const priorConclusion = report.conclusion || (signed ? record.review_note : "") || "";
   const formBody = signed ? `<section class="signed-section">${record.empty_review_confirmed
@@ -547,12 +532,7 @@ function reportPage(record) {
       ${images.map((im,i)=>`<div class="report-evidence"><img src="${escape(im.url)}" alt=""><div><b>${i===0?"主图":"附图 "+i} · ${escape(im.projection)}</b><small>${escape(im.filename)}</small>
       ${(im.measurements || []).map(m=>`<span>${m.kind==="distance"?"距离":"角度"}　${Number(m.value).toFixed(1)} ${m.kind==="distance"?"px":"°"}</span>`).join("")}
       ${(im.annotations || []).map(a=>`<span>人工标注 · ${escape(a.label)}（${escape(a.updated_by)}）</span>`).join("")}</div></div>`).join("")}</section>
-      <section class="card model-summary"><h2>主图 AI 辅助结果</h2>
-      <h3>整片筛查</h3>${record.screening ? `<p class="film-screening"><b>${screeningDecision(record.screening)}</b><br>DINOv2 Small · ${screeningScores(record.screening)}</p>` : '<p class="dim">本次历史分析未记录整片筛查。</p>'}
-      <h3>YOLO 病灶定位</h3><p>${boxes.length ? boxes.map((box,i)=>`候选区域 ${i+1} · 模型分数 ${pct(box.score)}`).join("<br>") : "当前定位门槛下未检出候选区域。"}</p>
-      <p class="dim">请结合原片复核；筛查分数和候选框仅供参考。</p>
-      <details><summary>模型版本与门槛</summary>${record.screening ? `<p>筛查 · ${escape(record.screening.model)}<br>报警门槛 ${record.screening.threshold}</p>` : ""}
-      <p>定位 · ${escape(record.model)}<br>候选框门槛 ${pct(record.threshold)}</p></details></section></aside></div>`;
+      <section class="card model-summary"><h2>主图 AI 辅助结果</h2>${readingGuide(record, escapeHTML)}</section></aside></div>`;
   archiveAction(record,reportPage);
   const form = byId("report-form");
   if (!form) return;

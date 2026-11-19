@@ -297,11 +297,18 @@ label.search-field:not(.check){position:relative;display:flex;align-items:center
 .case-result-strip .result-meta span{font-variant-numeric:tabular-nums}
 .case-result-strip h2{font-size:clamp(17px,1.4vw,22px);letter-spacing:-.025em}
 .case-result-strip p{color:#516354;margin:3px 0 0}
-.case-result-strip .localization-summary{margin-top:6px}
-.model-summary h3{font-size:14px;margin:16px 0 4px}
-.model-summary details p{overflow-wrap:anywhere}
-.case-result-strip.no-detections{background:#faf6eb;border-color:#e5ddc5}
-.no-detections .tile-icon{background:#f1e8ce;color:#82683d}
+.reading-title{font-size:clamp(16px,1.4vw,21px);line-height:1.45;margin:0;letter-spacing:-.02em}
+.reading-guide .reading-next{margin:3px 0 0;line-height:1.65}
+.model-summary .reading-title{font-size:16px;margin:12px 0 3px}
+.model-evidence{margin-top:9px;line-height:1.6;color:#48564b;font-size:12px;overflow-wrap:anywhere}
+.model-evidence summary{cursor:pointer;width:fit-content;font-weight:600}
+.model-evidence dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 10px;margin:9px 0 4px}
+.model-evidence dt{font-weight:600}.model-evidence dd,.model-evidence dd p{margin:0}
+.model-evidence small{display:block}
+.case-result-strip.review-prompt{background:#faf6eb;border-color:#e5ddc5}
+.review-prompt .tile-icon{background:#f1e8ce;color:#82683d}
+.reading-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.reading-actions a,.reading-actions button{white-space:nowrap}
 .case-result-strip .primary{flex-shrink:0}
 .case-result-strip form{margin:0;text-align:right;max-width:min(350px,45%)}
 .case-result-strip .error{font-size:12px;color:#91493e;margin-top:5px}
@@ -322,5 +329,7 @@ label.search-field:not(.check){position:relative;display:flex;align-items:center
   .case-result-strip>div{flex-basis:100%}
   .case-result-strip form{max-width:100%;text-align:left}
   .case-result-strip .primary{min-height:35px;padding:7px 11px;font-size:13px}
+  .reading-actions{width:100%}
+  .reading-actions button,.reading-actions a{flex:1;justify-content:center}
   .sidebar nav a{font-size:12px;padding:7px 4px}
 }

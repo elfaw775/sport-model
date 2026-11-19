@@ -50,10 +50,39 @@ try {
     assert.match(screening.model, /^DINOv2-Small-refit84@/);
     assert.ok(Number.isFinite(screening.score) && Number.isFinite(screening.threshold));
     assert.equal(screening.predicted_positive, screening.score >= screening.threshold);
-    const output = await page.$eval(selector, element => element.innerText);
-    assert.ok(output.includes(screening.predicted_positive ? "提示疑似病灶" : "未达到病灶提示门槛"));
-    assert.ok(output.includes(screening.score.toPrecision(5)));
-    assert.ok(output.includes(screening.threshold.toPrecision(5)));
+    const title = await page.$eval(selector + " .reading-title", element => element.innerText);
+    const boxes = record.detections.length;
+    assert.equal(title, (screening.predicted_positive ? "整片提示可疑" : "整片未触发提示") + "，" +
+      (boxes ? `定位到 ${boxes} 处候选区域` : "未定位到候选区域"));
+    assert.equal(await page.$eval(selector + " details", node => node.open), false);
+    await click(selector + " summary");
+    const evidence = await page.$eval(selector + " details", element => element.innerText);
+    for (const value of [screening.score.toPrecision(5), screening.threshold.toPrecision(5), screening.model, record.model]) {
+      assert.ok(evidence.includes(value));
+    }
+    await click(selector + " summary");
+  };
+  const checkReviewButton = async (count) => {
+    await click("#go-to-primary");
+    const view = await page.$eval(".film-stage.active-pane", el => {
+      const bounds = el.getBoundingClientRect();
+      return {id:el.dataset.imageId, focused:el === document.activeElement,
+        inView:bounds.top < innerHeight && bounds.bottom > 0, boxes:el.querySelectorAll(".detection-boxes rect").length,
+        labels:[...el.querySelectorAll(".box-label")].map(item=>item.innerText),
+        original:document.querySelector("#viewer-original").getAttribute("aria-pressed")};
+    });
+    assert.deepEqual(view, {id:"primary", focused:true, inView:true, boxes:count,
+      labels:Array.from({length:count}, (_,i)=>"AI 候选 " + String(i+1).padStart(2,"0")), original:String(!count)});
+  };
+  const checkBoxLabels = async () => {
+    const errors = await page.$eval('.film-stage[data-image-id="primary"]', stage => {
+      const labels = [...stage.querySelectorAll(".box-label")];
+      return [...stage.querySelectorAll(".detection-boxes rect")].map((box,i) => {
+        const region = box.getBoundingClientRect(), label = labels[i].getBoundingClientRect();
+        return Math.max(Math.abs(label.left - region.left),Math.abs(label.bottom - region.top));
+      });
+    });
+    assert.ok(errors.length && errors.every(delta => delta < 2), "Candidate numbers must line up with their own boxes");
   };
   const home = async () => {
     await click("#nav-archive");
@@ -74,6 +103,31 @@ try {
   };
 
   await page.goto(base);
+  const branches = await page.evaluate(async () => {
+    const {readingGuide} = await import("/static/reading-guide.js");
+    const fixture = document.createElement("section");
+    const outputs = [];
+    for (const flag of [true,false,null]) {
+      for (const count of [1,0]) {
+        const screening = flag === null ? null : {predicted_positive:flag, score:flag ? .8 : .1, threshold:.5, model:"screen-test"};
+        fixture.innerHTML = readingGuide({screening,model:"local-test",detections:count ? [{score:.7}] : []},String);
+        outputs.push([fixture.querySelector("h3").textContent, fixture.querySelector(".reading-next").textContent,
+          fixture.querySelector("dd").textContent.includes("本次历史分析未记录整片筛查")]);
+      }
+    }
+    return outputs;
+  });
+  const expectedBranches = [
+    ["整片提示可疑，定位到 1 处候选区域", /先核对主图上编号的 AI 候选框/, false],
+    ["整片提示可疑，未定位到候选区域", /具体位置需要人工查找/, false],
+    ["整片未触发提示，定位到 1 处候选区域", /定位模型单独给出了提示/, false],
+    ["整片未触发提示，未定位到候选区域", /常规复核整张主图/, false],
+    ["历史记录：定位到 1 处候选区域", /本次仅保存了定位结果/, true],
+    ["历史记录：未定位到候选区域", /请查看整张原片/, true],
+  ];
+  branches.forEach(([title,next,historical],i) => {
+    assert.equal(title,expectedBranches[i][0]);assert.match(next,expectedBranches[i][1]);assert.equal(historical,expectedBranches[i][2]);
+  });
   const loginMember = async username => {
     await visible("select[name=username]");
     await page.select("[name=username]", username);
@@ -163,20 +217,34 @@ try {
   assert.equal(result.status, "analyzed");
   assert.equal(result.archived_at, null);
   assert.equal(await page.$("#archive-visit"), null);
-  assert.match(await page.$eval("#analysis-summary.has-detections", el => el.innerText), /最高模型分数/);
   await checkScreening(result, "#analysis-summary");
+  await click('.film-card[data-image-id="1"]');
+  assert.equal(await page.$eval(".film-stage.active-pane", el=>el.dataset.imageId), "1");
+  await click("#viewer-original");
+  await click("#viewer-compare");
+  await checkReviewButton(result.detections.length);
+  assert.equal(await page.$eval(".film-stage.active-pane", el=>el.dataset.pane), "right");
+  await checkBoxLabels();
+  await click("#viewer-compare");
+  await checkReviewButton(result.detections.length);
   await findText("主片复核区域");
+  await click("[data-rename]");
+  assert.equal(await page.$eval("#go-to-primary", el=>el.disabled), true);
+  await click("#cancel-annotation");
   await click("#viewer-original");
   assert.equal(await page.$eval(".manual-marks",el=>getComputedStyle(el).display),"none");
   assert.equal(await page.$eval(".detection-boxes",el=>getComputedStyle(el).display),"none");
   assert.equal(await page.$eval(".measured-lines",el=>getComputedStyle(el).display),"none");
   await click("#viewer-original");
   assert.notEqual(await page.$eval(".detection-boxes",el=>getComputedStyle(el).display),"none");
+  await checkBoxLabels();
+  await page.$eval("#analysis-summary", el=>el.scrollIntoView({block:"start"}));
+  await page.waitForSelector("#toast:empty");
   await screenshot("clinical-result");
   await click("#nav-reviews");
   await click(`#queue-list a[href="#report/${second}"]`);
   await visible("#report-form");
-  await checkScreening(result, ".film-screening");
+  await checkScreening(result, ".model-summary");
   const findings = "已逐张核对主片与附片，距离和角度已记录。";
   const conclusion = "记录本次运动马球节复查结果。";
   await writeReport(findings, conclusion);
@@ -202,7 +270,8 @@ try {
   const reviewed = await detail(second);
   assert.equal(reviewed.report.author, "朱诗嘉");
   assert.deepEqual(reviewed.screening, result.screening);
-  await checkScreening(reviewed, ".film-screening");
+  await checkScreening(reviewed, ".model-summary");
+  assert.match(await page.$eval(".reading-next",node=>node.innerText), /报告已签署/);
   await findText("人工标注 · 主片复核区域");
   await screenshot("clinical-reviewed");
   assert.equal(reviewed.reviewer, "王一伊");
@@ -213,6 +282,7 @@ try {
   assert.equal(reviewed.archived_at, null);
   await click(`a[href="#case/${second}"]`);
   await visible("[data-annotation-id]");
+  assert.equal(await page.$("#go-to-primary"),null);
   assert.equal(await page.$eval('button[data-tool=rectangle]',el=>el.disabled),true);
   assert.equal(await page.$("[data-delete-annotation]"),null);
   assert.equal(await page.$("[data-rename]"),null);
@@ -271,9 +341,16 @@ try {
   }))));
   assert.equal(await page.$eval("#analysis-summary.no-detections", el => {
     const bounds = el.getBoundingClientRect();
-    return el.innerText.includes("未检出") && bounds.top >= 0 && bounds.bottom <= innerHeight
+    return el.innerText.includes("未定位到候选区域") && bounds.top >= 0 && bounds.bottom <= innerHeight
       && bounds.bottom <= document.querySelector("#viewer-host").getBoundingClientRect().top;
   }), true);
+  await page.waitForSelector("#toast:empty");
+  await screenshot("clinical-screening-disagreement");
+  await page.setViewport({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
+  await screenshot("clinical-screening-disagreement-mobile");
+  await checkReviewButton(0);
+  await page.setViewport({width:1440,height:960});
   await openReport(); await writeReport("　", " ");
   await click("#confirm-report"); await visible("#sign-empty-review");
   assert.equal((await detail(noFindingId)).status, "analyzed");
@@ -285,6 +362,7 @@ try {
   assert.equal((await detail(noFindingId)).report.revision, 0);
   await click("#confirm-report"); await click("#sign-empty-review"); await visible("#archive-visit");
   await findText("复核人已确认留空提交");
+  assert.match(await page.$eval(".reading-next",node=>node.textContent), /已确认本次人工所见与结论留空/);
   assert.equal((await detail(noFindingId)).empty_review_confirmed, true);
   await click("#archive-visit"); await waitForArchive(noFindingId);
   await home(); await click(".row-delete"); await click("#confirm-delete");
@@ -297,7 +375,7 @@ try {
   assert.equal((await detail(singleFieldId)).empty_review_confirmed, false);
   assert.equal((await detail(singleFieldId)).review_note, "需核对侧位片。");
   assert.deepEqual(errors, []);
-  console.log("PASS: shared visits, two-film comparison, transformed pixel and angle measurements, live inference, report draft recovery, author/reviewer signatures, archive, search, mobile layout and shared deletion.");
+  console.log("PASS: shared visits, primary-film review with and without candidate boxes, all four reading-guide branches and legacy records, two-film comparison, annotations, live inference, signatures, archive, search and mobile layout.");
 } finally {
   try { await browser?.close(); }
   finally { service.kill(); await closed; await rm(db, {recursive:true,force:true}); }
