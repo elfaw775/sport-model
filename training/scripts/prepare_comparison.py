@@ -1,8 +1,10 @@
-"""Build the two-model experiment from the archived split and original CVAT geometry."""
+"""Stage the archived split with corrected CVAT geometry, without editing the source data."""
+import argparse
 import csv
+import filecmp
 import json
-import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 from collections import Counter
@@ -13,12 +15,13 @@ SOURCE = ROOT / "training/data/sporthorse_v2"
 WORK = ROOT / "work/model-comparison"
 
 
-def main():
-    converted = WORK / "rotation-aware"
+def prepare(work=WORK):
+    work = Path(work).resolve()
+    converted = work / "rotation-aware"
     subprocess.run([sys.executable, str(Path(__file__).with_name("coco2yolo.py")),
                     str(ROOT / "training/source/coco/instances_default.json"),
                     "--out", str(converted), "--keep", "病变"], check=True)
-    dataset = WORK / "dataset"
+    dataset = work / "dataset"
     with (SOURCE / "split_manifest.tsv").open(encoding="utf-8") as stream:
         rows = list(csv.DictReader(stream, delimiter="\t"))
     assert len({row["image"] for row in rows}) == len(rows) == 84
@@ -28,14 +31,15 @@ def main():
         stem, split = row["image"], row["split"]
         matches = [file for file in (SOURCE / "images" / split).iterdir() if file.stem == stem]
         source, = matches
-        label = (converted / (stem + ".txt")).read_text() if row["category"] == "pos" else ""
+        label = (converted / (stem + ".txt")).read_text(encoding="utf-8") if row["category"] == "pos" else ""
         assert len(label.splitlines()) == int(row["class0_boxes"])
         counts[split] += len(label.splitlines())
         path = dataset / "images" / split / source.name
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists():
-            os.link(source, path)
-        elif not path.samefile(source):
+            # Some loaders can repair a malformed JPEG in-place. Do not hard-link the archive.
+            shutil.copyfile(source, path)
+        elif not filecmp.cmp(source, path, shallow=False):
             raise RuntimeError(f"Unexpected image already present: {path}")
         output = dataset / "labels" / split / (stem + ".txt")
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -50,6 +54,13 @@ def main():
     (dataset / "data.yaml").write_text("path: " + json.dumps(str(dataset), ensure_ascii=False)
         + "\ntrain: images/train\nval: images/val\ntest: images/test\nnames: {0: lesion}\n", encoding="utf-8")
     print(f"Ready: {dataset}; boxes per split: {dict(counts)}")
+    return dataset
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--work", type=Path, default=WORK)
+    prepare(parser.parse_args().work)
 
 
 if __name__ == "__main__":
