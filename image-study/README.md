@@ -81,4 +81,12 @@ The preparation command regenerates rotation-corrected boxes from the repository
 
 The dataset defaults to `training/data/sporthorse_v2`. Set `SPORT_XRAY_DATA` to point classification scripts to a byte-equivalent local copy with its original split manifest and image folders. The repository's annotation converter reads source images and COCO annotations from its standard training layout. Cache paths default to the current user's local app data on Windows or home cache on Linux. All Hugging Face encoders are identified by revision and file digests in the three asset loaders.
 
-The evidence ZIP contains the full outer prediction table, inner scores and thresholds, five seed-42 heads, detector boxes, paired comparisons, perturbation and occlusion audits, historical per-film predictions, feature provenance and original hash-bearing source files. The runnable copies adapt file locations for a checkout. Source hashes in the frozen experiment reports refer to the original files. Public encoder weights are fetched on demand. 
+The evidence ZIP contains the full outer prediction table, inner scores and thresholds, five seed-42 heads, detector boxes, paired comparisons, perturbation and occlusion audits, historical per-film predictions, feature provenance and original hash-bearing source files. The runnable copies adapt file locations for a checkout. Source hashes in the frozen experiment reports refer to the original files. Public encoder weights are fetched on demand.
+
+## Run with temporary images
+
+The helper fetches the selected image splits and manifest from the pinned GitHub dataset, verifies every Git blob, and removes its temporary directory when the command exits. Point the training output to a separate run directory. The detector uses its own temporary preparation of the corrected boxes.
+
+```powershell
+& $py image-study/with_film_data.py --splits train -- $py image-study/hf_features.py --models dinov2 --splits train
+```
