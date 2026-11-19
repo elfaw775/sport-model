@@ -1,12 +1,13 @@
 import io
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from backend import detector
+from backend import detector, screening
 from backend.app import MAX_BYTES, create_app
 
 
@@ -50,6 +51,29 @@ def upload(client, content=None, **metadata):
     data = {"horse_name": "追风", "projection": "侧位", "quality_confirmed": "true"} | metadata
     return client.post("/api/cases", data=data,
                        files={"image": ("../xray.png", picture() if content is None else content, "image/png")})
+
+
+@pytest.mark.parametrize("name,ref_score,positive", [
+    ("16-侧位.jpg", 0.9996267822680424, True),
+    ("7-RF-正位.jpg", 0.002013474966457373, False),
+])
+def test_real_screening_and_localization_on_main_image(client, name, ref_score, positive):
+    # CPU PyTorch reference from the frozen DINO encoder and the published all-84-film head.
+    source = Path(__file__).resolve().parents[2] / "training/data/sporthorse_v2/images/test" / name
+    login(client)
+    case = upload(client, source.read_bytes()).json()
+    path = "/api/cases/" + case["id"]
+    assert case["screening"] is None
+    response = client.post(path + "/analyze")
+    assert response.status_code == 200, response.text
+    analyzed = response.json()
+    film = analyzed["screening"]
+    assert film["model"].startswith("DINOv2-Small-refit84@")
+    assert film["threshold"] == 0.17883443932013382
+    assert film["score"] == pytest.approx(ref_score, abs=1e-6)
+    assert film["predicted_positive"] is positive
+    assert analyzed["model"] == detector.MODEL_ID and isinstance(analyzed["detections"], list)
+    assert client.get(path).json() == analyzed
 
 
 def test_auth_validation_and_revocation(client):
@@ -187,13 +211,22 @@ def test_workflow_persistence_and_ownership(client, tmp_path, monkeypatch):
     def unavailable(_image):
         raise RuntimeError("model unavailable")
 
+    monkeypatch.setattr(screening, "classify", unavailable)
+    failure = client.post(resource + "/analyze")
+    assert failure.status_code == 503 and "DINOv2" in failure.json()["detail"]
+    assert client.get(resource).json() == case
+    # A negative film screen and a positive YOLO box are two distinct findings.
+    film = {"model": "DINOv2-test", "score": 0.10, "threshold": 0.18, "predicted_positive": False}
+    monkeypatch.setattr(screening, "classify", lambda image: film)
     monkeypatch.setattr(detector, "detect", unavailable)
-    assert client.post(resource + "/analyze").status_code == 503
-    assert client.get(resource).json()["status"] == "uploaded"
+    failure = client.post(resource + "/analyze")
+    assert failure.status_code == 503 and "YOLO11s" in failure.json()["detail"]
+    assert client.get(resource).json() == case
     predicted = [{"x1": 3.0, "y1": 4.0, "x2": 8.0, "y2": 12.0, "score": 0.82}]
     monkeypatch.setattr(detector, "detect", lambda image: predicted if image.size == (32, 48) else [])
     analyzed = client.post(resource + "/analyze").json()
     assert analyzed["detections"] == predicted and analyzed["model"] == detector.MODEL_ID
+    assert analyzed["screening"] == film
     assert analyzed["status"] == "analyzed" and analyzed["analyzed_at"]
     assert client.post(resource + "/analyze").status_code == 409
     assert client.post(resource + "/archive").status_code == 409
@@ -345,6 +378,7 @@ def test_startup_migrates_legacy_database_and_preserves_history(tmp_path, monkey
                 "reviewed", "旧复核人", "旧意见", "original-model", [{"score": 0.45}])
             assert case["report"] == {"findings": "", "conclusion": "旧意见", "author": "旧复核人",
                                       "updated_at": previous_time, "revision": 0}
+            assert case["screening"] is None
             assert case["images"][0]["quality"] == "未确认" and case["images"][0]["measurements"] == []
     with TestClient(create_app(tmp_path)) as migrated:
         login(migrated)
@@ -504,6 +538,7 @@ def test_existing_multi_image_database_upgrades_without_guessing_quality_or_chan
     images = append_image(client, path, second).json()["images"]
     with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
         database.execute("ALTER TABLE cases DROP COLUMN empty_review_confirmed")
+        database.execute("ALTER TABLE cases DROP COLUMN screening")
         for column in ("metadata_reviewed_at", "metadata_reviewer", "quality"):
             database.execute(f"ALTER TABLE case_images DROP COLUMN {column}")
         database.execute("DROP TABLE image_measurements")
@@ -513,5 +548,6 @@ def test_existing_multi_image_database_upgrades_without_guessing_quality_or_chan
             login(upgraded)
             case = upgraded.get(path).json()
             assert case["empty_review_confirmed"] is False
+            assert case["screening"] is None
             assert case["images"] == images and case["report"]["revision"] == 0
             assert [upgraded.get(image["url"]).content for image in images] == [first, second]

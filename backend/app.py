@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import detector
+from . import detector, screening
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,12 +28,12 @@ MAX_BYTES = 10 * 1024 * 1024
 MIMES = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 TEAM = {"wangyiyi": "王一伊", "zhushijia": "朱诗嘉", "alimire": "阿里米热", "liqihang": "李其杭"}
 CASE_FIELDS = """number, owner AS created_by, horse_name, comment, created_at, archived_at, status,
-    detections, model, threshold, analyzed_at, reviewer, review_note, reviewed_at, empty_review_confirmed"""
+    detections, model, threshold, screening, analyzed_at, reviewer, review_note, reviewed_at, empty_review_confirmed"""
 CASE_SCHEMA = """CREATE TABLE IF NOT EXISTS cases (
     number INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL,
     horse_name TEXT NOT NULL, comment TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,
     archived_at TEXT, status TEXT NOT NULL DEFAULT 'registered', detections TEXT NOT NULL DEFAULT '[]',
-    model TEXT, threshold REAL, analyzed_at TEXT, reviewer TEXT, review_note TEXT, reviewed_at TEXT,
+    model TEXT, threshold REAL, screening TEXT, analyzed_at TEXT, reviewer TEXT, review_note TEXT, reviewed_at TEXT,
     empty_review_confirmed INTEGER NOT NULL DEFAULT 0
 )"""
 IMAGES_SCHEMA = """CREATE TABLE IF NOT EXISTS case_images (
@@ -55,8 +55,11 @@ def prepare_database(database, team_mode):
         high_water = database.execute("SELECT seq FROM sqlite_sequence WHERE name='cases'").fetchone()
         database.execute("ALTER TABLE cases RENAME TO cases_v1")
     database.execute(CASE_SCHEMA)
-    if "empty_review_confirmed" not in {row["name"] for row in database.execute("PRAGMA table_info(cases)")}:
+    case_columns = {row["name"] for row in database.execute("PRAGMA table_info(cases)")}
+    if "empty_review_confirmed" not in case_columns:
         database.execute("ALTER TABLE cases ADD COLUMN empty_review_confirmed INTEGER NOT NULL DEFAULT 0")
+    if "screening" not in case_columns:
+        database.execute("ALTER TABLE cases ADD COLUMN screening TEXT")
     database.execute(IMAGES_SCHEMA)
     if legacy:
         database.execute("""INSERT INTO cases(number, owner, horse_name, created_at, status, detections,
@@ -192,6 +195,7 @@ def load_cases(database, owners, number=None):
         case = dict(row)
         key = case.pop("number")
         case.update(id=f"EV-{key:06d}", detections=json.loads(case["detections"]), images=[],
+                    screening=json.loads(case["screening"]) if case["screening"] is not None else None,
                     empty_review_confirmed=bool(case["empty_review_confirmed"]),
                     has_image=False, filename=None, projection=None, width=None, height=None, quality_confirmed=False)
         case["report"] = {"findings": "", "conclusion": case["review_note"] or "", "author": case["reviewer"],
@@ -540,17 +544,22 @@ def create_app(data_dir=None):
             row = original(database, number, owner)
         if row["status"] != "uploaded":
             raise HTTPException(409, "本病例已有分析结果")
+        stage = "读取影像"
         try:
             with Image.open(io.BytesIO(row["original"])) as image:
+                stage = "DINOv2 整片筛查"
+                film_result = screening.classify(image)
+                stage = "YOLO11s 病灶定位"
                 predictions = detector.detect(ImageOps.exif_transpose(image))
         except Exception as error:
-            logging.getLogger(__name__).exception("病例 %s 推理失败", identifier)
-            raise HTTPException(503, "模型推理失败，原片已保留，可稍后重试") from error
+            logging.getLogger(__name__).exception("病例 %s %s失败", identifier, stage)
+            raise HTTPException(503, f"{stage}失败，原片已保留，可稍后重试") from error
         with connect() as database:
             changed = database.execute("""
-                UPDATE cases SET status='analyzed', detections=?, model=?, threshold=?, analyzed_at=?
+                UPDATE cases SET status='analyzed', detections=?, model=?, threshold=?, screening=?, analyzed_at=?
                 WHERE number=? AND owner=? AND status='uploaded'
-            """, (json.dumps(predictions, allow_nan=False), detector.MODEL_ID, detector.THRESHOLD, timestamp(), number, owner))
+            """, (json.dumps(predictions, allow_nan=False), detector.MODEL_ID, detector.THRESHOLD,
+                  json.dumps(film_result, allow_nan=False), timestamp(), number, owner))
             if not changed.rowcount:
                 raise HTTPException(409, "本病例已有分析结果")
             return read_case(database, number, owner)
