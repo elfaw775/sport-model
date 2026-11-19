@@ -86,6 +86,27 @@
 #viewer-metadata select{margin:3px 0 0;width:100%;height:33px;padding:3px 2px;border:1px solid #d2ddce;background:#fff;border-radius:5px;color:#304a37;font-size:12px}
 #viewer-metadata select:disabled{background:#f1f3ee;color:#5c6b59;opacity:1}
 .metadata-save,#viewer-cancel{grid-column:1/-1;justify-self:start;border:0;background:transparent;color:#466b4f;font-size:11px!important;font-weight:600!important;padding:2px 0}
+.study-viewer[data-tool=rectangle] .film-stage,.study-viewer[data-tool=polygon] .film-stage{cursor:crosshair}
+.manual-marks rect,.manual-marks polygon,.manual-marks polyline{stroke:#fcbd75;stroke-width:2px;fill:#faab4e16;vector-effect:non-scaling-stroke}
+.manual-marks .manual-draft{stroke-dasharray:5 3}
+.manual-draft circle{fill:#ffdfae;stroke:none}
+.manual-label{transform:translate(3px,3px);background:#543919ed;color:#ffe0a4;max-width:85%;overflow:hidden;text-overflow:ellipsis}
+.study-viewer.original-only .manual-marks,.study-viewer.original-only .measured-lines,.study-viewer.original-only .detection-boxes,.study-viewer.original-only .evidence-labels{display:none!important}
+.study-viewer.original-only .radiograph image{filter:none!important}
+.annotation-form{display:flex;align-items:flex-end;flex-wrap:wrap;gap:6px;padding:10px;background:#20362c;border-top:1px solid #405446}
+.annotation-form label{display:grid;flex:1 1 130px;gap:3px;color:#dbe7d8;font-size:12px}
+.annotation-form input{width:100%;height:30px;margin:0;padding:3px 7px}
+.annotation-form button{background:#344d3d;color:#eef4e9;border:1px solid #667966;border-radius:4px;padding:6px;font-size:12px}
+.annotation-form #save-annotation{background:#d8e5c8;color:#233b2d}
+.annotation-form button:disabled{opacity:.5}
+.inspector-annotations{border-top:1px solid var(--viewer-line);padding-top:12px;margin-top:12px;min-width:0}
+.annotation-list{list-style:none;margin:0;padding:0;max-height:180px;overflow:auto}
+.annotation-list li{display:grid;grid-template-columns:1fr auto;gap:2px 6px;padding:7px 0;border-bottom:1px solid #e3eade;overflow-wrap:anywhere}
+.annotation-list strong{grid-column:1/-1;font-size:12px}
+.annotation-list small{font-size:11px;color:#526b58}
+.annotation-list button{border:0;background:transparent;padding:0 3px;color:#466b4f;font-size:11px}
+.annotation-export{display:inline-block;padding-top:6px;color:#315d40;font-size:12px}
+@media(max-width:1100px){.image-inspector .inspector-annotations{grid-row:2;grid-column:1/-1}}
 .image-inspector .overlay-switch{font-size:11px;gap:4px;margin:10px 0}
 .image-inspector .overlay-switch input{width:14px;height:14px;margin:0;accent-color:#44764e}
 .inspector-measures{border-top:1px solid var(--viewer-line);padding-top:12px;margin-top:12px}

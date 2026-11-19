@@ -11,14 +11,17 @@ from contextlib import asynccontextmanager, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
+from uuid import UUID
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import detector, screening
+from . import annotations, detector, screening
+from .annotations import ImagePoint
+from .annotation_export import annotated_png
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,13 +31,13 @@ MAX_BYTES = 10 * 1024 * 1024
 MIMES = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 TEAM = {"wangyiyi": "王一伊", "zhushijia": "朱诗嘉", "alimire": "阿里米热", "liqihang": "李其杭"}
 CASE_FIELDS = """number, owner AS created_by, horse_name, comment, created_at, archived_at, status,
-    detections, model, threshold, screening, analyzed_at, reviewer, review_note, reviewed_at, empty_review_confirmed"""
+    detections, model, threshold, screening, analyzed_at, reviewer, review_note, reviewed_at, empty_review_confirmed, annotation_revision"""
 CASE_SCHEMA = """CREATE TABLE IF NOT EXISTS cases (
     number INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL,
     horse_name TEXT NOT NULL, comment TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,
     archived_at TEXT, status TEXT NOT NULL DEFAULT 'registered', detections TEXT NOT NULL DEFAULT '[]',
     model TEXT, threshold REAL, screening TEXT, analyzed_at TEXT, reviewer TEXT, review_note TEXT, reviewed_at TEXT,
-    empty_review_confirmed INTEGER NOT NULL DEFAULT 0
+    empty_review_confirmed INTEGER NOT NULL DEFAULT 0, annotation_revision INTEGER NOT NULL DEFAULT 0
 )"""
 IMAGES_SCHEMA = """CREATE TABLE IF NOT EXISTS case_images (
     case_number INTEGER NOT NULL REFERENCES cases(number) ON DELETE CASCADE,
@@ -60,6 +63,8 @@ def prepare_database(database, team_mode):
         database.execute("ALTER TABLE cases ADD COLUMN empty_review_confirmed INTEGER NOT NULL DEFAULT 0")
     if "screening" not in case_columns:
         database.execute("ALTER TABLE cases ADD COLUMN screening TEXT")
+    if "annotation_revision" not in case_columns:
+        database.execute("ALTER TABLE cases ADD COLUMN annotation_revision INTEGER NOT NULL DEFAULT 0")
     database.execute(IMAGES_SCHEMA)
     if legacy:
         database.execute("""INSERT INTO cases(number, owner, horse_name, created_at, status, detections,
@@ -84,6 +89,7 @@ def prepare_database(database, team_mode):
         kind TEXT NOT NULL, points TEXT NOT NULL, value REAL NOT NULL, created_by TEXT NOT NULL, created_at TEXT NOT NULL,
         FOREIGN KEY (case_number,position) REFERENCES case_images(case_number,position) ON DELETE CASCADE)""")
     database.execute("CREATE INDEX IF NOT EXISTS measurements_image ON image_measurements(case_number,position)")
+    annotations.prepare(database)
     database.execute("""CREATE TABLE IF NOT EXISTS case_reports (
         case_number INTEGER PRIMARY KEY REFERENCES cases(number) ON DELETE CASCADE, findings TEXT NOT NULL,
         conclusion TEXT NOT NULL, author TEXT NOT NULL, updated_at TEXT NOT NULL, revision INTEGER NOT NULL)""")
@@ -103,6 +109,7 @@ class Credentials(BaseModel):
 class Review(BaseModel):
     model_config = ConfigDict(extra="forbid")
     note: str = Field(max_length=2000)
+    annotation_revision: int = Field(default=0, ge=0, strict=True)
     empty_review_confirmed: bool = Field(default=False, strict=True)
 
 
@@ -115,16 +122,12 @@ class ReportDraft(BaseModel):
 
 class ReportConfirmation(ReportDraft):
     empty_review_confirmed: bool = Field(default=False, strict=True)
+    annotation_revision: int = Field(default=0, ge=0, strict=True)
 
 
 class ImageReview(BaseModel):
     projection: Projection | Literal["未确认"] | None = None
     quality: Literal["未确认", "良好", "一般", "不适合"] | None = None
-
-
-class ImagePoint(BaseModel):
-    x: float = Field(ge=0, allow_inf_nan=False, strict=True)
-    y: float = Field(ge=0, allow_inf_nan=False, strict=True)
 
 
 class Measurement(BaseModel):
@@ -219,6 +222,7 @@ def load_cases(database, owners, number=None):
         image["id"] = str(position) if position else "primary"
         image["url"] = f"/api/cases/{case['id']}/images/{image['id']}"
         image["measurements"] = []
+        image["annotations"] = []
         images[key, position] = image
         case["images"].append(image)
     for row in database.execute(f"""SELECT case_number, position, id, kind, points, value, created_by,
@@ -228,6 +232,14 @@ def load_cases(database, owners, number=None):
         image = images[mark.pop("case_number"), mark.pop("position")]
         mark.update(id=str(mark["id"]), points=json.loads(mark["points"]), unit="px" if mark["kind"] == "distance" else "°")
         image["measurements"].append(mark)
+    for row in database.execute(f"""SELECT case_number, position, id, kind, label, points, revision,
+        image_annotations.created_by, image_annotations.created_at, updated_by, updated_at
+        FROM image_annotations JOIN cases ON number=case_number
+        WHERE {condition} AND deleted=0 ORDER BY image_annotations.rowid""", params):
+        mark = dict(row)
+        image = images[mark.pop("case_number"), mark.pop("position")]
+        mark.update(source="manual", points=json.loads(mark["points"]))
+        image["annotations"].append(mark)
     return list(records.values())
 
 
@@ -529,6 +541,24 @@ def create_app(data_dir=None):
                 raise HTTPException(404, "未找到此影像的测量记录")
             return read_case(database, number, owner)
 
+    @api.put("/api/cases/{identifier}/images/{image_id}/annotations/{annotation_id}")
+    def save_annotation(identifier: str, image_id: str, annotation_id: UUID, edit: annotations.AnnotationEdit,
+                        owner: str = Depends(record_owner), user: str = Depends(current_user)):
+        number, position = case_number(identifier), image_position(image_id)
+        with connect() as database:
+            image = editable_image(database, number, owner, position)
+            annotations.save(database, (number, position, str(annotation_id)), edit, image, accounts[user][1], timestamp())
+            return read_case(database, number, owner)
+
+    @api.delete("/api/cases/{identifier}/images/{image_id}/annotations/{annotation_id}")
+    def delete_annotation(identifier: str, image_id: str, annotation_id: UUID, revision: int = Query(ge=1, le=2**63-2),
+                          owner: str = Depends(record_owner), user: str = Depends(current_user)):
+        number, position = case_number(identifier), image_position(image_id)
+        with connect() as database:
+            editable_image(database, number, owner, position)
+            annotations.remove(database, (number, position, str(annotation_id)), revision, accounts[user][1], timestamp())
+            return read_case(database, number, owner)
+
     @api.get("/api/cases/{identifier}/image")
     def case_image(identifier: str, owner: str = Depends(record_owner)):
         with connect() as database:
@@ -583,6 +613,8 @@ def create_app(data_dir=None):
             case = read_case(database, number, owner)
             if case["status"] != "analyzed":
                 raise HTTPException(409, "仅待复核病例可以提交复核")
+            if review.annotation_revision != case["annotation_revision"]:
+                raise HTTPException(409, "人工标注已变化，请重新打开报告并核对标注后签署")
             name = accounts[reviewer][1]
             if isinstance(review, ReportConfirmation):
                 note = review.conclusion.strip()
@@ -599,6 +631,22 @@ def create_app(data_dir=None):
             database.execute("""UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?,
                 empty_review_confirmed=? WHERE number=? AND owner=?""", (name, note, timestamp(), empty, number, owner))
             return read_case(database, number, owner)
+
+    @api.get("/api/cases/{identifier}/images/{image_id}/annotations.png")
+    def export_annotations(identifier: str, image_id: str, owner: str = Depends(record_owner)):
+        number, position = case_number(identifier), image_position(image_id)
+        with connect() as database:
+            database.execute("BEGIN")
+            pixels = original(database, number, owner, position)["original"]
+            record = read_case(database, number, owner)
+            selected = next(item for item in record["images"] if item["id"] == image_id)
+            annotations = selected["annotations"]
+        if not annotations:
+            raise HTTPException(409, "此影像尚无已保存的人工标注")
+        return Response(content=annotated_png(pixels, annotations), media_type="image/png", headers={
+            "Cache-Control": "private, no-store",
+            "Content-Disposition": f'attachment; filename="{identifier}-{image_id}-annotations.png"',
+        })
 
     api.mount("/static", StaticFiles(directory=ROOT / "backend/static"), name="assets")
     api.mount("/", StaticFiles(directory=ROOT / "backend/static", html=True), name="workstation")

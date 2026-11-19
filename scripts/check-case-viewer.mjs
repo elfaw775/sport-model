@@ -12,7 +12,7 @@ export async function checkCaseViewer(page, id) {
     const record = await (await fetch("/api/cases/" + key)).json();
     return record.images.find(image => image.id === imageId)?.measurements?.length === count;
   }, {}, id, imageId, count);
-  const mark = async (stage, points) => {
+  const mark = async (stage, points, drag = false) => {
     const svg = await page.waitForSelector(stage + " svg");
     await svg.scrollIntoView();
     const screenPoints = await page.$eval(stage + " g.image-space", (group, originals) => {
@@ -22,11 +22,15 @@ export async function checkCaseViewer(page, id) {
         return [point.x, point.y];
       });
     }, points);
-    for (const [x, y] of screenPoints) {
+    for (const [index, [x, y]] of screenPoints.entries()) {
       const onImage = await page.evaluate((x, y, stage) =>
         document.elementFromPoint(x, y)?.closest(stage) != null, x, y, stage);
       assert.ok(onImage, "measurement point must be visible in the chosen pane");
-      await page.mouse.click(x, y);
+      if (drag) {
+        await page.mouse.move(x, y, {steps:index ? 4 : 1});
+        if (index === 0) await page.mouse.down();
+        else await page.mouse.up();
+      } else await page.mouse.click(x, y);
     }
   };
   const checkPoints = (actual, expected, epsilon) => {
@@ -92,7 +96,47 @@ export async function checkCaseViewer(page, id) {
   assert.ok(Math.abs(angle.value - 90) <= 3);
   checkPoints(angle.points, anglePoints, 5);
   assert.deepEqual(record.images[0].measurements, [distance]);
+  const nameInput = page.locator('#viewer-annotation-form [name=label]');
+  await click('[data-tool="polygon"]');
+  await mark(right, [[550,650],[650,650],[580,740]]);
+  await nameInput.fill("附片人工多边形");
+  await click("#save-annotation");
+  await page.waitForSelector("[data-annotation-id]");
+  const polygon = (await detail()).images[1].annotations[0];
+  assert.equal(polygon.label, "附片人工多边形");
+  checkPoints(polygon.points, [[550,650],[650,650],[580,740]],5);
+  page.once("dialog", dialog => dialog.accept());
+  await click("[data-delete-annotation]");
+  await page.waitForFunction(()=>!document.querySelector("[data-annotation-id]"));
+  assert.equal((await detail()).images[1].annotations.length,0);
+  // Draw on the flipped primary pane. Coordinates must return to the underlying image grid.
+  await click('.film-card[data-image-id="primary"]');
+  const activeStage = (await page.$eval(right, el=>el.dataset.imageId)) === "primary" ? right : left;
+  await click('[data-tool="rectangle"]');
+  await mark(activeStage, [[80,180],[130,230]], true);
+  await nameInput.fill("主片可疑区域");
+  await click("#save-annotation");
+  await page.waitForSelector("[data-annotation-id]");
+  const image = (await detail()).images[0], rectangle = image.annotations[0];
+  assert.equal(rectangle.kind,"rectangle");assert.equal(rectangle.source,"manual");
+  checkPoints(rectangle.points, [[80,180],[130,230]],2);
+  await click("[data-rename]");
+  await nameInput.fill("主片复核区域");
+  await click("#save-annotation");
+  await page.waitForFunction(()=>document.querySelector(".annotation-list strong")?.textContent==="主片复核区域");
+  await click("#annotation-layer");
+  assert.equal(await page.$('[data-manual-id]'),null);
+  await click("#annotation-layer");
+  await page.waitForSelector('[data-manual-id]');
+  const png = await page.$eval("#annotation-export",async link=>{
+    const reply=await fetch(link.href); const data=new Uint8Array(await reply.arrayBuffer());
+    const header=new DataView(data.buffer);
+    return [reply.headers.get("content-type"),data[0],data[1],data[2],data[3],header.getUint32(16),header.getUint32(20)];
+  });
+  assert.deepEqual(png,["image/png",137,80,78,71,image.width,image.height]);
   await page.reload();
+  await page.waitForSelector('[data-manual-id]');
+  assert.equal(await page.$eval(".annotation-list strong",el=>el.textContent),"主片复核区域");
   await click('.film-card[data-image-id="1"]');
   await waitFor(left, "1");
   await page.waitForFunction(() => document.querySelector(".measurement-list")?.textContent.includes("°"));

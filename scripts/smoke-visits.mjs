@@ -165,6 +165,13 @@ try {
   assert.equal(await page.$("#archive-visit"), null);
   assert.match(await page.$eval("#analysis-summary.has-detections", el => el.innerText), /最高模型分数/);
   await checkScreening(result, "#analysis-summary");
+  await findText("主片复核区域");
+  await click("#viewer-original");
+  assert.equal(await page.$eval(".manual-marks",el=>getComputedStyle(el).display),"none");
+  assert.equal(await page.$eval(".detection-boxes",el=>getComputedStyle(el).display),"none");
+  assert.equal(await page.$eval(".measured-lines",el=>getComputedStyle(el).display),"none");
+  await click("#viewer-original");
+  assert.notEqual(await page.$eval(".detection-boxes",el=>getComputedStyle(el).display),"none");
   await screenshot("clinical-result");
   await click("#nav-reviews");
   await click(`#queue-list a[href="#report/${second}"]`);
@@ -196,6 +203,7 @@ try {
   assert.equal(reviewed.report.author, "朱诗嘉");
   assert.deepEqual(reviewed.screening, result.screening);
   await checkScreening(reviewed, ".film-screening");
+  await findText("人工标注 · 主片复核区域");
   await screenshot("clinical-reviewed");
   assert.equal(reviewed.reviewer, "王一伊");
   assert.ok(reviewed.reviewed_at);
@@ -203,6 +211,15 @@ try {
   assert.deepEqual(reviewed.images[1].measurements, [measurements.angle]);
   assert.equal(reviewed.status, "reviewed");
   assert.equal(reviewed.archived_at, null);
+  await click(`a[href="#case/${second}"]`);
+  await visible("[data-annotation-id]");
+  assert.equal(await page.$eval('button[data-tool=rectangle]',el=>el.disabled),true);
+  assert.equal(await page.$("[data-delete-annotation]"),null);
+  assert.equal(await page.$("[data-rename]"),null);
+  await page.setViewport({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
+  await page.screenshot({path:path.join(qaRoot,"clinical-annotations-mobile.png"),fullPage:true});
+  await page.setViewport({width:1440,height:960});
   await click("#nav-filing");
   await visible(`#queue-list a[href="#report/${second}"]`);
   await click('[data-filed="yes"]');

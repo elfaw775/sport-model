@@ -1,6 +1,12 @@
 # Whole-film lesion classification on 84 equine radiographs
 
+[简体中文](README.zh-CN.md) · **English**
+
 The image classifier answers “does this film contain an annotated lesion?” A positive film has at least one lesion annotation. The public archive contains 68 positive films, 16 negative films and 81 lesion boxes. The downloadable research head returns one score per JPG or PNG. A separate YOLO detector produces locations.
+
+## Padding sensitivity
+
+On ten fixed canvas conditions, the existing DINOv2 method correctly classified 82/84 films on its normal centered black canvas. Training a candidate with four mild padding variants per fitting film raised that particular score to 83/84. Both methods correctly classified the same 81/84 films under every condition. Each decision used a model and threshold fitted outside that film's test fold. These repeated decisions test sensitivity to padding in the same 84 films. The workbench uses the previously verified model. [Bilingual results, figures by condition and reproduction command](published/cv84/canvas-round2/README.md) · [Per-film scores](published/cv84/canvas-round2/scores.csv)
 
 ## What the experiments measured
 

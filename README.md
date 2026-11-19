@@ -1,5 +1,9 @@
 # EQUIVISION · 马球节影像工作台
 
+**简体中文** · [English](README.en.md)
+
+[黑边对照实验与逐片成绩](image-study/published/cv84/canvas-round2/README.md#中文) · [模型研究中文指南](image-study/README.zh-CN.md)
+
 Python 工作台支持登录、整片筛查、疑似病灶定位、人工复核和团队病例归档。病例分析由服务所在机器用 CPU 运行 DINOv2 Small 和 YOLO11s，两个推理权重随仓库提供。独立的 [GitHub Pages 演示](https://elfaw775.github.io/sport-model/) 使用访问者浏览器里的 YOLO，病例记录存在该浏览器。
 
 ## 一期工作台：本地运行
@@ -22,6 +26,8 @@ python3.12 -m venv .venv
 同一次就诊可以在新建时或之后补充多张 PNG、JPEG 或 WebP。第一张为主图，后续为附图。确认主图是合适的球节 X 线片后，点击分析。DINOv2 Small 为整张主图打分，YOLO11s 给出可疑区域的坐标。附图用于对照阅片。可用仓库中的[侧位示例](training/data/sporthorse_v2/images/test/16-侧位.jpg)试用。
 
 ### 病例阅片与复核报告
+
+医生可在主图或附图上绘制矩形和多边形，填写病灶区域名称，再保存人工标注。坐标相对于该张原片，看图时可以切换标注显隐。保存后重新打开同一病例或换一个团队账号，仍可复核这些区域；签署后的标注只读。可导出带编号轮廓的原分辨率 PNG，附带区域编号、名称与坐标的 PNG 文本信息。原片保持独立，人工区域和 YOLO 候选框各有来源。[展示仓库中的标注交互](https://github.com/theAtlantic-zza/sports-horse--studio--display/tree/6612f270604ae764fd212fe8fe2cc769e200b195)
 
 上传完成后打开病例阅片页。左侧按本次检查列出主图和附图，中间显示原始像素，右侧核对体位、影像质量与逐图测量。点击「对照」可选择左右两张不同原片，切换活动窗后独立平移、缩放、旋转、翻转、反色或调节亮度与对比度。两点记录原图像素距离，三点记录以第二点为顶点的角度。未标定的 X 线图仅显示 px 和 °。候选框只叠加在实际参加检测的主图。
 
@@ -67,8 +73,6 @@ python3.12 -m venv .venv
 ## 1. 本地开发 / 预览
 
 ```bash
-cd web-next
-
 # 安装依赖（pnpm-workspace.yaml 里已放行 protobufjs 的构建脚本）
 pnpm install
 

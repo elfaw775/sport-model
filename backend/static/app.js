@@ -33,7 +33,7 @@ async function api(path, options = {}) {
     notify("登录已过期，请重新登录。");
   }
   const detail = typeof data?.detail === "string" ? data.detail : (response.status === 422 ? "请检查就诊字段、投照方向及图片格式。" : "");
-  throw new Error(detail || ("请求未完成（" + response.status + "）"));
+  throw Object.assign(new Error(detail || ("请求未完成（" + response.status + "）")), {status:response.status});
 }
 
 function formatError(error) {
@@ -543,9 +543,10 @@ function reportPage(record) {
         ${signed && report.author && report.author !== record.reviewer ? `<span>草稿作者 <b>${escape(report.author)}</b></span>` : ""}
         <span>复核人 <b>${escape(signed ? record.reviewer : user.display_name)}</b></span></div>
       ${formBody}${record.archived_at ? `<p class="dim">归档时间 · ${escape(dateText(record.archived_at))}</p>` : ""}</article>
-    <aside class="report-aside"><section class="card"><div class="panel-title"><h2>影像与测量</h2><a href="${caseLink(record.id)}">返回阅片</a></div>
+    <aside class="report-aside"><section class="card"><div class="panel-title"><h2>影像、标注与测量</h2><a href="${caseLink(record.id)}">返回阅片</a></div>
       ${images.map((im,i)=>`<div class="report-evidence"><img src="${escape(im.url)}" alt=""><div><b>${i===0?"主图":"附图 "+i} · ${escape(im.projection)}</b><small>${escape(im.filename)}</small>
-      ${(im.measurements || []).map(m=>`<span>${m.kind==="distance"?"距离":"角度"}　${Number(m.value).toFixed(1)} ${m.kind==="distance"?"px":"°"}</span>`).join("")}</div></div>`).join("")}</section>
+      ${(im.measurements || []).map(m=>`<span>${m.kind==="distance"?"距离":"角度"}　${Number(m.value).toFixed(1)} ${m.kind==="distance"?"px":"°"}</span>`).join("")}
+      ${(im.annotations || []).map(a=>`<span>人工标注 · ${escape(a.label)}（${escape(a.updated_by)}）</span>`).join("")}</div></div>`).join("")}</section>
       <section class="card model-summary"><h2>主图 AI 辅助结果</h2>
       <h3>整片筛查</h3>${record.screening ? `<p class="film-screening"><b>${screeningDecision(record.screening)}</b><br>DINOv2 Small · ${screeningScores(record.screening)}</p>` : '<p class="dim">本次历史分析未记录整片筛查。</p>'}
       <h3>YOLO 病灶定位</h3><p>${boxes.length ? boxes.map((box,i)=>`候选区域 ${i+1} · 模型分数 ${pct(box.score)}`).join("<br>") : "当前定位门槛下未检出候选区域。"}</p>
@@ -559,6 +560,7 @@ function reportPage(record) {
   const save = async (confirm) => {
     const findings = form.elements.findings.value.trim(), conclusion = form.elements.conclusion.value.trim();
     const body = {findings,conclusion,revision:version};
+    if (confirm) body.annotation_revision = record.annotation_revision || 0;
     if (!findings && !conclusion) {
       if (!confirm) throw new Error("请先填写一项草稿内容。");
       openDialog(`<h2 id="dialog-title">留空提交复核？</h2><p class="sub">影像所见和复核结论均为空。继续将以${escape(user.display_name)}的姓名签署此报告，并记录留空确认。</p>
