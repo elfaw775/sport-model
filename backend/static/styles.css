@@ -192,6 +192,10 @@ label.search-field:not(.check){position:relative;display:flex;align-items:center
 .image-drop.has-preview .preview-hint{display:block;position:absolute;right:10px;bottom:10px;padding:4px 8px;background:#16251fdd;color:#edf4ec;border:1px solid #ffffff40;border-radius:5px;font-size:11px}
 .file-status{display:flex;align-items:center;gap:6px;color:#607265;font-size:12px;line-height:1.5;margin:10px 0 0;overflow-wrap:anywhere}
 .file-status svg{width:15px!important;height:15px!important;flex:none}
+.sample-picker{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:14px}
+.sample-picker>span{color:var(--muted);font-size:12px;margin-right:3px}
+.sample-picker .secondary{min-height:30px;padding:4px 10px;font-size:12px}
+.sample-picker button:disabled{opacity:.5;cursor:default}
 .intake-settings{border-left:1px solid var(--line);background:#fbfcfa}
 .intake-settings>label:not(.check){margin-top:14px}
 .intake-settings .check{font-size:12px;margin:14px 0;align-items:flex-start}
@@ -282,6 +286,12 @@ label.search-field:not(.check){position:relative;display:flex;align-items:center
 .queue-tabs button{border:0;border-radius:6px;background:transparent;color:#576b60;padding:7px 12px;font-size:14px}
 .queue-tabs button[aria-pressed="true"]{background:#e5eee1;color:#235239;font-weight:650}
 .queue-tabs b{font-size:12px;margin-left:3px}
+.review-filters{display:flex;flex-wrap:wrap;gap:6px;padding:0 clamp(16px,2vw,27px) 16px}
+.review-filters button{background:#fff;color:#486052;border:1px solid #d4dfd4;border-radius:6px;padding:6px 9px;font-size:12px}
+.review-filters button[aria-pressed="true"]{border-color:#29583f;color:#fff;background:#29583f}
+.review-filters button b{margin-left:3px;font-variant-numeric:tabular-nums}
+.queue-signal{display:inline-block;font-size:12px;color:#4d6355;margin-top:5px}
+.queue-signal[data-signal="screen-only"],.queue-signal[data-signal="boxes-only"]{color:#835914;font-weight:650}
 .queue-row{border-top:1px solid var(--line);gap:13px}
 .queue-person{min-width:0;flex:1}
 .queue-row small,.queue-person strong{display:block}

@@ -136,12 +136,16 @@ try {
     await visible("#visit-form");
     assert.equal(new URL(page.url()).hash, "#new");
   };
-  const uploadPrimary = async (name, filename) => {
+  const uploadPrimary = async (name, filename, sample = false) => {
     const form = "#visit-form";
-    const picker = await page.waitForSelector(form + ' [name="image"]');
-    await picker.uploadFile(fixture(filename));
+    if (sample) {
+      await click(`[data-sample="${filename}"]`);
+    } else {
+      const picker = await page.waitForSelector(form + ' [name="image"]');
+      await picker.uploadFile(fixture(filename));
+    }
     await visible("#image-preview");
-    await page.type(form + ' [name="horse_name"]', name);
+    await page.locator(form + ' [name="horse_name"]').fill(name);
     await page.select(form + ' [name="projection"]', filename.includes("侧位") ? "侧位" : "正位");
     const quality = form + ' [name="quality_confirmed"]';
     if (!await page.$eval(quality, el => el.checked)) await click(quality);
@@ -262,9 +266,26 @@ try {
   await click("#logout"); await loginMember("wangyiyi");
   await home(); await click(`tr[data-id="${second}"] .horse-cell`);
   await openReport();
+  const changeCase = (id, update) => page.evaluate(async (key, fields) =>
+    (await fetch("/api/cases/" + key, {method:"PATCH", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(fields)})).status, id, update);
+  assert.equal(await changeCase(second, {comment: draft.comment + "（复核前已更新）"}), 200);
+  await click("#confirm-report");
+  await click("#refresh-report");
+  await findText("复核前已更新");
+  assert.equal(await page.$eval('#report-form [name="conclusion"]', input => input.value), conclusion);
   await click("#confirm-report");
   await visible("#archive-visit");
+  const downloadedReport = await page.$eval("#download-report", async link => {
+    const response = await fetch(link.href);
+    return {status:response.status, attachment:response.headers.get("content-disposition"), text:await response.text()};
+  });
+  assert.equal(downloadedReport.status, 200);
+  assert.ok(downloadedReport.attachment.includes(second + "-report.html"));
+  assert.ok(downloadedReport.text.includes(conclusion) && downloadedReport.text.includes("复核前已更新"));
+  assert.equal(await changeCase(second, {comment: draft.comment}), 200);
   await page.reload();
+  await findText("复核前已更新");
   await visible("#archive-visit");
   await findText(conclusion);
   const reviewed = await detail(second);
@@ -330,7 +351,7 @@ try {
   await page.waitForFunction(async () => (await (await fetch("/api/cases")).json()).length === 0);
   await page.reload(); await visible("#new-visit"); assert.equal((await records()).length,0);
   await click("#logout"); await loginMember("wangyiyi"); assert.deepEqual(await records(), []);
-  const noFindingId = await uploadPrimary("零候选复核", "23-LF-正位.jpg");
+  const noFindingId = await uploadPrimary("零候选复核", "23-LF-正位.jpg", true);
   await formSubmit("#analyze-form");
   await waitForAnalysis();
   const noFinding = (await records()).find(record => record.id === noFindingId);

@@ -33,6 +33,8 @@ On Windows, use `.venv\Scripts\python.exe` for the last two commands. Open the l
 3. Pan, zoom, rotate or invert the image. Record two-point distances in pixels and three-point angles in degrees. On any view, draw a rectangle or polygon, name the region and save it as a manual annotation. Toggle the overlay to inspect the original. A PNG export contains numbered outlines at original resolution, with region labels and coordinates embedded as PNG text metadata.
 4. Save draft findings or a conclusion, then sign the report. A deliberately empty report needs explicit confirmation. Changed drafts and annotation versions are checked before signing. Signed reports and manual annotations are read-only. Archiving is a separate action. The dashboard can reopen a case and its signed report.
 
+The new-visit form also offers two built-in research films. Both follow the regular upload and inference path. In the review queue, filter cases by their stored screening and localization results, including positive screens with no boxes. The report checks the displayed case and image evidence again before signing. Open a newly signed report to download an offline, printable HTML copy. Its contents stay tied to the signature even after a later case edit or attachment. Older reports are identified as reconstructions from the available record.
+
 The workbench stores original image bytes, model outputs, individual measurements, annotations and review history in SQLite. The default database is `var/cases.sqlite3`; preserve the configured data directory across restarts. Existing cases retain their original results. A manually archived historic case may still require review.
 
 ### Acceptance and deployment

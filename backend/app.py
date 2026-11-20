@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import annotations, detector, screening
 from .annotations import ImagePoint
 from .annotation_export import annotated_png
+from .report_export import report_html, signed_evidence
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -90,6 +91,9 @@ def prepare_database(database, team_mode):
         FOREIGN KEY (case_number,position) REFERENCES case_images(case_number,position) ON DELETE CASCADE)""")
     database.execute("CREATE INDEX IF NOT EXISTS measurements_image ON image_measurements(case_number,position)")
     annotations.prepare(database)
+    database.execute("""CREATE TABLE IF NOT EXISTS signed_reports (
+        case_number INTEGER PRIMARY KEY REFERENCES cases(number) ON DELETE CASCADE,
+        evidence TEXT NOT NULL)""")
     database.execute("""CREATE TABLE IF NOT EXISTS case_reports (
         case_number INTEGER PRIMARY KEY REFERENCES cases(number) ON DELETE CASCADE, findings TEXT NOT NULL,
         conclusion TEXT NOT NULL, author TEXT NOT NULL, updated_at TEXT NOT NULL, revision INTEGER NOT NULL)""")
@@ -110,6 +114,7 @@ class Review(BaseModel):
     model_config = ConfigDict(extra="forbid")
     note: str = Field(max_length=2000)
     annotation_revision: int = Field(default=0, ge=0, strict=True)
+    review_context: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     empty_review_confirmed: bool = Field(default=False, strict=True)
 
 
@@ -123,6 +128,7 @@ class ReportDraft(BaseModel):
 class ReportConfirmation(ReportDraft):
     empty_review_confirmed: bool = Field(default=False, strict=True)
     annotation_revision: int = Field(default=0, ge=0, strict=True)
+    review_context: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
 
 class ImageReview(BaseModel):
@@ -250,6 +256,11 @@ def read_case(database, number, owner):
     return records[0]
 
 
+def read_signed_evidence(database, number):
+    row = database.execute("SELECT evidence FROM signed_reports WHERE case_number=?", (number,)).fetchone()
+    return json.loads(row["evidence"]) if row else None
+
+
 def original(database, number, owner, position=0):
     row = database.execute(
         """SELECT original, mime, status FROM case_images JOIN cases ON number=case_number
@@ -285,6 +296,14 @@ def store_report(database, number, case, draft, author, *, confirmed_empty=False
             VALUES (?,?,?,?,?,?) ON CONFLICT(case_number) DO UPDATE SET findings=excluded.findings,
             conclusion=excluded.conclusion, author=excluded.author, updated_at=excluded.updated_at,
             revision=excluded.revision""", (number, findings, conclusion, author, timestamp(), draft.revision + 1))
+
+
+def review_context(case):
+    # A review covers the film set, its interpretation, and the visit identity.
+    keys = ("id", "horse_name", "comment", "images", "screening", "detections", "threshold", "model")
+    evidence = {key: case[key] for key in keys}
+    encoded = json.dumps(evidence, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
 def inspect_image(payload):
@@ -404,6 +423,15 @@ def create_app(data_dir=None):
     def login_options():
         return TEAM if team_mode else {}
 
+    @api.get("/api/demo-images/{filename}", dependencies=[Depends(current_user)])
+    def demo_image(filename: str):
+        if filename not in {"16-侧位.jpg", "23-LF-正位.jpg"}:
+            raise HTTPException(404, "未找到此研究样片")
+        source = ROOT / "training/data/sporthorse_v2/images/test" / filename
+        if not source.is_file():
+            raise HTTPException(404, "当前安装未包含此研究样片")
+        return Response(source.read_bytes(), media_type="image/jpeg")
+
     @api.post("/api/login")
     def login(credentials: Credentials, request: Request, response: Response):
         username = credentials.username
@@ -453,9 +481,16 @@ def create_app(data_dir=None):
             return load_cases(database, accounts)
 
     @api.get("/api/cases/{identifier}")
-    def case_detail(identifier: str, owner: str = Depends(record_owner)):
+    def case_detail(identifier: str, owner: str = Depends(record_owner), include_signed_evidence: bool = False):
+        number = case_number(identifier)
         with connect() as database:
-            return read_case(database, case_number(identifier), owner)
+            case = read_case(database, number, owner)
+            if include_signed_evidence:
+                if case["status"] == "analyzed":
+                    case["review_context"] = review_context(case)
+                elif case["status"] == "reviewed":
+                    case["signed_evidence"] = read_signed_evidence(database, number)
+            return case
 
     @api.patch("/api/cases/{identifier}")
     def edit(identifier: str, update: VisitUpdate, owner: str = Depends(record_owner)):
@@ -615,6 +650,8 @@ def create_app(data_dir=None):
                 raise HTTPException(409, "仅待复核病例可以提交复核")
             if review.annotation_revision != case["annotation_revision"]:
                 raise HTTPException(409, "人工标注已变化，请重新打开报告并核对标注后签署")
+            if review.review_context is not None and review.review_context != review_context(case):
+                raise HTTPException(409, "病例或影像资料已有更新，请重新核对后签署")
             name = accounts[reviewer][1]
             if isinstance(review, ReportConfirmation):
                 note = review.conclusion.strip()
@@ -630,7 +667,21 @@ def create_app(data_dir=None):
                 store_report(database, number, case, review, name, confirmed_empty=empty)
             database.execute("""UPDATE cases SET status='reviewed', reviewer=?, review_note=?, reviewed_at=?,
                 empty_review_confirmed=? WHERE number=? AND owner=?""", (name, note, timestamp(), empty, number, owner))
-            return read_case(database, number, owner)
+            signed = read_case(database, number, owner)
+            database.execute("INSERT INTO signed_reports(case_number, evidence) VALUES (?, ?)",
+                             (number, json.dumps(signed_evidence(signed), ensure_ascii=False, allow_nan=False)))
+            return signed
+
+    @api.get("/api/cases/{identifier}/report/download")
+    def download_report(identifier: str, owner: str = Depends(record_owner)):
+        number = case_number(identifier)
+        with connect() as database:
+            case = read_case(database, number, owner)
+            if case["status"] != "reviewed":
+                raise HTTPException(409, "请先签署复核报告")
+            evidence = read_signed_evidence(database, number)
+        return Response(content=report_html(evidence or case, historical=evidence is None), media_type="text/html",
+                        headers={"Content-Disposition": f'attachment; filename="{identifier}-report.html"'})
 
     @api.get("/api/cases/{identifier}/images/{image_id}/annotations.png")
     def export_annotations(identifier: str, image_id: str, owner: str = Depends(record_owner)):

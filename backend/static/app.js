@@ -203,6 +203,10 @@ function createVisit() {
           <input id="image-file" type="file" name="image" aria-label="选择检查影像" accept="${fileTypes}" multiple required>
         </div>
         <p class="file-status">${icon("image")}<span class="file-title" aria-live="polite">尚未选择影像</span></p>
+        <div class="sample-picker"><span>研究样片 · 选一张作为主图</span>
+          <button type="button" class="secondary" data-sample="16-侧位.jpg" data-projection="侧位">16 号侧位</button>
+          <button type="button" class="secondary" data-sample="23-LF-正位.jpg" data-projection="正位">23 号正位</button>
+          <button type="button" class="text-button" id="clear-image" hidden>清除所选影像</button></div>
       </section>
       <section class="intake-settings"><h2>检查信息</h2>
         <label>马匹名称 / 编号<input id="horse-name" name="horse_name" maxlength="80" required placeholder="例如：追风 或 H-001"></label>
@@ -215,6 +219,57 @@ function createVisit() {
     <footer class="intake-foot"><span>暂时没有影像？ <a id="manual-visit" href="#manual">手动登记就诊</a></span><a href="#dashboard">${icon("book")} 查找历史记录</a></footer>`;
   const form = byId("visit-form");
   wireImages(form);
+  const input = form.elements.image;
+  const samples = form.querySelectorAll("[data-sample]");
+  const clear = byId("clear-image");
+  let sampleHorse = "", sampleProjection = "", loadingSample = false, fileRevision = 0;
+  function refreshSamples() {
+    const selected = input.files.length > 0;
+    for (const button of samples) button.disabled = loadingSample || selected;
+    clear.hidden = !selected;
+  }
+  input.addEventListener("change", () => {
+    fileRevision++;
+    if (form.elements.horse_name.value === sampleHorse) form.elements.horse_name.value = "";
+    if (form.elements.projection.value === sampleProjection) form.elements.projection.value = "";
+    sampleHorse = sampleProjection = "";
+    form.elements.quality_confirmed.checked = false;
+    refreshSamples();
+  });
+  clear.onclick = () => {
+    input.value = "";
+    input.dispatchEvent(new Event("change"));
+    input.focus();
+  };
+  for (const button of samples) button.onclick = async () => {
+    if (input.files.length || loadingSample) return;
+    loadingSample = true;
+    const atSelection = fileRevision;
+    refreshSamples();
+    const {sample, projection} = button.dataset;
+    const title = form.querySelector(".file-title");
+    title.textContent = "正在载入研究样片…";
+    try {
+      const response = await fetch("/api/demo-images/" + encodeURIComponent(sample), {cache:"no-store"});
+      if (!response.ok) throw new Error(response.status === 401 ? "登录已过期，请重新登录。" : "样片载入失败，可重试或上传本地影像。");
+      const blob = await response.blob();
+      if (!form.isConnected || fileRevision !== atSelection || input.files.length) return;
+      const selection = new DataTransfer();
+      selection.items.add(new File([blob], sample, {type:"image/jpeg"}));
+      input.files = selection.files;
+      input.dispatchEvent(new Event("change"));
+      form.elements.projection.value = sampleProjection = projection;
+      if (!form.elements.horse_name.value.trim()) {
+        form.elements.horse_name.value = sampleHorse = "研究样片 " + sample.split("-")[0] + " 号";
+      }
+      title.textContent = "研究样片 · 主图 " + sample;
+    } catch (error) {
+      if (form.isConnected && fileRevision === atSelection && !input.files.length) title.textContent = formatError(error);
+    } finally {
+      loadingSample = false;
+      refreshSamples();
+    }
+  };
   action(form, "正在上传…", async active => {
     const horseName = form.elements.horse_name.value.trim();
     if (!horseName) throw new Error("请填写马匹名称或编号。");
@@ -309,6 +364,18 @@ function selectNav(route) {
   }
 }
 
+const reviewResultLabels = {
+  all: "全部", "screen-only": "筛查可疑 · 无定位框", both: "筛查可疑 · 有定位框",
+  "boxes-only": "仅定位提示", neither: "两项均未提示", legacy: "旧版无整片结果"
+};
+
+function reviewResultKey(record) {
+  if (!record.screening) return "legacy";
+  const hasBoxes = record.detections.length > 0;
+  if (record.screening.predicted_positive) return hasBoxes ? "both" : "screen-only";
+  return hasBoxes ? "boxes-only" : "neither";
+}
+
 function worklist(route, records) {
   const queue = worklists[route];
   const filing = route === "filing";
@@ -317,30 +384,48 @@ function worklist(route, records) {
   ));
   const archived = filing ? records.filter(r => r.archived_at) : [];
   let showArchived = filing && !pending.length && archived.length > 0;
+  const reviewing = route === "reviews";
+  let resultFilter = "all";
+  const counts = {all: pending.length};
+  if (reviewing) {
+    for (const record of pending) {
+      const key = reviewResultKey(record);
+      counts[key] = (counts[key] || 0) + 1;
+    }
+  }
   page.innerHTML = heading("临床工作台", queue.title, queue.description, newLink) + `
     <section class="card queue-card"><header class="queue-header"><div class="queue-tabs">
       ${filing ? '<button type="button" data-filed="no">待归档 <b>'+pending.length+'</b></button><button type="button" data-filed="yes">已归档 <b>'+archived.length+'</b></button>'
         : '<h2>待处理病例 <span class="count-tag">'+pending.length+'</span></h2>'}</div>
       <label class="search-field">${icon("search")}<input type="search" id="queue-search" placeholder="搜索马匹或就诊编号" aria-label="搜索当前队列"></label></header>
+      ${reviewing ? `<div class="review-filters" role="group" aria-label="按主图模型结果筛选">
+        ${Object.entries(reviewResultLabels).map(([key,label]) => `<button type="button" data-review-filter="${key}" aria-pressed="${key === resultFilter}">${label} <b>${counts[key] || 0}</b></button>`).join("")}
+      </div>` : ""}
       <div id="queue-list"></div></section>`;
   const query = byId("queue-search");
   const renderRows = () => {
     const term = query.value.trim().toLowerCase();
     const list = showArchived ? archived : pending;
-    const shown = list.filter(r => [r.id, r.horse_name].some(s => String(s).toLowerCase().includes(term)));
+    const shown = list.filter(r => (resultFilter === "all" || reviewResultKey(r) === resultFilter)
+      && [r.id, r.horse_name].some(s => String(s).toLowerCase().includes(term)));
+    const filtering = Boolean(term) || resultFilter !== "all";
     byId("queue-list").innerHTML = shown.length ? shown.map(r => {
       const openReport = route === "reviews" || (filing && r.status === "reviewed");
       const action = showArchived ? (openReport ? "查看报告" : "查看病例") : queue.action;
       const status = showArchived ? "已归档" : filing ? (r.status === "registered" ? "仅登记" : "已确认复核") : route === "reviews" && r.report?.revision ? "已有复核草稿" : statusNames[r.status];
       const time = showArchived ? r.archived_at : r.reviewed_at || r.analyzed_at || r.created_at;
-      return `<article class="queue-row"><span class="horse-avatar" aria-hidden="true">${escape(Array.from(r.horse_name)[0])}</span><div class="queue-person"><strong>${escape(r.horse_name)}</strong><small>${escape(r.id)}</small></div>
+      const resultKey = reviewing ? reviewResultKey(r) : null;
+      const evidence = reviewing ? `<span class="queue-signal" data-signal="${resultKey}">${reviewResultLabels[resultKey]}${resultKey === "legacy" ? " · " + r.detections.length + " 个定位框" : ""}</span>` : "";
+      return `<article class="queue-row"><span class="horse-avatar" aria-hidden="true">${escape(Array.from(r.horse_name)[0])}</span><div class="queue-person"><strong>${reviewing ? `<a href="${caseLink(r.id)}" title="打开病例原片">${escape(r.horse_name)}</a>` : escape(r.horse_name)}</strong><small>${escape(r.id)}</small>${evidence}</div>
         <div class="queue-meta"><span>${escape(status)}</span><small>${r.images.length} 张影像 · ${escape(dateText(time))}</small></div>
         <a class="secondary" href="${openReport ? reportLink(r.id) : caseLink(r.id)}">${action} ${icon("arrow")}</a></article>`;
-    }).join("") : `<div class="empty large-empty"><span class="tile-icon">${icon(queue.icon)}</span><h3>${term ? "没有匹配的病例" : showArchived ? "目前没有已归档的病例" : queue.empty}</h3>${term ? '<button class="secondary" id="clear-queue">清除搜索</button>' : '<a class="secondary" href="#dashboard">查看历史记录</a>'}</div>`;
-    byId("clear-queue")?.addEventListener("click", () => { query.value=""; renderRows(); query.focus(); });
+    }).join("") : `<div class="empty large-empty"><span class="tile-icon">${icon(queue.icon)}</span><h3>${filtering ? "没有匹配的病例" : showArchived ? "目前没有已归档的病例" : queue.empty}</h3>${filtering ? '<button class="secondary" id="clear-queue">清除筛选</button>' : '<a class="secondary" href="#dashboard">查看历史记录</a>'}</div>`;
+    byId("clear-queue")?.addEventListener("click", () => { query.value=""; resultFilter="all"; renderRows(); query.focus(); });
+    for (const tab of page.querySelectorAll("[data-review-filter]")) tab.setAttribute("aria-pressed", String(tab.dataset.reviewFilter === resultFilter));
     for (const tab of page.querySelectorAll("[data-filed]")) tab.setAttribute("aria-pressed", String((tab.dataset.filed === "yes") === showArchived));
   };
   query.oninput = renderRows;
+  for (const tab of page.querySelectorAll("[data-review-filter]")) tab.onclick = () => { resultFilter = tab.dataset.reviewFilter; renderRows(); };
   for (const tab of page.querySelectorAll("[data-filed]")) tab.onclick = () => { showArchived = tab.dataset.filed === "yes"; renderRows(); };
   renderRows();
 }
@@ -507,6 +592,9 @@ function reportPage(record) {
     return;
   }
   const signed = record.status === "reviewed";
+  if (signed && record.signed_evidence) {
+    record = {...record, ...record.signed_evidence, archived_at:record.archived_at};
+  }
   const report = record.report || {};
   const images = record.images || [];
   const priorFindings = report.findings || "";
@@ -514,7 +602,9 @@ function reportPage(record) {
   const formBody = signed ? `<section class="signed-section">${record.empty_review_confirmed
     ? '<p>复核人已确认留空提交，未填写人工所见或结论。</p>'
     : `<h3>影像所见</h3><p>${escape(priorFindings || "未填写")}</p><h3>复核结论</h3><p>${escape(priorConclusion || "未填写")}</p>`}
-    <div class="report-signature">${icon("check")} ${escape(record.reviewer)} 已确认 <time>${escape(dateText(record.reviewed_at))}</time></div></section>` : `<form id="report-form">
+    <div class="report-signature">${icon("check")} ${escape(record.reviewer)} 已确认 <time>${escape(dateText(record.reviewed_at))}</time></div>
+    ${record.signed_evidence ? "" : '<p class="dim">历史报告依据当前留存的病例资料整理。</p>'}
+    <a href="${casePath(record.id)}/report/download" class="secondary" id="download-report" download>下载签署报告（HTML）</a></section>` : `<form id="report-form">
     <label>影像所见（选填）<textarea name="findings" rows="4" maxlength="4000" placeholder="记录不同投照位观察到的影像特征、位置与测量情况">${escape(priorFindings)}</textarea></label>
     <label>复核结论（选填）<textarea name="conclusion" rows="3" maxlength="2000" placeholder="记录人工判断及需要进一步核查的内容">${escape(priorConclusion)}</textarea></label>
     <p class="dim" id="draft-status" role="status">${report.updated_at ? "最近保存 · "+escape(report.author)+" · "+escape(dateText(report.updated_at)) : "草稿可保存，下次打开时继续编辑。"}</p>
@@ -527,20 +617,24 @@ function reportPage(record) {
       <div class="report-facts"><span>检查日期 <b>${escape(dateText(record.created_at))}</b></span><span>检查影像 <b>${images.length} 张</b></span>
         ${signed && report.author && report.author !== record.reviewer ? `<span>草稿作者 <b>${escape(report.author)}</b></span>` : ""}
         <span>复核人 <b>${escape(signed ? record.reviewer : user.display_name)}</b></span></div>
+      ${record.comment ? `<p class="visit-context"><strong>就诊备注</strong>　${escape(record.comment)}</p>` : ""}
       ${formBody}${record.archived_at ? `<p class="dim">归档时间 · ${escape(dateText(record.archived_at))}</p>` : ""}</article>
     <aside class="report-aside"><section class="card"><div class="panel-title"><h2>影像、标注与测量</h2><a href="${caseLink(record.id)}">返回阅片</a></div>
-      ${images.map((im,i)=>`<div class="report-evidence"><img src="${escape(im.url)}" alt=""><div><b>${i===0?"主图":"附图 "+i} · ${escape(im.projection)}</b><small>${escape(im.filename)}</small>
+      ${images.map((im,i)=>`<div class="report-evidence"><img src="${escape(im.url)}" alt=""><div><b>${i===0?"主图":"附图 "+i} · ${escape(im.projection)}</b><small>${escape(im.filename)}</small><small>影像质量 · ${escape(im.quality || "未确认")}</small>
       ${(im.measurements || []).map(m=>`<span>${m.kind==="distance"?"距离":"角度"}　${Number(m.value).toFixed(1)} ${m.kind==="distance"?"px":"°"}</span>`).join("")}
       ${(im.annotations || []).map(a=>`<span>人工标注 · ${escape(a.label)}（${escape(a.updated_by)}）</span>`).join("")}</div></div>`).join("")}</section>
       <section class="card model-summary"><h2>主图 AI 辅助结果</h2>${readingGuide(record, escapeHTML)}</section></aside></div>`;
-  archiveAction(record,reportPage);
+  archiveAction(record,render);
   const form = byId("report-form");
   if (!form) return;
   let version = report.revision || 0;
   const save = async (confirm) => {
     const findings = form.elements.findings.value.trim(), conclusion = form.elements.conclusion.value.trim();
     const body = {findings,conclusion,revision:version};
-    if (confirm) body.annotation_revision = record.annotation_revision || 0;
+    if (confirm) {
+      body.annotation_revision = record.annotation_revision || 0;
+      body.review_context = record.review_context;
+    }
     if (!findings && !conclusion) {
       if (!confirm) throw new Error("请先填写一项草稿内容。");
       openDialog(`<h2 id="dialog-title">留空提交复核？</h2><p class="sub">影像所见和复核结论均为空。继续将以${escape(user.display_name)}的姓名签署此报告，并记录留空确认。</p>
@@ -555,7 +649,7 @@ function reportPage(record) {
     }
     const updated = await api(casePath(record.id)+(confirm?"/review":"/report"),{...json(body),method:confirm?"POST":"PUT"});
     if (!form.isConnected) return;
-    if (confirm) { reportPage(updated); window.scrollTo(0,0); notify("复核人及签署时间已记录。"); }
+    if (confirm) { await render(); window.scrollTo(0,0); notify("复核人及签署时间已记录。"); }
     else { version=updated.report.revision; byId("draft-status").textContent="草稿已保存 · "+updated.report.author+" · "+dateText(updated.report.updated_at); }
   };
   form.addEventListener("submit",async event => {
@@ -567,7 +661,44 @@ function reportPage(record) {
     error.hidden=true; form.setAttribute("aria-busy","true");
     controls.forEach(button => button.disabled=true);
     try { await save(confirm); }
-    catch (err) { error.textContent=formatError(err); error.hidden=false; }
+    catch (err) {
+      error.textContent=formatError(err);
+      error.hidden=false;
+      if (err.status === 409) {
+        const refresh = document.createElement("button");
+        refresh.type = "button";
+        refresh.className = "secondary";
+        refresh.id = "refresh-report";
+        refresh.textContent = "核对最新报告";
+        refresh.addEventListener("click", async () => {
+          refresh.disabled = true;
+          try {
+            const latest = await api(casePath(record.id) + "?include_signed_evidence=true");
+            if (!form.isConnected) return;
+            // Keep unsubmitted text while refreshing the image evidence.
+            const fields = ["findings", "conclusion"];
+            const pending = fields.map(key => form.elements[key].value);
+            reportPage(latest);
+            const updatedForm = byId("report-form");
+            if (updatedForm && latest.report.revision === version) {
+              fields.forEach((key, i) => { updatedForm.elements[key].value = pending[i]; });
+            } else if (updatedForm) {
+              const previous = document.createElement("details");
+              const summary = document.createElement("summary");
+              summary.textContent = "查看本次未提交的文字";
+              previous.append(summary);
+              for (const [i, label] of ["影像所见", "复核结论"].entries()) {
+                const text = document.createElement("p");
+                text.textContent = label + " · " + (pending[i] || "未填写");
+                previous.append(text);
+              }
+              updatedForm.prepend(previous);
+            }
+          } catch (reloadError) { notify(formatError(reloadError)); refresh.disabled=false; }
+        });
+        error.append(" ", refresh);
+      }
+    }
     finally { form.removeAttribute("aria-busy"); controls.forEach(button => button.disabled=false); }
   });
 }
@@ -595,7 +726,7 @@ async function render() {
   page.innerHTML = '<p class="sub">正在读取病例…</p>';
   page.setAttribute("aria-busy","true");
   try {
-    const result = await api(historyPage || queue ? "/api/cases" : casePath(decodeURIComponent(route.slice(route.indexOf("/")+1))));
+    const result = await api(historyPage || queue ? "/api/cases" : casePath(decodeURIComponent(route.slice(route.indexOf("/")+1))) + (isReport ? "?include_signed_evidence=true" : ""));
     if (ticket !== revision) return;
     if (historyPage) archive(result);
     else if (queue) worklist(route, result);

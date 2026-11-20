@@ -77,6 +77,19 @@ def test_real_screening_and_localization_on_main_image(client, name, ref_score, 
     assert client.get(path).json() == analyzed
 
 
+def test_demo_images_are_authenticated_and_read_only(client):
+    names = ("16-侧位.jpg", "23-LF-正位.jpg")
+    assert client.get("/api/demo-images/" + names[0]).status_code == 401
+    login(client)
+    for name in names:
+        response = client.get("/api/demo-images/" + name)
+        source = Path(__file__).resolve().parents[2] / "training/data/sporthorse_v2/images/test" / name
+        assert response.status_code == 200 and response.headers["content-type"] == "image/jpeg"
+        assert response.content == source.read_bytes()
+    assert client.get("/api/demo-images/7-RF-正位.jpg").status_code == 404
+    assert client.get("/api/cases").json() == []
+
+
 def test_auth_validation_and_revocation(client):
     assert client.get("/api/me").status_code == 401
     assert client.get("/api/cases").status_code == 401
@@ -432,6 +445,56 @@ def test_image_measurements_use_each_image_coordinates_and_server_computed_value
         assert restarted.delete(path).status_code == 204
     with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
         assert database.execute("SELECT COUNT(*) FROM image_measurements").fetchone() == (0,)
+
+
+@pytest.mark.parametrize("change", [
+    "horse_name", "comment", "attachment", "projection", "quality", "add_measurement", "remove_measurement",
+])
+def test_signing_checks_evidence_changed_by_another_member(team, monkeypatch, change):
+    sign_in_member(team, "wangyiyi")
+    case = upload(team).json()
+    path = "/api/cases/" + case["id"]
+    primary = case["images"][0]["url"]
+    measure_url = primary + "/measurements"
+    distance = {"kind": "distance", "points": [{"x": 1, "y": 2}, {"x": 4, "y": 6}]}
+    monkeypatch.setattr(detector, "detect", lambda _: [])
+    monkeypatch.setattr(screening, "classify", lambda _: {
+        "model": "DINOv2-test", "score": 0.1, "threshold": 0.18, "predicted_positive": False,
+    })
+    assert team.post(path + "/analyze").status_code == 200
+    if change == "remove_measurement":
+        added = team.post(measure_url, json=distance)
+        assert added.status_code == 201
+        mark = added.json()["images"][0]["measurements"][0]["id"]
+
+    detail = path + "?include_signed_evidence=true"
+    original = team.get(detail).json()["review_context"]
+    sign_in_member(team, "zhushijia")
+    if change == "attachment":
+        edit = append_image(team, path, picture(36, 40))
+    elif change == "add_measurement":
+        edit = team.post(measure_url, json=distance)
+    elif change == "remove_measurement":
+        edit = team.delete(f"{measure_url}/{mark}")
+    elif change in {"horse_name", "comment"}:
+        edit = team.patch(path, json={change: "补录资料"})
+    else:
+        edit = team.patch(primary, json={change: "正位" if change == "projection" else "一般"})
+    assert edit.is_success, edit.text
+
+    sign_in_member(team, "wangyiyi")
+    draft = {"findings": "已核对主片", "conclusion": "", "revision": 0}
+    stale = team.post(path + "/review", json=draft | {"review_context": original})
+    assert stale.status_code == 409
+    assert team.get(path).json()["status"] == "analyzed"
+    saved = team.put(path + "/report", json=draft)
+    assert saved.status_code == 200
+    refreshed = team.get(detail).json()
+    assert refreshed["review_context"] != original
+    updated = draft | {"revision": saved.json()["report"]["revision"], "review_context": refreshed["review_context"]}
+    signed = team.post(path + "/review", json=updated)
+    assert signed.status_code == 200, signed.text
+    assert signed.json()["status"] == "reviewed" and signed.json()["reviewer"] == "王一伊"
 
 
 def test_shared_structured_report_conflicts_signatures_and_read_only_history(team, tmp_path, monkeypatch):
