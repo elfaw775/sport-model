@@ -1,4 +1,5 @@
 import io
+import re
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -9,7 +10,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from backend import detector, screening
-from backend.app import MAX_BYTES, create_app
+from backend.app import MAX_BYTES, create_app, demo_library
 
 
 @pytest.fixture
@@ -79,15 +80,48 @@ def test_real_screening_and_localization_on_main_image(client, name, ref_score, 
 
 def test_demo_images_are_authenticated_and_read_only(client):
     names = ("16-侧位.jpg", "23-LF-正位.jpg")
+    assert client.get("/api/demo-images").status_code == 401
+    assert client.get("/api/demo-images/XR-001.jpg").status_code == 401
     assert client.get("/api/demo-images/" + names[0]).status_code == 401
     login(client)
+    catalog = client.get("/api/demo-images").json()
+    assert len(catalog) == len({item["horse_name"] for item in catalog}) == 84
+    assert len({item["url"] for item in catalog}) == 84
+    images = Path(__file__).resolve().parents[2] / "training/data/sporthorse_v2/images"
+    installed = {path.read_bytes(): path for path in images.glob("*/*") if path.suffix in {".jpg", ".png"}}
+    for item in catalog:
+        assert set(item) == {"filename", "projection", "horse_name", "url"}
+        assert re.fullmatch(r"XR-\d{3}\.(jpg|png)", item["filename"])
+        assert item["url"] == "/api/demo-images/" + item["filename"]
+        response = client.get(item["url"])
+        assert response.status_code == 200
+        source = installed.pop(response.content)
+        assert item["filename"].endswith(source.suffix)
+        assert response.headers["content-type"] == ("image/png" if source.suffix == ".png" else "image/jpeg")
+        if "+" in source.stem:
+            assert item["projection"] == ""
+        else:
+            assert item["projection"] in ("正位", "侧位", "斜位") and item["projection"] in source.stem
+    assert not installed
     for name in names:
         response = client.get("/api/demo-images/" + name)
         source = Path(__file__).resolve().parents[2] / "training/data/sporthorse_v2/images/test" / name
         assert response.status_code == 200 and response.headers["content-type"] == "image/jpeg"
         assert response.content == source.read_bytes()
+        canonical = response.headers["Content-Location"]
+        assert canonical in {item["url"] for item in catalog}
+        assert client.get(canonical).content == response.content
     assert client.get("/api/demo-images/7-RF-正位.jpg").status_code == 404
     assert client.get("/api/cases").json() == []
+
+
+def test_demo_image_numbers_stable_with_partial_dataset(tmp_path):
+    (tmp_path / "split_manifest.tsv").write_text("image\tsplit\nA-正位\tval\nB-侧位\ttest\n", encoding="utf-8")
+    test_dir = tmp_path / "images/test"
+    test_dir.mkdir(parents=True)
+    (test_dir / "B-侧位.jpg").touch()
+    catalog, _ = demo_library(tmp_path)
+    assert [entry["filename"] for entry in catalog] == ["XR-002.jpg"]
 
 
 def test_auth_validation_and_revocation(client):

@@ -28,6 +28,8 @@ On Windows, use `.venv\Scripts\python.exe` for the last two commands. Open the l
 
 ### Review a case
 
+For a live demonstration, click **随机抽取样片** on the new examination form to draw from the 84 project radiographs. Preview the film or draw another before uploading. Check the projection and image quality, upload to obtain a case number, then run both models, review the findings, sign and archive the report. The **推荐病例** section also offers films 16 and 23 for repeatable demonstrations. These radiographs were used during model development.
+
 1. Create a visit, enter the horse and projection, upload a PNG, JPEG or WebP and confirm image quality. A visit may also start without images. The first film is the primary view. Later views support side-by-side review. [Example lateral film](training/data/sporthorse_v2/images/test/16-侧位.jpg)
 2. Analyze the primary film. DINOv2 Small returns a whole-film screening result. YOLO11s locates candidate regions. Each has its own threshold and model version. If either inference fails, the original stays available for a retry.
 3. Pan, zoom, rotate or invert the image. Record two-point distances in pixels and three-point angles in degrees. On any view, draw a rectangle or polygon, name the region and save it as a manual annotation. Toggle the overlay to inspect the original. A PNG export contains numbered outlines at original resolution, with region labels and coordinates embedded as PNG text metadata.

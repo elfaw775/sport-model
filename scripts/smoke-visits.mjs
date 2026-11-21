@@ -139,12 +139,14 @@ try {
   const uploadPrimary = async (name, filename, sample = false) => {
     const form = "#visit-form";
     if (sample) {
+      await click("#featured-samples > summary");
       await click(`[data-sample="${filename}"]`);
     } else {
       const picker = await page.waitForSelector(form + ' [name="image"]');
       await picker.uploadFile(fixture(filename));
     }
     await visible("#image-preview");
+    if (!sample) assert.equal(await page.$eval("#draw-sample", button => button.disabled), true);
     await page.locator(form + ' [name="horse_name"]').fill(name);
     await page.select(form + ' [name="projection"]', filename.includes("侧位") ? "侧位" : "正位");
     const quality = form + ' [name="quality_confirmed"]';
@@ -389,14 +391,79 @@ try {
   await home(); await click(".row-delete"); await click("#confirm-delete");
   await page.waitForFunction(async () => (await (await fetch("/api/cases")).json()).length === 0);
   await click("#nav-work"); await visible("#visit-form");
-  const singleFieldId = await uploadPrimary("单项复核", "23-LF-正位.jpg");
-  await formSubmit("#analyze-form"); await openReport();
+  const catalog = await page.evaluate(async () => (await fetch("/api/demo-images")).json());
+  assert.equal(new Set(catalog.map(sample => sample.filename)).size, 84);
+  const drawSample = async (previous = "") => {
+    await click("#draw-sample");
+    await page.waitForFunction(old => {
+      const file = document.querySelector("#image-file").files[0];
+      const preview = document.querySelector("#image-preview");
+      return file && file.name !== old && !preview.hidden && preview.complete && preview.naturalWidth > 0;
+    }, {}, previous);
+    const filename = await page.$eval("#image-file", input => input.files[0].name);
+    const sample = catalog.find(entry => entry.filename === filename);
+    assert.ok(sample, "Selected film must belong to the 84-film catalog");
+    const picked = await page.$eval("#visit-form", form => ({
+      projection:form.elements.projection.value, quality:form.elements.quality_confirmed.checked,
+      horse:form.elements.horse_name.value
+    }));
+    assert.equal(picked.projection, sample.projection);
+    assert.equal(picked.quality, false);
+    return {sample, horse:picked.horse};
+  };
+  const featuredName = "16-侧位.jpg";
+  await click("#featured-samples > summary");
+  const [featuredResponse] = await Promise.all([
+    page.waitForResponse(response => decodeURI(new URL(response.url()).pathname) === "/api/demo-images/" + featuredName),
+    click(`[data-sample="${featuredName}"]`)
+  ]);
+  await visible("#image-preview");
+  const featuredUrl = featuredResponse.headers()["content-location"];
+  const featuredIndex = catalog.findIndex(sample => sample.url === featuredUrl);
+  assert.ok(featuredIndex >= 0, "Recommended film needs a matching catalog entry");
+  // Target the featured film's slot in an unfiltered catalog, for this draw only.
+  await page.evaluate(value => {
+    const original = Math.random;
+    Math.random = () => { Math.random = original; return value; };
+  }, (featuredIndex + 0.5) / catalog.length);
+  const firstDraw = await drawSample(featuredName);
+  assert.notEqual(firstDraw.sample.url, featuredUrl);
+  assert.equal(firstDraw.horse, firstDraw.sample.horse_name);
+  await page.locator("#horse-name").fill("随机样片复核");
+  await click('#visit-form [name="quality_confirmed"]');
+  const {sample, horse} = await drawSample(firstDraw.sample.filename);
+  assert.equal(horse, "随机样片复核");
+  assert.deepEqual(await records(), []);
+  if (!sample.projection) await page.select('#visit-form [name="projection"]', "其他");
+  await click('#visit-form [name="quality_confirmed"]');
+  await formSubmit("#visit-form"); await visible("#analyze-form");
+  const [randomVisit] = await records();
+  const singleFieldId = randomVisit.id;
+  assert.equal(randomVisit.filename, sample.filename);
+  assert.equal(randomVisit.horse_name, horse);
+  assert.equal(randomVisit.projection, sample.projection || "其他");
+  const sameImage = await page.evaluate(async (catalogURL, savedURL) => {
+    const readBytes = async url => new Uint8Array(await (await fetch(url)).arrayBuffer());
+    const [source, stored] = await Promise.all([readBytes(catalogURL), readBytes(savedURL)]);
+    return source.length > 0 && source.length === stored.length && source.every((value, i) => value === stored[i]);
+  }, sample.url, randomVisit.images[0].url);
+  assert.equal(sameImage, true, "Normal upload must preserve the selected original film");
+  await formSubmit("#analyze-form"); await waitForAnalysis();
+  const randomResult = await detail(singleFieldId);
+  assert.match(randomResult.model, /^YOLO11s-fetlock-640@/);
+  await checkScreening(randomResult, "#analysis-summary");
+  await openReport();
   await writeReport("", "需核对侧位片。");
   await click("#confirm-report"); await visible("#archive-visit");
   assert.equal((await detail(singleFieldId)).empty_review_confirmed, false);
   assert.equal((await detail(singleFieldId)).review_note, "需核对侧位片。");
+  await click("#archive-visit"); await waitForArchive(singleFieldId);
+  await home(); await page.type("#case-search", horse);
+  await click(`tr[data-id="${singleFieldId}"] .horse-cell`);
+  await findText(sample.filename);
+  await click("#open-report"); await findText("需核对侧位片。");
   assert.deepEqual(errors, []);
-  console.log("PASS: shared visits, primary-film review with and without candidate boxes, all four reading-guide branches and legacy records, two-film comparison, annotations, live inference, signatures, archive, search and mobile layout.");
+  console.log("PASS: random draw and replacement from 84 films, shared visits, primary-film review with and without candidate boxes, all four reading-guide branches and legacy records, two-film comparison, annotations, live inference, signatures, archive, search and mobile layout.");
 } finally {
   try { await browser?.close(); }
   finally { service.kill(); await closed; await rm(db, {recursive:true,force:true}); }

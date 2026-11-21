@@ -1,9 +1,11 @@
+import csv
 import hashlib
 import io
 import json
 import logging
 import math
 import os
+import re
 import secrets
 import sqlite3
 import time
@@ -349,8 +351,35 @@ def create_case(database, owner, horse_name, comment):
                             (owner, horse_name.strip(), comment.strip(), timestamp())).lastrowid
 
 
+def demo_library(dataset):
+    images = dataset / "images"
+    files = {name: images / "test" / name for name in ("16-侧位.jpg", "23-LF-正位.jpg")}
+    catalog = []
+    manifest = dataset / "split_manifest.tsv"
+    if not manifest.is_file():
+        return catalog, files
+
+    with manifest.open(encoding="utf-8", newline="") as table:
+        rows = sorted(csv.DictReader(table, delimiter="\t"), key=lambda row: row["image"])
+    installed = {(path.parent.name, path.stem): path for split in ("train", "val", "test")
+                 for path in (images / split).glob("*") if path.suffix in {".jpg", ".png"} and path.is_file()}
+    # Number the full manifest so sparse checkouts keep the same public image IDs.
+    for index, row in enumerate(rows, 1):
+        source = installed.get((row["split"], row["image"]))
+        if source is None:
+            continue
+        filename = f"XR-{index:03d}{source.suffix}"
+        view = re.search(r"-(正位|侧位|斜位)(?:[\s，,]|$)", source.stem)
+        files[filename] = source
+        catalog.append({"filename": filename, "projection": view[1] if view else "",
+                        "horse_name": f"演示马 {index:03d}", "url": f"/api/demo-images/{filename}"})
+    return catalog, files
+
+
 def create_app(data_dir=None):
     directory = Path(data_dir or os.environ.get("SPORT_MODEL_DATA_DIR", ROOT / "var"))
+    demo_catalog, demo_files = demo_library(ROOT / "training/data/sporthorse_v2")
+    demo_urls = {demo_files[item["filename"]]: item["url"] for item in demo_catalog}
     team_mode = not any(key in os.environ for key in
                         ("SPORT_MODEL_USERNAME", "SPORT_MODEL_PASSWORD", "SPORT_MODEL_DISPLAY_NAME"))
     if team_mode:
@@ -423,14 +452,20 @@ def create_app(data_dir=None):
     def login_options():
         return TEAM if team_mode else {}
 
+    @api.get("/api/demo-images", dependencies=[Depends(current_user)])
+    def list_demo_images():
+        return demo_catalog
+
     @api.get("/api/demo-images/{filename}", dependencies=[Depends(current_user)])
     def demo_image(filename: str):
-        if filename not in {"16-侧位.jpg", "23-LF-正位.jpg"}:
+        source = demo_files.get(filename)
+        if source is None:
             raise HTTPException(404, "未找到此研究样片")
-        source = ROOT / "training/data/sporthorse_v2/images/test" / filename
         if not source.is_file():
             raise HTTPException(404, "当前安装未包含此研究样片")
-        return Response(source.read_bytes(), media_type="image/jpeg")
+        headers = {"Content-Location": demo_urls[source]} if source in demo_urls else {}
+        return Response(source.read_bytes(), headers=headers,
+                        media_type="image/png" if source.suffix == ".png" else "image/jpeg")
 
     @api.post("/api/login")
     def login(credentials: Credentials, request: Request, response: Response):

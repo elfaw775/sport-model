@@ -192,9 +192,10 @@ async function attachFiles(id, files, projection, quality) {
 }
 
 function createVisit() {
-  page.innerHTML = heading("新建检查", "上传检查影像", "请选择设备导出的 X 线原片。带工具栏、缩略图或桌面边框的截图会缩小模型看到的病灶。") + progressBar(0) + `
+  page.innerHTML = heading("新建检查", "上传检查影像", "从项目的 84 张球节样片中抽取一张体验诊疗，或上传设备导出的 X 线原片。") + progressBar(0) + `
     <form class="card intake" id="visit-form">
-      <section class="intake-image"><div class="panel-title"><h2>检查影像</h2><span>首张为分析主图</span></div>
+      <section class="intake-image"><div class="panel-title sample-header"><div><h2>检查影像</h2><small>首张为分析主图</small></div>
+        <button type="button" class="secondary" id="draw-sample">${icon("image")}<span>随机抽取样片</span></button></div>
         <div class="image-drop">
           <div class="drop-corners" aria-hidden="true"></div>
           <img id="image-preview" alt="所选主图预览" hidden>
@@ -202,11 +203,12 @@ function createVisit() {
           <div class="preview-hint">点击重新选择影像</div>
           <input id="image-file" type="file" name="image" aria-label="选择检查影像" accept="${fileTypes}" multiple required>
         </div>
-        <p class="file-status">${icon("image")}<span class="file-title" aria-live="polite">尚未选择影像</span></p>
-        <div class="sample-picker"><span>研究样片 · 选一张作为主图</span>
+        <div class="file-status">${icon("image")}<span class="file-title" aria-live="polite">尚未选择影像</span>
+          <button type="button" class="text-button" id="clear-image" hidden>清除所选影像</button></div>
+        <details id="featured-samples"><summary>推荐病例</summary><div class="sample-picker">
           <button type="button" class="secondary" data-sample="16-侧位.jpg" data-projection="侧位">16 号侧位</button>
           <button type="button" class="secondary" data-sample="23-LF-正位.jpg" data-projection="正位">23 号正位</button>
-          <button type="button" class="text-button" id="clear-image" hidden>清除所选影像</button></div>
+        </div></details>
       </section>
       <section class="intake-settings"><h2>检查信息</h2>
         <label>马匹名称 / 编号<input id="horse-name" name="horse_name" maxlength="80" required placeholder="例如：追风 或 H-001"></label>
@@ -220,19 +222,26 @@ function createVisit() {
   const form = byId("visit-form");
   wireImages(form);
   const input = form.elements.image;
-  const samples = form.querySelectorAll("[data-sample]");
+  const draw = byId("draw-sample");
+  const recommendations = form.querySelectorAll("[data-sample]");
   const clear = byId("clear-image");
-  let sampleHorse = "", sampleProjection = "", loadingSample = false, fileRevision = 0;
+  const title = form.querySelector(".file-title");
+  let catalog, currentSample;
+  let loadingSample = false, fileRevision = 0;
   function refreshSamples() {
-    const selected = input.files.length > 0;
-    for (const button of samples) button.disabled = loadingSample || selected;
-    clear.hidden = !selected;
+    const localFiles = input.files.length > 0 && !currentSample;
+    draw.disabled = loadingSample || localFiles;
+    draw.querySelector("span").textContent = currentSample ? "换一张样片" : "随机抽取样片";
+    for (const button of recommendations) button.disabled = loadingSample || localFiles;
+    clear.hidden = input.files.length === 0;
+    if (!form.hasAttribute("aria-busy")) form.querySelector('[type="submit"]').disabled = loadingSample;
   }
   input.addEventListener("change", () => {
     fileRevision++;
-    if (form.elements.horse_name.value === sampleHorse) form.elements.horse_name.value = "";
-    if (form.elements.projection.value === sampleProjection) form.elements.projection.value = "";
-    sampleHorse = sampleProjection = "";
+    loadingSample = false;
+    if (form.elements.horse_name.value === currentSample?.horse_name) form.elements.horse_name.value = "";
+    if (form.elements.projection.value === currentSample?.projection) form.elements.projection.value = "";
+    currentSample = null;
     form.elements.quality_confirmed.checked = false;
     refreshSamples();
   });
@@ -241,34 +250,48 @@ function createVisit() {
     input.dispatchEvent(new Event("change"));
     input.focus();
   };
-  for (const button of samples) button.onclick = async () => {
-    if (input.files.length || loadingSample) return;
+  async function loadSample(sample) {
+    if (loadingSample || form.hasAttribute("aria-busy") || (input.files.length && !currentSample)) return;
     loadingSample = true;
     const atSelection = fileRevision;
+    const active = () => form.isConnected && fileRevision === atSelection;
     refreshSamples();
-    const {sample, projection} = button.dataset;
-    const title = form.querySelector(".file-title");
     title.textContent = "正在载入研究样片…";
     try {
-      const response = await fetch("/api/demo-images/" + encodeURIComponent(sample), {cache:"no-store"});
+      if (!sample) {
+        catalog ??= await api("/api/demo-images");
+        if (!active()) return;
+        if (!catalog.length) throw new Error("暂无可用样片，请上传本地影像。");
+        const pool = catalog.length > 1 ? catalog.filter(item => item.url !== currentSample?.url) : catalog;
+        sample = pool[Math.floor(Math.random() * pool.length)];
+      }
+      const response = await fetch(sample.url, {cache:"no-store"});
       if (!response.ok) throw new Error(response.status === 401 ? "登录已过期，请重新登录。" : "样片载入失败，可重试或上传本地影像。");
       const blob = await response.blob();
-      if (!form.isConnected || fileRevision !== atSelection || input.files.length) return;
+      if (!active()) return;
       const selection = new DataTransfer();
-      selection.items.add(new File([blob], sample, {type:"image/jpeg"}));
+      selection.items.add(new File([blob], sample.filename, {type:blob.type}));
       input.files = selection.files;
       input.dispatchEvent(new Event("change"));
-      form.elements.projection.value = sampleProjection = projection;
-      if (!form.elements.horse_name.value.trim()) {
-        form.elements.horse_name.value = sampleHorse = "研究样片 " + sample.split("-")[0] + " 号";
-      }
-      title.textContent = "研究样片 · 主图 " + sample;
-    } catch (error) {
-      if (form.isConnected && fileRevision === atSelection && !input.files.length) title.textContent = formatError(error);
-    } finally {
-      loadingSample = false;
+      currentSample = {...sample, url:response.headers.get("Content-Location") || sample.url};
+      form.elements.projection.value = sample.projection;
+      if (!form.elements.horse_name.value.trim()) form.elements.horse_name.value = sample.horse_name;
+      title.textContent = "已载入 " + sample.filename + (sample.projection ? "" : " · 请选择投照方向");
       refreshSamples();
+    } catch (error) {
+      if (active()) title.textContent = (currentSample ? "已保留 " + currentSample.filename + "。" : "") + formatError(error);
+    } finally {
+      if (active()) {
+        loadingSample = false;
+        refreshSamples();
+      }
     }
+  }
+  draw.onclick = () => loadSample();
+  for (const button of recommendations) button.onclick = () => {
+    const {sample: filename, projection} = button.dataset;
+    loadSample({filename, projection, horse_name:"研究样片 " + filename.split("-")[0] + " 号",
+      url:"/api/demo-images/" + encodeURIComponent(filename)});
   };
   action(form, "正在上传…", async active => {
     const horseName = form.elements.horse_name.value.trim();
