@@ -47,7 +47,7 @@ export function mountViewer(container, record, {api, onUpload, onReport, reviewB
   if (!images().length) return () => {};
   const imageById = id => images().find(image => image.id === id);
   const readonly = () => record.status === "reviewed";
-  const rootPath = "/api/cases/" + encodeURIComponent(record.id) + "/images/";
+  const rootPath = "./api/cases/" + encodeURIComponent(record.id) + "/images/";
   const panes = {left:images()[0].id, right:images()[1]?.id};
   const views = new Map();
   let active = "left", compare = false, tool = "pan", showBoxes = true, pending = false;

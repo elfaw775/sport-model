@@ -2,13 +2,14 @@ import { mountViewer } from "./viewer.js";
 import { readingGuide } from "./reading-guide.js";
 
 const page = document.querySelector("#page");
+const browserDemo = document.documentElement.dataset.storage === "browser";
 const byId = (id) => document.getElementById(id);
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const icon = (name) => '<svg aria-hidden="true"><use href="#' + name + '"/></svg>';
 const statusNames = {registered:"仅登记",uploaded:"待分析", analyzed:"待复核", reviewed:"已复核"};
 const statusBadge = (status) => '<span class="badge ' + (status in statusNames ? status : "") + '">' + escapeHTML(statusNames[status]) + '</span>';
 const dateText = (value) => value ? new Intl.DateTimeFormat("zh-CN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Shanghai",hour12:false}).format(new Date(value)) : "—";
-const casePath = (id) => "/api/cases/" + encodeURIComponent(id);
+const casePath = (id) => "./api/cases/" + encodeURIComponent(id);
 const caseLink = (id) => "#case/" + encodeURIComponent(id);
 const json = (data) => ({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
 let user = null;
@@ -85,12 +86,12 @@ function login() {
     </section>
     <section class="card login-card"><span class="tile-icon">${icon("mark")}</span><p class="eyebrow">WORKSPACE ACCESS</p><h2>登录工作台</h2><p class="sub">使用分配的账号进入影像诊疗与病例档案。</p>
       <form id="login-form"><label>账号${usernameField}</label><label>密码<input name="password" type="password" autocomplete="current-password" required placeholder="请输入密码"></label><p class="error" role="alert" hidden></p><button class="primary wide" type="submit">登录工作台 ${icon("arrow")}</button></form>
-      ${members.length ? '<p class="credentials">团队试用密码：小写拼音账号后加 <code>sportsHorse</code>，注意大写 H。<br>四位成员共享就诊记录，复核按登录姓名署名。</p>' : ''}
+      ${members.length ? '<p class="credentials">团队试用密码：小写拼音账号后加 <code>sportsHorse</code>，注意大写 H。<br>' + (browserDemo ? '本机浏览器中的四个演示账号共享病例。<a href="./legacy/">查看旧版检测记录</a>' : '四位成员共享就诊记录，复核按登录姓名署名。') + '</p>' : ''}
     </section></div>`;
   const form = byId("login-form");
   action(form,"正在登录…",async (active) => {
-    await api("/api/login",json(Object.fromEntries(new FormData(form))));
-    const identity = await api("/api/me");
+    await api("./api/login",json(Object.fromEntries(new FormData(form))));
+    const identity = await api("./api/me");
     if (active()) {
       user = identity;
       Object.assign(dashboardState, {query:"", filter:"all", page:1});
@@ -259,7 +260,7 @@ function createVisit() {
     title.textContent = "正在载入研究样片…";
     try {
       if (!sample) {
-        catalog ??= await api("/api/demo-images");
+        catalog ??= await api("./api/demo-images");
         if (!active()) return;
         if (!catalog.length) throw new Error("暂无可用样片，请上传本地影像。");
         const pool = catalog.length > 1 ? catalog.filter(item => item.url !== currentSample?.url) : catalog;
@@ -291,7 +292,7 @@ function createVisit() {
   for (const button of recommendations) button.onclick = () => {
     const {sample: filename, projection} = button.dataset;
     loadSample({filename, projection, horse_name:"研究样片 " + filename.split("-")[0] + " 号",
-      url:"/api/demo-images/" + encodeURIComponent(filename)});
+      url:"./api/demo-images/" + encodeURIComponent(filename)});
   };
   action(form, "正在上传…", async active => {
     const horseName = form.elements.horse_name.value.trim();
@@ -301,7 +302,7 @@ function createVisit() {
     const quality = form.elements.quality_confirmed.checked;
     const payload = imagePayload(mainImage, projection, quality);
     payload.set("horse_name", horseName);
-    const record = await api("/api/cases", {method:"POST", body:payload});
+    const record = await api("./api/cases", {method:"POST", body:payload});
     const message = await attachFiles(record.id, additional, projection, quality);
     if (active()) {
       if (message) uploadMessage = {id:record.id, message};
@@ -320,7 +321,7 @@ function manualVisit() {
   action(form, "正在登记…", async active => {
     const horse_name = form.elements.horse_name.value.trim();
     if (!horse_name) throw new Error("请填写马匹名称或编号。");
-    const record = await api("/api/visits", json({horse_name, comment:form.elements.comment.value.trim()}));
+    const record = await api("./api/visits", json({horse_name, comment:form.elements.comment.value.trim()}));
     if (active()) {
       location.hash = caseLink(record.id);
       notify("就诊登记已保存。");
@@ -587,7 +588,7 @@ function detail(record) {
     summary.classList.remove("analysis-failed");
     byId("analysis-state").textContent = "分析中";
     byId("analysis-title").textContent = "正在分析主图…";
-    byId("analysis-lead").textContent = "正在进行整片筛查和病灶定位。";
+    byId("analysis-lead").textContent = browserDemo ? "首次分析需要下载约 126 MB 模型。请保持页面打开，模型将在本机浏览器运行。" : "正在进行整片筛查和病灶定位。";
     let updated;
     try {
       updated = await api(base+"/analyze",{method:"POST"});
@@ -749,7 +750,7 @@ async function render() {
   page.innerHTML = '<p class="sub">正在读取病例…</p>';
   page.setAttribute("aria-busy","true");
   try {
-    const result = await api(historyPage || queue ? "/api/cases" : casePath(decodeURIComponent(route.slice(route.indexOf("/")+1))) + (isReport ? "?include_signed_evidence=true" : ""));
+    const result = await api(historyPage || queue ? "./api/cases" : casePath(decodeURIComponent(route.slice(route.indexOf("/")+1))) + (isReport ? "?include_signed_evidence=true" : ""));
     if (ticket !== revision) return;
     if (historyPage) archive(result);
     else if (queue) worklist(route, result);
@@ -770,7 +771,7 @@ byId("logout").addEventListener("click",async () => {
   const button = byId("logout");
   button.disabled = true;
   try {
-    await api("/api/logout",{method:"POST"});
+    await api("./api/logout",{method:"POST"});
     user = null;
     history.replaceState(null,"",location.pathname);
     render();
@@ -779,8 +780,8 @@ byId("logout").addEventListener("click",async () => {
   finally { button.disabled = false; }
 });
 
-try { loginOptions = await api("/api/login-options"); }
+try { loginOptions = await api("./api/login-options"); }
 catch { loginOptions = {}; }
-try { user = await api("/api/me"); }
+try { user = await api("./api/me"); }
 catch (error) { if (error instanceof TypeError) notify(formatError(error)); }
 render();

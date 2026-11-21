@@ -31,18 +31,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build static site
+      - name: Build previous viewer at its archive address
         env:
-          # 项目站点（<user>.github.io/<repo>）需要这个前缀；
-          # 如果是 <user>.github.io 用户站点，把下面改成空字符串 ""
-          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}/legacy
         run: pnpm build
+
+      - name: Package clinical workbench, models and study films
+        run: python3 scripts/build-pages.py
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: out
+          path: work/pages-build/sport-model
 
   deploy:
     needs: build

@@ -4,7 +4,9 @@
 
 [Padding study and per-film results](image-study/published/cv84/canvas-round2/README.md#english) · [Research guide](image-study/README.md)
 
-The Python workbench supports team case files, image review, whole-film screening, lesion localization and signed reports. Both inference models are included in the repository and run on the server's CPU. A separate GitHub Pages site runs YOLO in the visitor's browser and stores its history in that browser. [Research workbench models](backend/models) · [Browser demo](https://elfaw775.github.io/sport-model/)
+[Open the public clinical workbench](https://elfaw775.github.io/sport-model/) · [Previous YOLO viewer and its history](https://elfaw775.github.io/sport-model/legacy/)
+
+GitHub Pages runs DINOv2 whole-film screening and YOLO localization in the visitor's browser. The 84-film picker, review tools, signatures, reports and archives use the same interface as the Python workbench. Pages cases and uploads are shared by the four demo identities within one browser profile. The Python edition stores team records on the server for cross-device use.
 
 ## How backend edits affect model output
 
@@ -71,4 +73,4 @@ The two outputs can disagree. For example, the workbench flagged a left-fore fro
 
 From the repository root, run `pnpm install --frozen-lockfile`, then `pnpm build`. Serve `out/` with a static HTTP server. For a development server use `pnpm dev`; for the browser smoke test use `node scripts/smoke.mjs`. On the macOS configuration requiring the WebAssembly SWC fallback, set `NEXT_TEST_WASM_DIR` to `$PWD/node_modules/@next/swc-wasm-nodejs` when building.
 
-For a project site, set `NEXT_PUBLIC_BASE_PATH` to the repository name prefixed with a slash; a user site uses an empty base path. The Pages workflow sets this during its build. Enable GitHub Actions as the Pages source in the repository settings. The browser downloads the selected model and ONNX WebAssembly runtime. The fast choice is YOLO11n (about 10 MB); the larger choice is YOLO11s (about 36 MB). The browser letterboxes the image, runs detection, suppresses overlapping boxes and maps coordinates back to the original. Clearing browser storage also clears the local history. [Static-site workflow](.github/workflows/deploy.yml) · [Browser code](app/page.tsx)
+To package both entry points, set `NEXT_PUBLIC_BASE_PATH=/sport-model/legacy` for the Next build, run `python3 scripts/build-pages.py`, then serve `work/pages-build/` over localhost. GitHub Actions publishes its `sport-model/` directory at the original project address. Run `PAGES_SMOKE_URL=http://127.0.0.1:8926/sport-model/ node scripts/smoke-visits.mjs` against the local build or freshly deployed Pages URL in an isolated browser profile.

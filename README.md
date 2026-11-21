@@ -4,7 +4,9 @@
 
 [黑边对照实验与逐片成绩](image-study/published/cv84/canvas-round2/README.md#中文) · [模型研究中文指南](image-study/README.zh-CN.md)
 
-Python 工作台支持登录、整片筛查、疑似病灶定位、人工复核和团队病例归档。病例分析由服务所在机器用 CPU 运行 DINOv2 Small 和 YOLO11s，两个推理权重随仓库提供。独立的 [GitHub Pages 演示](https://elfaw775.github.io/sport-model/) 使用访问者浏览器里的 YOLO，病例记录存在该浏览器。
+[打开 GitHub Pages 工作台](https://elfaw775.github.io/sport-model/) · [打开旧版 YOLO 检测与历史记录](https://elfaw775.github.io/sport-model/legacy/)
+
+公网工作台和本地 Python 版共用阅片界面，均支持从 84 张样片中抽片、本地选片、DINOv2 整片筛查、YOLO 定位、人工复核、签署及归档。公网版在访问者的浏览器中运行模型，影像与病例存入当前浏览器的 IndexedDB。同一浏览器切换成员可接续工作，换设备或浏览器不会带出记录。Python 服务把团队病例存入服务端 SQLite，可供连接同一服务的设备共享。
 
 ## 后端改动会影响模型吗？
 
@@ -71,13 +73,14 @@ python3.12 -m venv .venv
 
 [修正标签与训练对照](training/results/comparison-2026-11-18/README.md)说明阈值的选择方法，并提供逐片预测。另有 [960 像素重训](training/results/yolo11s-960-2026-11-18/README.md)与 [多款视觉模型的实测](training/results/vision-model-scale-2026-11-18/README.md)。这些历史报告中的“现役”指当次实验时使用的 v2 权重。
 
-以下为原 GitHub Pages 浏览器端演示的开发与发布说明。
+以下包含旧版 YOLO 工具的开发说明，以及同时发布两个入口的步骤。
 
 ## 仓库结构
 
 | 目录 | 内容 |
 |---|---|
-| `app/` `lib/` `public/` | 网页本体（Next.js 静态站 + 浏览器端 ONNX 推理） |
+| `backend/static/`、`backend/pages/` | 工作台界面、Pages 本地病例存储、报告导出和双模型推理 |
+| `app/`、`lib/`、`public/` | 旧版 YOLO 网页，发布在 `/sport-model/legacy/` |
 | `training/` | **模型训练全过程**：数据、转换/拆分/评估脚本、训练权重、实验指标 |
 | `.github/workflows/` | GitHub Pages 自动构建部署 |
 
@@ -127,32 +130,23 @@ NEXT_TEST_WASM_DIR="$PWD/node_modules/@next/swc-wasm-nodejs" \
 
 ## 2. 部署到 GitHub Pages
 
-### 步骤
+合入 `main` 后，GitHub Actions 构建旧版工具，再打包临床工作台、两份 ONNX 权重、运行时和 84 张中性编号样片，发布到原项目网址。发布包仅收录演示所需文件。登录本地 Python 工作台时创建的 SQLite 数据库和用户上传的影像保存在原设备。
 
-1. 新建一个 GitHub 仓库，把 **`web-next/` 目录里的内容** 作为仓库根目录推上去
-   （`.github/workflows/deploy.yml` 必须位于仓库根目录的 `.github/` 下）。
-2. 仓库 **Settings → Pages → Build and deployment → Source** 选 **GitHub Actions**。
-3. push 到 `main` 分支，Actions 会自动构建并部署。
-4. 部署地址：`https://<用户名>.github.io/<仓库名>/`
-
-### basePath 说明（很关键）
-
-- 项目站点 `https://<user>.github.io/<repo>/` → 构建时必须带前缀 `/<repo>`。
-  workflow 里已自动用 `NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}`。
-- 用户站点 `https://<user>.github.io/`（仓库名必须是 `<user>.github.io`）→ 把 workflow 里
-  `NEXT_PUBLIC_BASE_PATH` 改成 `""`。
-
-本地手动构建项目站点：
+本地复现 Pages 部署并执行 Chrome 验收：
 
 ```bash
-NEXT_PUBLIC_BASE_PATH=/你的仓库名 \
-NEXT_TEST_WASM_DIR="$PWD/node_modules/@next/swc-wasm-nodejs" \
-  node node_modules/next/dist/bin/next build
+NEXT_PUBLIC_BASE_PATH=/sport-model/legacy pnpm build
+python3 scripts/build-pages.py
+python3 -m http.server 8926 --bind 127.0.0.1 --directory work/pages-build
+# 另开终端，在同一仓库运行
+PAGES_SMOKE_URL=http://127.0.0.1:8926/sport-model/ node scripts/smoke-visits.mjs
 ```
+
+首次分析按需下载约 126 MB 的模型，另有约 14 MB 的 WebAssembly 运行时。浏览器缓存和网络速度会影响首张片的等待时间。原有 YOLO 检测记录保存在旧版页面使用的浏览器数据库中。
 
 ---
 
-## 3. 模型（两个，页面可切换）
+## 3. 旧版 YOLO 工具的可选模型
 
 | 文件 | 模型 | 大小 | 说明 |
 |---|---|---|---|
@@ -214,7 +208,7 @@ web-next/
 
 ---
 
-## 6. 已知限制
+## 6. 旧版 YOLO 工具的已知限制
 
 - **模型仍属于研究原型**：不同版本、阈值和标签下的结果不能混用，参见训练指南的 v2 评估。
 - 首次打开要下载 **约 24MB**（模型 10MB + WASM 14MB），之后浏览器缓存。

@@ -7,9 +7,9 @@ export async function checkCaseViewer(page, id) {
     document.querySelector(target)?.dataset.imageId === value, {}, selector, imageId);
   const left = '.film-stage[data-pane="left"]';
   const right = '.film-stage[data-pane="right"]';
-  const detail = () => page.evaluate(async key => (await fetch("/api/cases/" + key)).json(), id);
+  const detail = () => page.evaluate(async key => (await fetch("./api/cases/" + key)).json(), id);
   const measured = (imageId, count) => page.waitForFunction(async (key, imageId, count) => {
-    const record = await (await fetch("/api/cases/" + key)).json();
+    const record = await (await fetch("./api/cases/" + key)).json();
     return record.images.find(image => image.id === imageId)?.measurements?.length === count;
   }, {}, id, imageId, count);
   const mark = async (stage, points, drag = false) => {
@@ -53,7 +53,7 @@ export async function checkCaseViewer(page, id) {
   await page.select('#viewer-metadata [name="quality"]', "一般");
   await click('#viewer-metadata button[type="submit"]');
   await page.waitForFunction(async key => {
-    const {images} = await (await fetch("/api/cases/" + key)).json();
+    const {images} = await (await fetch("./api/cases/" + key)).json();
     return images[1].projection === "斜位" && images[1].quality === "一般" && images[0].projection === "侧位";
   }, {}, id);
   await click('.film-card[data-image-id="primary"]');

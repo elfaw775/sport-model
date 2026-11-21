@@ -11,26 +11,31 @@ import { checkCaseViewer } from "./check-case-viewer.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const qaRoot = path.join(root, "work", "qa");
 await mkdir(qaRoot, { recursive: true });
-const db = await mkdtemp(path.join(qaRoot, "visit-smoke-"));
-const reserve = net.createServer();
-await new Promise(resolve => reserve.listen(0, "127.0.0.1", resolve));
-const port = reserve.address().port;
-await new Promise(resolve => reserve.close(resolve));
-const base = "http://127.0.0.1:" + port;
-const env = {...process.env, SPORT_MODEL_DATA_DIR: db, SPORT_MODEL_SECURE_COOKIE: "0"};
-for (const key of ["SPORT_MODEL_USERNAME", "SPORT_MODEL_PASSWORD", "SPORT_MODEL_DISPLAY_NAME"]) delete env[key];
-const service = spawn(process.env.PYTHON || path.join(root, ".venv/bin/python"),
-  ["-m", "uvicorn", "backend.app:app", "--host", "127.0.0.1", "--port", String(port)], {
-    cwd: root, stdio: "inherit", env
-  });
-const closed = new Promise(resolve => { service.once("close", resolve); service.once("error", resolve); });
-let browser;
-try {
+async function startTestService() {
+  const db = await mkdtemp(path.join(qaRoot, "visit-smoke-"));
+  const reserve = net.createServer();
+  await new Promise(resolve => reserve.listen(0, "127.0.0.1", resolve));
+  const port = reserve.address().port;
+  await new Promise(resolve => reserve.close(resolve));
+  const url = "http://127.0.0.1:" + port + "/";
+  const env = {...process.env, SPORT_MODEL_DATA_DIR:db, SPORT_MODEL_SECURE_COOKIE:"0"};
+  for (const key of ["SPORT_MODEL_USERNAME", "SPORT_MODEL_PASSWORD", "SPORT_MODEL_DISPLAY_NAME"]) delete env[key];
+  const service = spawn(process.env.PYTHON || path.join(root, ".venv/bin/python"),
+    ["-m", "uvicorn", "backend.app:app", "--host", "127.0.0.1", "--port", String(port)], {cwd:root, stdio:"inherit", env});
+  const closed = new Promise(resolve => { service.once("close", resolve); service.once("error", resolve); });
   for (let attempt = 0; attempt < 50; attempt++) {
     if (service.exitCode !== null) throw new Error("test service exited");
-    if (await fetch(base).then(res => res.ok).catch(() => false)) break;
+    if (await fetch(url).then(response => response.ok).catch(() => false)) break;
     await delay(150);
   }
+  return {url, async close() { service.kill(); await closed; await rm(db, {recursive:true, force:true}); }};
+}
+
+const pagesURL = process.env.PAGES_SMOKE_URL;
+const service = pagesURL ? null : await startTestService();
+const base = pagesURL || service.url;
+let browser;
+try {
   browser = await puppeteer.launch({executablePath: process.env.CHROME_BIN ||
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true,
     defaultViewport: {width: 1440,height: 960}});
@@ -39,12 +44,12 @@ try {
   page.on("pageerror", error => errors.push(error.message));
   page.setDefaultTimeout(9000);
   const visible = selector => page.waitForSelector(selector, {visible:true});
-  const waitForAnalysis = () => page.waitForSelector("#open-report", {visible:true, timeout:60000});
+  const waitForAnalysis = () => page.waitForSelector("#open-report", {visible:true, timeout:pagesURL ? 240000 : 60000});
   const click = async selector => { await visible(selector); await page.click(selector); };
   const findText = text => page.waitForFunction(value => document.body.innerText.includes(value), {}, text);
   const formSubmit = selector => click(selector + ' button[type="submit"]');
-  const records = () => page.evaluate(async () => (await fetch("/api/cases")).json());
-  const detail = id => page.evaluate(async key => (await fetch("/api/cases/" + key)).json(), id);
+  const records = () => page.evaluate(async () => (await fetch("./api/cases")).json());
+  const detail = id => page.evaluate(async key => (await fetch("./api/cases/" + key)).json(), id);
   const checkScreening = async (record, selector) => {
     const screening = record.screening;
     assert.match(screening.model, /^DINOv2-Small-refit84@/);
@@ -91,7 +96,7 @@ try {
   const fixture = name => path.join(root, "training/data/sporthorse_v2/images/test", name);
   const screenshot = name => page.screenshot({path: path.join(qaRoot, name + ".png")});
   const waitForArchive = id => page.waitForFunction(async key =>
-    Boolean((await (await fetch("/api/cases/" + key)).json()).archived_at), {}, id);
+    Boolean((await (await fetch("./api/cases/" + key)).json()).archived_at), {}, id);
   const openReport = async () => {
     await waitForAnalysis();
     await click("#open-report");
@@ -103,8 +108,14 @@ try {
   };
 
   await page.goto(base);
+  if (pagesURL) {
+    assert.ok(await page.$('meta[name="workbench-version"]'), "Expected a Pages workbench with browser-local storage");
+    await visible("#login-form");
+    assert.equal(await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL),
+      new URL("service-worker.js", base).href);
+  }
   const branches = await page.evaluate(async () => {
-    const {readingGuide} = await import("/static/reading-guide.js");
+    const {readingGuide} = await import("./static/reading-guide.js");
     const fixture = document.createElement("section");
     const outputs = [];
     for (const flag of [true,false,null]) {
@@ -191,7 +202,7 @@ try {
     await formSubmit("#attach-form");
     await findText(file);
     await page.waitForFunction(async (id, name) =>
-      (await (await fetch("/api/cases/" + id)).json()).images.some(image => image.filename === name), {}, second, file);
+      (await (await fetch("./api/cases/" + id)).json()).images.some(image => image.filename === name), {}, second, file);
   };
 
   await click("#logout"); await loginMember("zhushijia");
@@ -256,7 +267,7 @@ try {
   await writeReport(findings, conclusion);
   await click("#save-report-draft");
   await page.waitForFunction(async (id, text) =>
-    (await (await fetch("/api/cases/" + id)).json()).report.findings === text, {}, second, findings);
+    (await (await fetch("./api/cases/" + id)).json()).report.findings === text, {}, second, findings);
   await page.reload();
   await visible("#report-form");
   assert.equal(await page.$eval('#report-form [name="findings"]', input => input.value), findings);
@@ -269,7 +280,7 @@ try {
   await home(); await click(`tr[data-id="${second}"] .horse-cell`);
   await openReport();
   const changeCase = (id, update) => page.evaluate(async (key, fields) =>
-    (await fetch("/api/cases/" + key, {method:"PATCH", headers:{"Content-Type":"application/json"},
+    (await fetch("./api/cases/" + key, {method:"PATCH", headers:{"Content-Type":"application/json"},
       body:JSON.stringify(fields)})).status, id, update);
   assert.equal(await changeCase(second, {comment: draft.comment + "（复核前已更新）"}), 200);
   await click("#confirm-report");
@@ -350,7 +361,7 @@ try {
   await home(); await selectBoth(); await click("#batch-delete"); await click("#cancel-delete");
   assert.equal((await records()).length, 2);
   await selectBoth(); await click("#batch-delete"); await click("#confirm-delete");
-  await page.waitForFunction(async () => (await (await fetch("/api/cases")).json()).length === 0);
+  await page.waitForFunction(async () => (await (await fetch("./api/cases")).json()).length === 0);
   await page.reload(); await visible("#new-visit"); assert.equal((await records()).length,0);
   await click("#logout"); await loginMember("wangyiyi"); assert.deepEqual(await records(), []);
   const noFindingId = await uploadPrimary("零候选复核", "23-LF-正位.jpg", true);
@@ -389,9 +400,9 @@ try {
   assert.equal((await detail(noFindingId)).empty_review_confirmed, true);
   await click("#archive-visit"); await waitForArchive(noFindingId);
   await home(); await click(".row-delete"); await click("#confirm-delete");
-  await page.waitForFunction(async () => (await (await fetch("/api/cases")).json()).length === 0);
+  await page.waitForFunction(async () => (await (await fetch("./api/cases")).json()).length === 0);
   await click("#nav-work"); await visible("#visit-form");
-  const catalog = await page.evaluate(async () => (await fetch("/api/demo-images")).json());
+  const catalog = await page.evaluate(async () => (await fetch("./api/demo-images")).json());
   assert.equal(new Set(catalog.map(sample => sample.filename)).size, 84);
   const drawSample = async (previous = "") => {
     await click("#draw-sample");
@@ -414,7 +425,7 @@ try {
   const featuredName = "16-侧位.jpg";
   await click("#featured-samples > summary");
   const [featuredResponse] = await Promise.all([
-    page.waitForResponse(response => decodeURI(new URL(response.url()).pathname) === "/api/demo-images/" + featuredName),
+    page.waitForResponse(response => decodeURI(new URL(response.url()).pathname) === new URL("api/demo-images/", base).pathname + featuredName),
     click(`[data-sample="${featuredName}"]`)
   ]);
   await visible("#image-preview");
@@ -466,5 +477,5 @@ try {
   console.log("PASS: random draw and replacement from 84 films, shared visits, primary-film review with and without candidate boxes, all four reading-guide branches and legacy records, two-film comparison, annotations, live inference, signatures, archive, search and mobile layout.");
 } finally {
   try { await browser?.close(); }
-  finally { service.kill(); await closed; await rm(db, {recursive:true,force:true}); }
+  finally { await service?.close(); }
 }
