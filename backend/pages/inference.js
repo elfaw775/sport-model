@@ -7,24 +7,105 @@ const yoloDigest = "61286f939c6a6c4a591d5034e33794ba0af99b5f1f29aac279bb15974c02
 const threshold = 0.20;
 let models;
 
+const chunksURL = new URL("./models/chunks/", import.meta.url);
+const partSize = 4 * 1024 * 1024;
+
+async function sha256(bytes) {
+  const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(hash, byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function fetchChecked(url, check, signal, onRetry) {
+  for (let attempt = 1; ; attempt++) {
+    signal.throwIfAborted();
+    try {
+      const response = await fetch(url, {
+        cache: attempt === 1 ? "force-cache" : "reload",
+        signal: AbortSignal.any([signal, AbortSignal.timeout(45000)])
+      });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      return await check(response);
+    } catch (error) {
+      if (attempt >= 3 || signal.aborted) throw error;
+      onRetry(attempt + 1);
+      await new Promise(resolve => setTimeout(resolve, attempt * 300));
+    }
+  }
+}
+
+async function loadModelBytes(filename, digest, label) {
+  const controller = new AbortController();
+  const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(300000)]);
+  const stage = message => self.postMessage({stage: label + " · " + message});
+  try {
+    stage("读取分片清单…");
+    const manifest = await fetchChecked(new URL(digest + ".json", chunksURL), async response => {
+      const data = await response.json();
+      if (data.file !== filename || data.sha256 !== digest || !Number.isSafeInteger(data.bytes) ||
+          data.bytes <= 0 || data.bytes > 512 * 1024 * 1024 || !Array.isArray(data.parts) ||
+          data.parts.length !== Math.ceil(data.bytes / partSize) ||
+          !data.parts.every((part, i) => /^[a-f0-9]{64}$/.test(part?.sha256) &&
+            part.bytes === Math.min(partSize, data.bytes - i * partSize))) throw new Error("分片清单无效");
+      return data;
+    }, signal, attempt => stage("重试读取分片清单（" + attempt + "/3）"));
+
+    const buffer = new Uint8Array(manifest.bytes);
+    const storage = await self.caches?.open("equivision-model-parts-v1").catch(() => null);
+    let nextPart = 0, verified = 0;
+    const progress = () => "已校验 " + (verified / 1048576).toFixed(1) + " / " +
+      (manifest.bytes / 1048576).toFixed(1) + " MiB（" + Math.floor(verified / manifest.bytes * 100) + "%）";
+    stage(progress());
+    async function downloadParts() {
+      while (nextPart < manifest.parts.length) {
+        signal.throwIfAborted();
+        const index = nextPart++;
+        const part = manifest.parts[index];
+        const url = new URL(part.sha256 + ".bin", chunksURL);
+        async function verify(response) {
+          const bytes = new Uint8Array(await response.arrayBuffer());
+          if (bytes.length !== part.bytes || await sha256(bytes) !== part.sha256) throw new Error("分片校验失败");
+          return bytes;
+        }
+        let bytes;
+        if (storage) {
+          try {
+            const cached = await storage.match(url);
+            if (cached) bytes = await verify(cached);
+          } catch {
+            await storage.delete(url).catch(() => {});
+          }
+        }
+        if (!bytes) {
+          bytes = await fetchChecked(url, verify, signal, attempt =>
+            stage(progress() + "，重试第 " + (index + 1) + " 片（" + attempt + "/3）"));
+          if (storage) await storage.put(url, new Response(bytes)).catch(() => {});
+        }
+        signal.throwIfAborted();
+        buffer.set(bytes, index * partSize);
+        verified += bytes.length;
+        stage(progress());
+      }
+    }
+    await Promise.all(Array.from({length: Math.min(4, manifest.parts.length)}, downloadParts));
+    stage("校验完整模型…");
+    if (await sha256(buffer) !== digest) throw new Error("完整模型 SHA-256 校验失败");
+    return buffer;
+  } finally {
+    controller.abort();
+  }
+}
+
 async function loadSession(filename, digest) {
-  const bytes = Uint8Array.from(digest.match(/../g), pair => parseInt(pair, 16));
-  const integrity = "sha256-" + btoa(String.fromCharCode(...bytes));
   const label = filename.startsWith("dinov2") ? "DINOv2 筛查模型" : "YOLO11s 定位模型";
-  const url = new URL("./models/" + filename, import.meta.url);
-  url.searchParams.set("v", digest.slice(0,12));
-  self.postMessage({stage:"正在载入并校验 " + label + "…"});
   let buffer;
   try {
-    const response = await fetch(url, {integrity, cache:"force-cache", signal:AbortSignal.timeout(240000)});
-    if (!response.ok) throw new Error("HTTP " + response.status);
-    buffer = await response.arrayBuffer();
+    buffer = await loadModelBytes(filename, digest, label);
   } catch (error) {
     throw new Error(label + "下载或完整性校验失败。请检查网络后重试。（" + error.message + "）");
   }
   self.postMessage({stage:"正在启动 " + label + "…"});
   try {
-    return await ort.InferenceSession.create(new Uint8Array(buffer), {executionProviders:["wasm"]});
+    return await ort.InferenceSession.create(buffer, {executionProviders:["wasm"]});
   } catch (error) {
     throw new Error(label + "浏览器运行时启动失败，请检查网络并关闭占用内存的标签页后重试。（" + error.message + "）");
   }

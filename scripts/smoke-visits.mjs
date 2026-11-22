@@ -32,20 +32,56 @@ async function startTestService() {
 }
 
 const pagesURL = process.env.PAGES_SMOKE_URL;
+// Allow for a cold public download of both models before running the visit flow.
+const modelTimeout = pagesURL ? 600000 : 60000;
 const service = pagesURL ? null : await startTestService();
 const base = pagesURL || service.url;
 let browser;
 try {
   browser = await puppeteer.launch({executablePath: process.env.CHROME_BIN ||
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true,
-    defaultViewport: {width: 1440,height: 960}});
+    protocolTimeout: modelTimeout + 60000, defaultViewport: {width: 1440,height: 960}});
   const page = await browser.newPage();
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   page.setDefaultTimeout(9000);
   const visible = selector => page.waitForSelector(selector, {visible:true});
-  const waitForAnalysis = () => page.waitForSelector("#open-report", {visible:true, timeout:pagesURL ? 240000 : 60000});
   const click = async selector => { await visible(selector); await page.click(selector); };
+  const waitForModel = async (phase) => {
+    const started = Date.now();
+    const elapsed = () => `${((Date.now() - started) / 1000).toFixed(1)}s`;
+    let attempt = 1, deadline = started + modelTimeout, lastStatus = "";
+    while (Date.now() < deadline) {
+      const state = await page.evaluate(phase => {
+        if (phase === "prepare") {
+          const button = document.querySelector("#prepare-models");
+          return {ready:button?.textContent === "模型已就绪", status:button?.nextElementSibling?.textContent,
+            retry:button?.textContent === "重试准备模型" && !button.disabled};
+        }
+        const error = document.querySelector("#analyze-form .error:not([hidden])")?.textContent;
+        return {ready:Boolean(document.querySelector("#open-report")?.getClientRects().length),
+          status:error || document.querySelector("#analysis-lead")?.textContent || document.querySelector("#analysis-state")?.textContent,
+          retry:Boolean(error && document.querySelector('#analyze-form button[type="submit"]:enabled'))};
+      }, phase);
+      const status = state.status || "等待模型状态";
+      if (status !== lastStatus || state.retry) {
+        console.log(`[model ${phase} #${attempt} +${elapsed()}] ${status}`);
+        lastStatus = status;
+      }
+      if (state.ready) return;
+      if (state.retry) {
+        if (!pagesURL || attempt >= 2) throw new Error(`Model ${phase} failed after ${elapsed()}: ${status}`);
+        console.warn(`[model ${phase} +${elapsed()}] Retrying once through the workbench.`);
+        await click(phase === "prepare" ? "#prepare-models" : '#analyze-form button[type="submit"]');
+        attempt++;
+        deadline = Date.now() + modelTimeout;
+        lastStatus = "";
+      }
+      await delay(500);
+    }
+    throw new Error(`Model ${phase} #${attempt} timed out after ${elapsed()}: ${lastStatus}`);
+  };
+  const waitForAnalysis = () => waitForModel("analyze");
   const findText = text => page.waitForFunction(value => document.body.innerText.includes(value), {}, text);
   const formSubmit = selector => click(selector + ' button[type="submit"]');
   const records = () => page.evaluate(async () => (await fetch("./api/cases")).json());
@@ -170,7 +206,7 @@ try {
   await loginMember("wangyiyi");
   if (pagesURL) {
     await click("#prepare-models");
-    await page.waitForFunction(() => document.querySelector("#prepare-models")?.textContent === "模型已就绪", {timeout:240000});
+    await waitForModel("prepare");
     assert.deepEqual(await records(), []);
   }
   assert.deepEqual(await page.$$eval("#navigation nav a", links => links.map(link => link.textContent.trim())),

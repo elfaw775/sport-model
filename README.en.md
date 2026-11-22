@@ -28,7 +28,7 @@ python3.12 -m venv .venv
 
 On Windows, use `.venv\Scripts\python.exe` for the last two commands. Open the local workbench and choose a demo member. The usernames are `wangyiyi`, `zhushijia`, `alimire` and `liqihang`. The local demo password is the username followed by `sportsHorse`. Members share team cases, while the case retains its creator and the report retains its signer. [Open the local workbench](http://127.0.0.1:8765/)
 
-The public workbench can initialize both models before uploading. Click **提前准备模型** and keep the tab open for the live demonstration. Training hardware can be powered off after deployment. Four selected vertices form the largest simple quadrilateral through all four points. Signed cases with both AI and manual regions offer combined, AI-only and manual-only PNGs and CVAT COCO 1.0 dataset exports with original pixels.
+The public workbench can initialize both models before uploading. Click **提前准备模型** and keep the tab open for the live demonstration. On first use the browser downloads approximately 126 MB of model weights in 4 MiB chunks and a 15 MB WebAssembly runtime. Progress counts verified chunks. Retrying can reuse cached chunks, and the assembled weights are checked against the model digest. Training hardware can be powered off after deployment. Four selected vertices form the largest simple quadrilateral through all four points. Signed cases with both AI and manual regions offer combined, AI-only and manual-only PNGs and CVAT COCO 1.0 dataset exports with original pixels.
 
 ### Review a case
 

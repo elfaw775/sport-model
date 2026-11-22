@@ -1,5 +1,6 @@
 """Assemble the public workbench and the previous YOLO viewer into the Pages artifact."""
 from pathlib import Path
+import hashlib
 import json
 import shutil
 import subprocess
@@ -8,6 +9,23 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from backend.demo_library import demo_library
+
+
+def write_model_chunks(models_dir):
+    chunks = models_dir / "chunks"
+    chunks.mkdir()
+    for model in sorted(models_dir.glob("*.onnx")):
+        digest = hashlib.sha256()
+        parts = []
+        with model.open("rb") as stream:
+            while part := stream.read(4 * 1024 * 1024):
+                digest.update(part)
+                part_hash = hashlib.sha256(part).hexdigest()
+                (chunks / f"{part_hash}.bin").write_bytes(part)
+                parts.append({"sha256": part_hash, "bytes": len(part)})
+        sha256 = digest.hexdigest()
+        manifest = {"file": model.name, "sha256": sha256, "bytes": model.stat().st_size, "parts": parts}
+        (chunks / f"{sha256}.json").write_text(json.dumps(manifest), encoding="utf-8")
 
 
 def build():
@@ -30,6 +48,7 @@ def build():
     index = (static / "index.html").read_text().replace('./static/app.js', f'./boot.js?v={version}')
     (output / "index.html").write_text(index.replace('<meta charset="utf-8">', f'<meta charset="utf-8">\n  <meta name="workbench-version" content="{version}">'))
     shutil.copytree(ROOT / "backend/models", output / "models")
+    write_model_chunks(output / "models")
     runtime = ROOT / "node_modules/onnxruntime-web/dist"
     ort = output / "ort"
     ort.mkdir()

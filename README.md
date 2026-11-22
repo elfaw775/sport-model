@@ -148,7 +148,7 @@ python3 -m http.server 8926 --bind 127.0.0.1 --directory work/pages-build
 PAGES_SMOKE_URL=http://127.0.0.1:8926/sport-model/ node scripts/smoke-visits.mjs
 ```
 
-首次分析按需下载约 126 MB 的模型，另有约 14 MB 的 WebAssembly 运行时。浏览器缓存和网络速度会影响首张片的等待时间。原有 YOLO 检测记录保存在旧版页面使用的浏览器数据库中。
+公网版首次准备需要通过网络载入约 126 MB 的模型和约 15 MB 的 WebAssembly 运行时。权重以约 4 MiB 的分片下载，界面显示已校验的进度；遇到中断可点击重试，浏览器可复用已缓存的正确分片。所有分片组装后再次校验完整权重。原有 YOLO 检测记录保存在旧版页面使用的浏览器数据库中。
 
 ---
 
