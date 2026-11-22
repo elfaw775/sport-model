@@ -1,5 +1,6 @@
 // The Pages workbench keeps originals and their clinical record in one IndexedDB transaction.
 import { editReview, exportReview } from "./review.js";
+import { exportLayer } from "./layer-export.js";
 
 const dbName = "equivision-pages-cases-v1:" + new URL(self.registration.scope).pathname;
 const projections = ["正位", "侧位", "斜位", "背内侧-掌外侧斜位", "背外侧-掌内侧斜位", "其他"];
@@ -201,6 +202,9 @@ export async function handleCases(request, route, user, runInference) {
       const image = record.images.find(im => im.id === (action === "image" ? "primary" : imageId));
       if (!image) fail(404, "未找到此影像");
       return new Response(image.blob, { headers: { "Content-Type": image.blob.type, "Cache-Control": "no-store" } });
+    }
+    if (action === "images" && imageAction === "layers" && parts.length === 4) {
+      return exportLayer(record, imageId, parts[3]);
     }
     return exportReview(record, parts);
   }

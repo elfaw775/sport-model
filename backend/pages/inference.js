@@ -10,15 +10,36 @@ let models;
 async function loadSession(filename, digest) {
   const bytes = Uint8Array.from(digest.match(/../g), pair => parseInt(pair, 16));
   const integrity = "sha256-" + btoa(String.fromCharCode(...bytes));
-  const response = await fetch(new URL("./models/" + filename, import.meta.url), {integrity});
-  if (!response.ok) throw new Error("模型文件加载失败：" + filename);
-  return ort.InferenceSession.create(new Uint8Array(await response.arrayBuffer()), {executionProviders:["wasm"]});
+  const label = filename.startsWith("dinov2") ? "DINOv2 筛查模型" : "YOLO11s 定位模型";
+  const url = new URL("./models/" + filename, import.meta.url);
+  url.searchParams.set("v", digest.slice(0,12));
+  self.postMessage({stage:"正在载入并校验 " + label + "…"});
+  let buffer;
+  try {
+    const response = await fetch(url, {integrity, cache:"force-cache", signal:AbortSignal.timeout(240000)});
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    buffer = await response.arrayBuffer();
+  } catch (error) {
+    throw new Error(label + "下载或完整性校验失败。请检查网络后重试。（" + error.message + "）");
+  }
+  self.postMessage({stage:"正在启动 " + label + "…"});
+  try {
+    return await ort.InferenceSession.create(new Uint8Array(buffer), {executionProviders:["wasm"]});
+  } catch (error) {
+    throw new Error(label + "浏览器运行时启动失败，请检查网络并关闭占用内存的标签页后重试。（" + error.message + "）");
+  }
 }
 
 async function loadModels() {
-  const response = await fetch(new URL("./models/dinov2-fetlock-84.json", import.meta.url));
-  if (!response.ok) throw new Error("无法读取整片筛查配置");
-  const manifest = await response.json();
+  self.postMessage({stage:"正在读取筛查模型配置…"});
+  let manifest;
+  try {
+    const response = await fetch(new URL("./models/dinov2-fetlock-84.json", import.meta.url), {signal:AbortSignal.timeout(30000)});
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    manifest = await response.json();
+  } catch (error) {
+    throw new Error("筛查模型配置读取失败，请检查网络后重试。（" + error.message + "）");
+  }
   if (manifest.file !== "dinov2-fetlock-84.onnx" || !/^[a-f0-9]{64}$/.test(manifest.sha256) ||
       manifest.model_id !== "DINOv2-Small-refit84@" + manifest.sha256.slice(0,12) ||
       !(manifest.threshold > 0 && manifest.threshold < 1)) throw new Error("整片筛查配置无效");
@@ -167,9 +188,13 @@ function decode(output, image, box) {
   })).filter(b => b.x2>b.x1 && b.y2>b.y1);
 }
 
-async function infer(blob) {
+function prepare() {
   models ??= loadModels().catch(error => { models = undefined; throw error; });
-  const {dino,yolo,manifest} = await models;
+  return models;
+}
+
+async function infer(blob) {
+  const {dino,yolo,manifest} = await prepare();
   const bitmap = await createImageBitmap(blob, {imageOrientation:"from-image", colorSpaceConversion:"none"});
   let image;
   try {
@@ -189,9 +214,12 @@ async function infer(blob) {
 }
 
 let pending = Promise.resolve();
-self.onmessage = ({data:{id,blob}}) => {
+self.onmessage = ({data:{id,type,blob}}) => {
   pending = pending.then(async () => {
-    try { self.postMessage({id, result:await infer(blob)}); }
+    try {
+      if (type === "prepare") { await prepare(); self.postMessage({id, result:true}); }
+      else self.postMessage({id, result:await infer(blob)});
+    }
     catch (error) { self.postMessage({id, error: error instanceof Error ? error.message : String(error)}); }
   });
 };

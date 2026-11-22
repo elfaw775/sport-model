@@ -1,45 +1,14 @@
+import {analyzeFilm} from "./model-client.js";
 // GitHub Pages serves the workbench files. Its case API stays on this device.
 document.documentElement.dataset.storage = "browser";
 const page = document.getElementById("page");
-let inferenceWorker;
-const jobs = new Map();
-
-function startWorker() {
-  const worker = new Worker(new URL("./inference.js", import.meta.url), {type:"module"});
-  worker.onmessage = ({data}) => {
-    const reply = jobs.get(data.id);
-    if (!reply) return;
-    jobs.delete(data.id);
-    reply.postMessage(data.error ? {error:data.error} : {result:data.result});
-    reply.close();
-  };
-  worker.onerror = () => {
-    for (const reply of jobs.values()) {
-      reply.postMessage({error:"浏览器未能启动模型。请检查网络后重试。"});
-      reply.close();
-    }
-    jobs.clear();
-    worker.terminate();
-    inferenceWorker = undefined;
-  };
-  return worker;
-}
-
 async function boot() {
   if (!navigator.serviceWorker || !window.indexedDB) throw new Error("请使用支持本地存储的新版 Chrome 或 Edge 打开工作台。");
   navigator.serviceWorker.addEventListener("message", event => {
     if (event.source !== navigator.serviceWorker.controller || event.data?.type !== "analyze-film") return;
     const reply = event.ports[0];
-    const id = crypto.randomUUID();
-    try {
-      inferenceWorker ??= startWorker();
-      jobs.set(id, reply);
-      inferenceWorker.postMessage({id, blob:event.data.blob});
-    } catch (error) {
-      jobs.delete(id);
-      reply.postMessage({error:error.message});
-      reply.close();
-    }
+    analyzeFilm(event.data.blob).then(result => reply.postMessage({result}),
+      error => reply.postMessage({error:error.message})).finally(() => reply.close());
   });
   const script = new URL("./service-worker.js", import.meta.url);
   const controlledHere = () => navigator.serviceWorker.controller?.scriptURL === script.href;

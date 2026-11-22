@@ -168,6 +168,11 @@ try {
     return (await records()).find(record => record.horse_name === name).id;
   };
   await loginMember("wangyiyi");
+  if (pagesURL) {
+    await click("#prepare-models");
+    await page.waitForFunction(() => document.querySelector("#prepare-models")?.textContent === "模型已就绪", {timeout:240000});
+    assert.deepEqual(await records(), []);
+  }
   assert.deepEqual(await page.$$eval("#navigation nav a", links => links.map(link => link.textContent.trim())),
     ["新建检查","待分析","人工复核","病例归档","历史记录"]);
   await screenshot("clinical-new");
@@ -337,8 +342,36 @@ try {
   await click("#logout"); await loginMember("wangyiyi");
   await home(); await click(`tr[data-id="${second}"] .horse-cell`);
   await findText("同事接诊，补片待复核");
+  await visible('#archive-images [data-film="primary"] [data-layer="combined"]');
+  const gallery = await page.$eval("#archive-images", async host => {
+    const cards = [...host.querySelectorAll('[data-film="primary"] [data-layer]')];
+    const layers = await Promise.all(cards.map(async card => {
+      const image = card.querySelector("img");
+      await image.decode();
+      const [png, zip] = card.querySelectorAll("a[download]");
+      const payload = await fetch(zip.href);
+      const magic = [...new Uint8Array(await payload.arrayBuffer()).slice(0, 4)];
+      return {layer:card.dataset.layer, source:image.currentSrc === png.href,
+        width:image.naturalWidth, zip:payload.status, magic};
+    }));
+    return {layers, secondaryAI:!!host.querySelector('[data-film="1"] [data-layer="ai"]'),
+      originals:host.querySelectorAll(".archive-original[download]").length};
+  });
+  assert.deepEqual(gallery.layers.map(layer => layer.layer), ["combined","ai","manual"]);
+  for (const layer of gallery.layers) {
+    assert.equal(layer.source, true);
+    assert.equal(layer.width, reviewed.images[0].width);
+    assert.equal(layer.zip, 200);
+    assert.deepEqual(layer.magic, [80,75,3,4]);
+  }
+  assert.equal(gallery.secondaryAI, false);
+  assert.equal(gallery.originals, 2);
+  await click('#archive-images [data-layer="manual"] [data-preview]');
+  await visible("#record-dialog .expanded-layer");
+  await click("#close-layer");
   await click("#open-report");
   await findText("朱诗嘉"); await findText("王一伊"); await findText(conclusion);
+  await visible('#archive-images [data-film="primary"] [data-layer="manual"]');
   const signed = await detail(second);
   assert.ok(signed.archived_at); assert.equal(signed.images.length, 2);
   await home(); await page.type("#case-search", "复查备注"); await visible(".row-select");

@@ -8,6 +8,7 @@
     "start": "npx serve out"
   },
   "dependencies": {
+    "fflate": "0.8.2",
     "next": "15",
     "onnxruntime-web": "^1.22.0",
     "react": "19",

@@ -1,7 +1,9 @@
 import io
+import json
 import re
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+from itertools import permutations
 from pathlib import Path
 from uuid import uuid4
 
@@ -728,7 +730,7 @@ def test_annotation_geometry_is_pixel_space_and_bounded(client):
         return {"revision": 0, "kind": "polygon", "label": "人工区域",
                 "points": [{"x": x, "y": y} for x, y in coords]}
     for invalid in ([(1,1),(2,2)], [(1,1),(1,1),(5,6)], [(1,1),(2,2),(3,3)],
-                    [(1,1),(10,10),(1,8),(10,1)], [(0,0),(32,0),(7,8)]):
+                    [(1,1),(2,2),(3,3),(4,4)], [(1,1),(1,1),(3,0),(1,3)], [(0,0),(32,0),(7,8)]):
         assert client.put(url, json=polygon(invalid)).status_code == 422
     for invalid in (rectangle("  "), rectangle() | {"points": [{"x": 1,"y": 0},{"x": 1,"y": 5}]},
                     rectangle() | {"source": "ai"}):
@@ -736,3 +738,42 @@ def test_annotation_geometry_is_pixel_space_and_bounded(client):
     valid = polygon([(0,0),(18.5,0),(5.5,7),(20,20),(0,18)])
     saved = client.put(url, json=valid).json()["images"][0]["annotations"][0]
     assert saved["points"] == valid["points"] and saved["kind"] == "polygon"
+
+
+@pytest.mark.parametrize("vertices,expected_area", [
+    ([(1,1),(21,1),(21,15),(1,15)], 280),
+    ([(0,0),(20,0),(0,20),(2,8)], 180),  # The fourth vertex is inside the triangle.
+    ([(0,0),(8,0),(20,0),(0,20)], 200),
+])
+def test_four_point_outline_is_largest_for_every_click_order(client, vertices, expected_area):
+    login(client)
+    image = upload(client).json()["images"][0]
+    url = image["url"] + "/annotations/" + str(uuid4())
+    first = None
+    for order in permutations(vertices):
+        response = client.put(url, json={"revision": 0, "kind": "polygon", "label": "人工区域",
+                                         "points": [{"x": x, "y": y} for x, y in order]})
+        assert response.status_code == 200
+        annotation, = response.json()["images"][0]["annotations"]
+        outline = [(p["x"], p["y"]) for p in annotation["points"]]
+        if first is None:
+            first = outline
+        assert outline == first and set(outline) == set(vertices) and annotation["revision"] == 1
+        twice_area = sum(x*y2-x2*y for (x,y),(x2,y2) in zip(outline, outline[1:] + outline[:1]))
+        assert twice_area == 2*expected_area
+
+
+def test_renaming_legacy_four_point_annotation_preserves_its_boundary(client, tmp_path):
+    login(client)
+    case = upload(client).json()
+    mark_id = str(uuid4())
+    url = case["images"][0]["url"] + "/annotations/" + mark_id
+    old_outline = [{"x": x, "y": y} for x, y in [(0,0),(2,8),(20,0),(0,20)]]
+    body = {"revision": 0, "kind": "polygon", "label": "原名", "points": old_outline}
+    saved = client.put(url, json=body).json()["images"][0]["annotations"][0]
+    assert saved["points"] != old_outline
+    with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
+        database.execute("UPDATE image_annotations SET points = ? WHERE id = ?", (json.dumps(old_outline), mark_id))
+    renamed = client.put(url, json={**body, "revision": 1, "label": "更正名称"})
+    assert renamed.status_code == 200
+    assert renamed.json()["images"][0]["annotations"][0]["points"] == old_outline

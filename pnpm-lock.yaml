@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      fflate:
+        specifier: 0.8.2
+        version: 0.8.2
       next:
         specifier: '15'
         version: 15.5.28(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -359,6 +362,9 @@ packages:
   escalade@3.2.0:
     resolution: {integrity: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==}
     engines: {node: '>=6'}
+
+  fflate@0.8.2:
+    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
 
   flatbuffers@25.9.23:
     resolution: {integrity: sha512-MI1qs7Lo4Syw0EOzUl0xjs2lsoeqFku44KpngfIduHBYvzm8h2+7K8YMQh1JtVVVrUvhLpNwqVi4DERegUJhPQ==}
@@ -750,6 +756,8 @@ snapshots:
   emoji-regex@10.3.0: {}
 
   escalade@3.2.0: {}
+
+  fflate@0.8.2: {}
 
   flatbuffers@25.9.23: {}
 

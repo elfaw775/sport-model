@@ -28,6 +28,8 @@ python3.12 -m venv .venv
 
 On Windows, use `.venv\Scripts\python.exe` for the last two commands. Open the local workbench and choose a demo member. The usernames are `wangyiyi`, `zhushijia`, `alimire` and `liqihang`. The local demo password is the username followed by `sportsHorse`. Members share team cases, while the case retains its creator and the report retains its signer. [Open the local workbench](http://127.0.0.1:8765/)
 
+The public workbench can initialize both models before uploading. Click **提前准备模型** and keep the tab open for the live demonstration. Training hardware can be powered off after deployment. Four selected vertices form the largest simple quadrilateral through all four points. Signed cases with both AI and manual regions offer combined, AI-only and manual-only PNGs and CVAT COCO 1.0 dataset exports with original pixels.
+
 ### Review a case
 
 For a live demonstration, click **随机抽取样片** on the new examination form to draw from the 84 project radiographs. Preview the film or draw another before uploading. Check the projection and image quality, upload to obtain a case number, then run both models, review the findings, sign and archive the report. The **推荐病例** section also offers films 16 and 23 for repeatable demonstrations. These radiographs were used during model development.

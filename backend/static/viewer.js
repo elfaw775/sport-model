@@ -1,3 +1,5 @@
+import {largestQuadrilateral, simplePolygon} from "./polygon.js";
+
 const escape = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[char]));
 const paths = {
   pan:"M8 12V7a1.4 1.4 0 0 1 2.8 0v4-6a1.4 1.4 0 0 1 2.8 0v6-5a1.4 1.4 0 0 1 2.8 0v5-2a1.4 1.4 0 0 1 2.8 0v6c0 4-2.3 6-6.1 6h-1c-2.7 0-4.1-1.8-5.5-3.8l-3.1-4a1.5 1.5 0 0 1 2.2-2z",
@@ -53,6 +55,9 @@ export function mountViewer(container, record, {api, onUpload, onReport, reviewB
   let active = "left", compare = false, tool = "pan", showBoxes = true, pending = false;
   let points = [], drag = null, rectangleStart = null, preview = null;
   let draftId = null, editRevision = 0, showAnnotations = true, originalOnly = false;
+  // Keep raw clicks for undo and for polygons with five or more ordered boundary points.
+  const draftBoundary = () => tool === "polygon" && !editRevision && points.length === 4
+    ? largestQuadrilateral(points) : points;
   const currentImage = () => imageById(panes[active]);
   const paneNode = pane => find(`.film-stage[data-pane="${pane}"]`);
   const state = pane => {
@@ -161,12 +166,12 @@ export function mountViewer(container, record, {api, onUpload, onReport, reviewB
     const drawing = annotationTool(tool) && pane === active;
     const draft = !drawing && pane === active && points.length ? [{points, draft:true}] : [];
     const annotations = showAnnotations ? image.annotations || [] : [];
-    let draftPoints = points;
+    let draftPoints = draftBoundary();
     if (drawing && tool === "rectangle" && preview && points.length < 2) {
       const first = points[0] || rectangleStart?.point;
       if (first) draftPoints = [first,preview];
     }
-    const drawingMarkup = drawing && draftPoints.length ? `<g class="manual-draft">${annotationShape(tool,draftPoints)}${draftPoints.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="${Math.max(.7,Math.min(image.width,image.height)/185)}"/>`).join("")}</g>` : "";
+    const drawingMarkup = drawing && (draftPoints?.length || points.length) ? `<g class="manual-draft">${draftPoints ? annotationShape(tool,draftPoints) : ""}${(draftPoints || points).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="${Math.max(.7,Math.min(image.width,image.height)/185)}"/>`).join("")}</g>` : "";
     stage.querySelector(".manual-marks").innerHTML = annotations.map(a=>`<g data-manual-id="${escape(a.id)}">${annotationShape(a.kind,a.points)}<title>${escape(a.label)}</title></g>`).join("") + drawingMarkup;
     const records = [...(image.measurements || []), ...draft];
     stage.querySelector(".measured-lines").innerHTML = records.map(m => `<g class="${m.draft ? "measure-draft" : "measure-mark"}">
@@ -212,7 +217,9 @@ export function mountViewer(container, record, {api, onUpload, onReport, reviewB
     const form = find("#viewer-annotation-form");
     form.hidden = !drawing;
     form.elements.label.disabled = pending;
-    find("#save-annotation").disabled = pending || points.length < (tool === "polygon" ? 3 : 2);
+    const boundary = draftBoundary();
+    const invalidPolygon = tool === "polygon" && (!boundary || !simplePolygon(boundary));
+    find("#save-annotation").disabled = pending || points.length < 2 || invalidPolygon;
     find("#undo-vertex").disabled = pending || !points.length || editRevision > 0;
     find("#cancel-annotation").disabled = pending;
     const download = find("#annotation-export");
@@ -239,7 +246,8 @@ export function mountViewer(container, record, {api, onUpload, onReport, reviewB
       stage.classList.toggle("active-pane", selected);
       const hint = !selected ? "点选此片操作" : tool === "pan" ? "拖动平移" : pending ? "正在保存…" :
         editRevision ? "修改名称后保存" : tool === "rectangle" ? ["拖出矩形或点选两个对角","点选另一个对角","填写名称后保存"][points.length] :
-        tool === "polygon" ? `依次点选边界 · 已选 ${points.length} 点，至少 3 点后可保存` :
+        tool === "polygon" ? (points.length >= 3 && invalidPolygon ? "暂未围成有效区域 · 可继续取点或撤销" :
+          `已选 ${points.length} 点 · 四点自动连边，五点以上沿边界依次取点`) :
         tool === "distance" ? `距离 · 点选${points.length ? "终点" : "起点"}` : `角度 · 点选${["第一点","顶点","第三点"][points.length] || "第三点"}`;
       stage.querySelector(".canvas-hint").textContent = hint;
     }
@@ -374,7 +382,8 @@ export function mountViewer(container, record, {api, onUpload, onReport, reviewB
       }
     }
     if (tool === "polygon" && points.length >= 32) {feedback("每个多边形最多 32 点。", true);return;}
-    if (points.length && Math.hypot(point.x-points.at(-1).x, point.y-points.at(-1).y) < .001) {
+    const previous = tool === "polygon" ? points : points.slice(-1);
+    if (previous.some(p => Math.hypot(point.x-p.x,point.y-p.y) < .001)) {
       feedback("请选取不同的位置。", true);return;
     }
     points.push(point);drawOverlays(active);syncTools();feedback("");
@@ -453,7 +462,11 @@ export function mountViewer(container, record, {api, onUpload, onReport, reviewB
       if (readonly() || pending || !annotationTool(tool)) return;
       const label = event.target.elements.label.value.trim(), image = currentImage();
       if (!label) {feedback("请输入标注名称。",true);return;}
-      if (await write(rootPath + encodeURIComponent(image.id) + "/annotations/" + draftId,"PUT",{kind:tool,label,points:[...points],revision:editRevision})) {
+      const boundary = draftBoundary();
+      if (tool === "polygon" && (!boundary || !simplePolygon(boundary))) {
+        feedback("请重新取点，围成有面积且边不交叉的区域。",true);return;
+      }
+      if (await write(rootPath + encodeURIComponent(image.id) + "/annotations/" + draftId,"PUT",{kind:tool,label,points:boundary,revision:editRevision})) {
         tool = "pan";clearDraft();redraw();
       }
       return;

@@ -1,4 +1,5 @@
 import { mountViewer } from "./viewer.js";
+import { mountArchiveImages } from "./archive-images.js";
 import { readingGuide } from "./reading-guide.js";
 
 const page = document.querySelector("#page");
@@ -215,12 +216,27 @@ function createVisit() {
         <label>马匹名称 / 编号<input id="horse-name" name="horse_name" maxlength="80" required placeholder="例如：追风 或 H-001"></label>
         <label>投照方向<select name="projection" required>${projectionOptions}</select></label>
         <dl class="model-scope"><dt>检查部位</dt><dd>球节</dd><dt>关注病变</dt><dd>疑似骨折</dd></dl>
+        ${browserDemo ? '<div class="model-preflight"><button type="button" class="text-button" id="prepare-models">提前准备模型</button><small role="status">首次分析需载入模型，可在上传前准备。</small></div>' : ""}
         <label class="check"><input type="checkbox" name="quality_confirmed" value="true" required>已核对马匹、方向和影像清晰度</label>
         ${errorBox}<button class="primary wide" type="submit">上传影像 ${icon("arrow")}</button>
       </section>
     </form>
     <footer class="intake-foot"><span>暂时没有影像？ <a id="manual-visit" href="#manual">手动登记就诊</a></span><a href="#dashboard">${icon("book")} 查找历史记录</a></footer>`;
   const form = byId("visit-form");
+  const prepare = byId("prepare-models");
+  if (prepare) prepare.onclick = async () => {
+    prepare.disabled = true;
+    const status = prepare.nextElementSibling;
+    try {
+      const {prepareModels} = await import("../model-client.js");
+      await prepareModels(text => { status.textContent = text; });
+      prepare.textContent = "模型已就绪";
+    } catch (error) {
+      status.textContent = error.message;
+      prepare.textContent = "重试准备模型";
+      prepare.disabled = false;
+    }
+  };
   wireImages(form);
   const input = form.elements.image;
   const draw = byId("draw-sample");
@@ -568,7 +584,7 @@ function detail(record) {
     <div class="case-heading"><h1>${escape(record.horse_name)}</h1><span>${hasImage ? "影像工作台" : "就诊登记"}</span><code>${escape(record.id)}</code></div></div></div>
     ${notice ? `<p class="error" role="alert">${escape(notice)}</p>` : ""}
     ${record.archived_at && !signed && hasImage ? '<p class="legacy-note">历史病例已归档，人工复核尚待完成。</p>' : ""}
-    ${hasImage ? progressBar(stage) + analysisSummary(record, analyzed, signed) + '<div id="viewer-host"></div>' : ""}
+    ${hasImage ? progressBar(stage) + analysisSummary(record, analyzed, signed) + (record.archived_at ? '<div id="archive-images"></div>' : '') + '<div id="viewer-host"></div>' : ""}
     <section class="card visit-summary"><div class="spread"><div class="panel-title"><h2>就诊信息</h2>${archiveBadge(record)}</div>
       <div class="row-actions"><button id="edit-visit" class="secondary">编辑记录</button>${!hasImage && !record.archived_at ? archiveButton : ""}</div></div>
       <p class="visit-comment">${escape(record.comment || "暂无就诊备注")}</p><div class="detail-meta"><span>${icon("user")} 登记人：${escape(creator)}</span><span>${escape(dateText(record.created_at))}</span>${record.archived_at ? `<span>归档于 ${escape(dateText(record.archived_at))}</span>` : ""}</div>
@@ -576,11 +592,13 @@ function detail(record) {
   const add = () => {
     openDialog(`<h2 id="dialog-title">补充就诊影像</h2><p class="dim">${escape(record.id)} · ${escape(record.horse_name)}</p>
       <form id="attach-form">${imageFields()}${errorBox}<div class="dialog-actions"><button type="button" class="secondary" id="cancel-attach">取消</button><button type="submit" class="primary">保存影像</button></div></form>`, "cancel-attach");
-    enableAttachment(byId("attach-form"),record,detail);
+    enableAttachment(byId("attach-form"),record,refreshDetail);
   };
-  byId("edit-visit").onclick = () => editVisit(record,detail);
+  const refreshDetail = updated => updated.archived_at ? render() : detail(updated);
+  mountArchiveImages(byId("archive-images"),record,escapeHTML,openDialog);
+  byId("edit-visit").onclick = () => editVisit(record,refreshDetail);
   byId("add-images")?.addEventListener("click",add);
-  archiveAction(record,detail);
+  archiveAction(record,refreshDetail);
   if (hasImage) unmountViewer = mountViewer(byId("viewer-host"), record, {api,onUpload:add,reviewButton:byId("go-to-primary"),
     onReport:() => { if (analyzed) location.hash = reportLink(record.id); else byId("analyze-form").requestSubmit(); }});
   if (byId("analyze-form")) action(byId("analyze-form"),"模型分析中…",async active => {
@@ -591,6 +609,13 @@ function detail(record) {
     byId("analysis-lead").textContent = browserDemo ? "首次分析需要下载约 126 MB 模型。请保持页面打开，模型将在本机浏览器运行。" : "正在进行整片筛查和病灶定位。";
     let updated;
     try {
+      if (browserDemo) {
+        const {prepareModels} = await import("../model-client.js");
+        const lead = byId("analysis-lead");
+        await prepareModels(text => { if (active()) lead.textContent = text; });
+        if (!active()) return;
+        lead.textContent = "正在对主图进行整片筛查和病灶定位。";
+      }
       updated = await api(base+"/analyze",{method:"POST"});
     } catch (error) {
       if (!active()) return;
@@ -647,7 +672,8 @@ function reportPage(record) {
       ${images.map((im,i)=>`<div class="report-evidence"><img src="${escape(im.url)}" alt=""><div><b>${i===0?"主图":"附图 "+i} · ${escape(im.projection)}</b><small>${escape(im.filename)}</small><small>影像质量 · ${escape(im.quality || "未确认")}</small>
       ${(im.measurements || []).map(m=>`<span>${m.kind==="distance"?"距离":"角度"}　${Number(m.value).toFixed(1)} ${m.kind==="distance"?"px":"°"}</span>`).join("")}
       ${(im.annotations || []).map(a=>`<span>人工标注 · ${escape(a.label)}（${escape(a.updated_by)}）</span>`).join("")}</div></div>`).join("")}</section>
-      <section class="card model-summary"><h2>主图 AI 辅助结果</h2>${readingGuide(record, escapeHTML)}</section></aside></div>`;
+      <section class="card model-summary"><h2>主图 AI 辅助结果</h2>${readingGuide(record, escapeHTML)}</section></aside></div>${signed ? '<div id="archive-images"></div>' : ''}`;
+  mountArchiveImages(byId("archive-images"),record,escapeHTML,openDialog);
   archiveAction(record,render);
   const form = byId("report-form");
   if (!form) return;
@@ -750,7 +776,7 @@ async function render() {
   page.innerHTML = '<p class="sub">正在读取病例…</p>';
   page.setAttribute("aria-busy","true");
   try {
-    const result = await api(historyPage || queue ? "./api/cases" : casePath(decodeURIComponent(route.slice(route.indexOf("/")+1))) + (isReport ? "?include_signed_evidence=true" : ""));
+    const result = await api(historyPage || queue ? "./api/cases" : casePath(decodeURIComponent(route.slice(route.indexOf("/")+1))) + "?include_signed_evidence=true");
     if (ticket !== revision) return;
     if (historyPage) archive(result);
     else if (queue) worklist(route, result);

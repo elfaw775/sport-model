@@ -24,7 +24,7 @@ def build():
     shutil.copytree(legacy, output / "legacy")
     static = ROOT / "backend/static"
     shutil.copytree(static, output / "static", ignore=shutil.ignore_patterns("index.html"))
-    for name in ("boot.js", "service-worker.js", "cases.js", "review.js", "inference.js"):
+    for name in ("boot.js", "service-worker.js", "cases.js", "review.js", "inference.js", "model-client.js", "layer-export.js"):
         shutil.copy2(ROOT / "backend/pages" / name, output)
     version = subprocess.check_output(["git", "rev-parse", "--short=12", "HEAD"], cwd=ROOT, text=True).strip()
     index = (static / "index.html").read_text().replace('./static/app.js', f'./boot.js?v={version}')
@@ -36,6 +36,11 @@ def build():
     for name in ("ort.wasm.min.mjs", "ort-wasm-simd-threaded.mjs", "ort-wasm-simd-threaded.wasm"):
         shutil.copy2(runtime / name, ort)
     shutil.copy2(ROOT / "backend/pages/ONNXRuntime-LICENSE.txt", ort / "LICENSE.txt")
+    vendor = output / "vendor"
+    vendor.mkdir()
+    fflate = ROOT / "node_modules/fflate"
+    shutil.copy2(fflate / "esm/browser.js", vendor / "fflate.js")
+    shutil.copy2(fflate / "LICENSE", vendor / "fflate-LICENSE.txt")
     catalog, files = demo_library(ROOT / "training/data/sporthorse_v2")
     if len(catalog) != 84:
         raise SystemExit(f"Pages requires 84 study films, found {len(catalog)}")

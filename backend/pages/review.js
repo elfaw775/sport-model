@@ -1,3 +1,4 @@
+import {largestQuadrilateral, simplePolygon} from "./static/polygon.js";
 // Synchronous edits run inside the case store's IndexedDB write transaction.
 function fail(status, message) {
   throw Object.assign(new Error(message), {status});
@@ -19,40 +20,20 @@ function pointsOnImage(image, points, min, max) {
   });
 }
 
-function cross(a, b, c) {
-  return (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
-}
-
-function intersects(a, b, c, d) {
-  for (const axis of ["x", "y"]) {
-    if (Math.max(a[axis], b[axis]) < Math.min(c[axis], d[axis]) ||
-        Math.max(c[axis], d[axis]) < Math.min(a[axis], b[axis])) return false;
-  }
-  return cross(a,b,c) * cross(a,b,d) <= 0 && cross(c,d,a) * cross(c,d,b) <= 0;
-}
-
-function shapePoints(image, {kind, points}) {
+function shapePoints(image, {kind, points}, original) {
   const pts = pointsOnImage(image, points, 2, 32);
   if (kind === "rectangle") {
     const [a,b] = pts;
     if (pts.length !== 2 || a.x === b.x || a.y === b.y) fail(422, "请使用两个对角点画出有面积的矩形。");
     return [{x:Math.min(a.x,b.x), y:Math.min(a.y,b.y)}, {x:Math.max(a.x,b.x), y:Math.max(a.y,b.y)}];
   }
-  if (kind !== "polygon" || pts.length < 3 || new Set(pts.map(p => [p.x,p.y].join(","))).size !== pts.length) {
-    fail(422, "多边形至少需要三个不同的顶点。");
-  }
-  const n = pts.length;
-  for (let i = 0; i < n; i++) {
-    const prev = pts[(i+n-1)%n], a = pts[i], b = pts[(i+1)%n];
-    if (cross(prev,a,b) === 0 && (prev.x-a.x)*(b.x-a.x) + (prev.y-a.y)*(b.y-a.y) >= 0) {
-      fail(422, "多边形的边不能重叠。");
-    }
-    for (let j = i+2; j < n; j++) {
-      if (i === 0 && j === n-1) continue;
-      if (intersects(a,b,pts[j],pts[(j+1)%n])) fail(422, "多边形的边不能交叉。");
-    }
-  }
-  return pts;
+  // Keep the original boundary when only renaming a saved annotation.
+  const unchanged = original?.kind === kind && JSON.stringify(original.points) === JSON.stringify(pts);
+  if (kind === "polygon" && pts.length === 4 && !unchanged) {
+    const ring = largestQuadrilateral(pts);
+    if (ring) return ring;
+  } else if (kind === "polygon" && simplePolygon(pts)) return pts;
+  fail(422, "请选择互不重合、能围出面积的顶点；五点以上请沿边界依次取点。");
 }
 
 function editAnnotation(image, id, method, body, query, actor, now) {
@@ -71,7 +52,7 @@ function editAnnotation(image, id, method, body, query, actor, now) {
     return true;
   }
   const {kind, revision} = body;
-  const label = textField(body.label, 80), points = shapePoints(image, body);
+  const label = textField(body.label, 80), points = shapePoints(image, body, original);
   if (!label || !Number.isSafeInteger(revision) || revision < 0) fail(422, "请填写标注名称和有效的版本号。");
   if (removed || (!original && revision !== 0)) fail(409, "标注已移除或不存在，请刷新影像。");
   const same = original?.kind === kind && original.label === label && JSON.stringify(original.points) === JSON.stringify(points);
@@ -218,7 +199,7 @@ function pngWithLegend(png, marks) {
   return new Blob([png.slice(0,-12),chunk,png.slice(-12)], {type:"image/png"});
 }
 
-async function markedPng(image) {
+export async function renderRegions(image, marks) {
   const bitmap = await createImageBitmap(image.blob, {imageOrientation:"from-image"});
   const canvas = new OffscreenCanvas(image.width, image.height);
   const ctx = canvas.getContext("2d");
@@ -227,7 +208,7 @@ async function markedPng(image) {
   const font = Math.max(10,Math.min(32,width*5));
   ctx.font = "bold " + font + "px sans-serif";
   ctx.textBaseline = "top";
-  for (const [index, mark] of image.annotations.entries()) {
+  for (const [index, mark] of marks.entries()) {
     const [first,second] = mark.points;
     ctx.beginPath();
     if (mark.kind === "rectangle") ctx.rect(first.x,first.y,second.x-first.x,second.y-first.y);
@@ -237,14 +218,14 @@ async function markedPng(image) {
       ctx.closePath();
     }
     ctx.lineWidth = width+2; ctx.strokeStyle = "#07392b"; ctx.stroke();
-    ctx.lineWidth = width; ctx.strokeStyle = "#54efac"; ctx.stroke();
-    const number = String(index+1), tagWidth = Math.ceil(ctx.measureText(number).width)+6;
+    ctx.lineWidth = width; ctx.strokeStyle = mark.source === "ai" ? "#ffbd58" : "#54efac"; ctx.stroke();
+    const number = mark.reference || String(index+1), tagWidth = Math.ceil(ctx.measureText(number).width)+6;
     const x = Math.max(0,Math.min(first.x,image.width-tagWidth));
     const y = Math.max(0,Math.min(first.y-font-5,image.height-font-5));
     ctx.fillStyle = "#07392b"; ctx.fillRect(x,y,tagWidth,font+5);
     ctx.fillStyle = "#ffffff"; ctx.fillText(number,x+3,y+2);
   }
-  return pngWithLegend(await canvas.convertToBlob({type:"image/png"}),image.annotations);
+  return canvas.convertToBlob({type:"image/png"});
 }
 
 export async function exportReview(record, parts) {
@@ -257,7 +238,7 @@ export async function exportReview(record, parts) {
     const image = record.images.find(im => im.id === parts[1]);
     if (!image) fail(404, "未找到此影像。");
     if (!image.annotations.length) fail(409, "此影像尚无已保存的人工标注。");
-    payload = await markedPng(image);
+    payload = pngWithLegend(await renderRegions(image, image.annotations), image.annotations);
     name = record.id + "-" + image.id + "-annotations.png"; type = "image/png";
   } else fail(404, "未找到此下载。");
   return new Response(payload, {headers:{"Content-Type":type, "Cache-Control":"private, no-store",

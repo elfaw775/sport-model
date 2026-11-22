@@ -18,7 +18,7 @@ class AnnotationEdit(BaseModel):
     label: str = Field(min_length=1, max_length=80)
     revision: int = Field(strict=True, ge=0, le=2**63-2)
 
-    def geometry(self, width, height):
+    def geometry(self, width, height, original=None):
         pts = [(p.x, p.y) for p in self.points]
         if not self.label.strip() or any(x >= width or y >= height for x, y in pts):
             raise HTTPException(422, "请填写名称，标注顶点须位于原图内")
@@ -27,6 +27,10 @@ class AnnotationEdit(BaseModel):
                 raise HTTPException(422, "矩形需要两个对角点，宽高须大于零")
             xs, ys = zip(*pts)
             pts = [(min(xs), min(ys)), (max(xs), max(ys))]
+        elif len(pts) == 4 and pts != original:
+            pts = largest_quadrilateral(pts)
+            if not pts:
+                raise HTTPException(422, "四点须互不重合，并能围成有面积的区域")
         elif not simple_polygon(pts):
             raise HTTPException(422, "多边形至少需要三个不同的顶点，围成的区域须有面积且边不能交叉")
         return json.dumps([{"x": x, "y": y} for x, y in pts], allow_nan=False)
@@ -58,7 +62,25 @@ def simple_polygon(pts):
         for j in range(i + 2, n):
             if (i, j) != (0, n-1) and intersects(a, b, *edges[j]):
                 return False
-    return sum(a[0]*b[1] - b[0]*a[1] for a, b in edges) != 0
+    return twice_area(pts) != 0
+
+
+def twice_area(pts):
+    return sum(cross(pts[0], pts[i-1], pts[i]) for i in range(2, len(pts)))
+
+
+def largest_quadrilateral(pts):
+    # Starting from a fixed vertex, exactly three cycles remain up to reversal.
+    a, b, c, d = sorted(pts)
+    best, max_area = None, 0
+    for ring in ([a,b,c,d], [a,b,d,c], [a,c,b,d]):
+        if not simple_polygon(ring):
+            continue
+        area = twice_area(ring)
+        if abs(area) > max_area:
+            max_area = abs(area)
+            best = ring if area > 0 else [ring[0], *ring[:0:-1]]
+    return best
 
 
 def prepare(database):
@@ -72,10 +94,13 @@ def prepare(database):
 
 def save(database, key, edit, image, actor, now):
     """Caller holds the write lock and has checked image access and signature status."""
-    shape = edit.geometry(image["width"], image["height"])
-    fields = (edit.kind, edit.label.strip(), shape)
     row = database.execute("""SELECT * FROM image_annotations
         WHERE case_number=? AND position=? AND id=?""", key).fetchone()
+    original = None
+    if row is not None and row["kind"] == "polygon" and len(edit.points) == 4:
+        original = [(p["x"], p["y"]) for p in json.loads(row["points"])]
+    shape = edit.geometry(image["width"], image["height"], original)
+    fields = (edit.kind, edit.label.strip(), shape)
     if row is None and edit.revision == 0:
         database.execute("""INSERT INTO image_annotations(case_number,position,id,kind,label,points,revision,
             created_by,created_at,updated_by,updated_at) VALUES (?,?,?,?,?,?,1,?,?,?,?)""",

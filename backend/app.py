@@ -23,6 +23,7 @@ from . import annotations, detector, screening
 from .demo_library import demo_library
 from .annotations import ImagePoint
 from .annotation_export import annotated_png
+from . import layer_export
 from .report_export import report_html, signed_evidence
 
 
@@ -691,6 +692,29 @@ def create_app(data_dir=None):
             evidence = read_signed_evidence(database, number)
         return Response(content=report_html(evidence or case, historical=evidence is None), media_type="text/html",
                         headers={"Content-Disposition": f'attachment; filename="{identifier}-report.html"'})
+
+    @api.get("/api/cases/{identifier}/images/{image_id}/layers/{layer}.{extension}")
+    def export_layer(identifier: str, image_id: str, layer: str, extension: str, owner: str = Depends(record_owner)):
+        if layer not in {"combined", "ai", "manual"} or extension not in {"png", "zip"}:
+            raise HTTPException(404, "未找到此导出图层")
+        number, position = case_number(identifier), image_position(image_id)
+        with connect() as database:
+            database.execute("BEGIN")
+            source = original(database, number, owner, position)
+            case = read_signed_evidence(database, number) or read_case(database, number, owner)
+        image = next((im for im in case["images"] if im["id"] == image_id), None)
+        if image is None:
+            raise HTTPException(404, "本次签署资料中没有这张影像")
+        marks = layer_export.regions(case, image, layer)
+        if extension == "png":
+            data = layer_export.overlay_png(source["original"], marks)
+            mime = "image/png"
+        else:
+            data = layer_export.training_zip(case, image, source["original"], source["mime"], marks, layer)
+            mime = "application/zip"
+        disposition = "inline" if extension == "png" else "attachment"
+        return Response(data, media_type=mime, headers={"Cache-Control": "private, no-store",
+                        "Content-Disposition": f'{disposition}; filename="{identifier}-{image_id}-{layer}.{extension}"'})
 
     @api.get("/api/cases/{identifier}/images/{image_id}/annotations.png")
     def export_annotations(identifier: str, image_id: str, owner: str = Depends(record_owner)):
