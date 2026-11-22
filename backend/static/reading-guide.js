@@ -14,21 +14,21 @@ function interpretation(screening, count) {
       : "定位模型单独给出了提示。请逐一核对主图上编号的 AI 候选框，再查看其余区域。";
   } else {
     next = screening.predicted_positive
-      ? "筛查模型提示了整张片，具体位置需要人工查找。请通览主图，可用矩形或多边形标出可疑处。"
+      ? "筛查模型提示了整张片，具体位置需要人工查找。请通览主图，可用矩形或四点四边形标出可疑处。"
       : "请按常规复核整张主图，并记录人工所见。";
   }
   return {title: `${finding}，${locations}`, next};
 }
 
 /** The same stored evidence is shown in the viewer and in the review report. */
-export function readingGuide(record, escapeHTML) {
+export function readingGuide(record, escapeHTML, showNext = true) {
   const boxes = record.detections || [];
   const screening = record.screening;
   const {title, next} = interpretation(screening, boxes.length);
   const scores = boxes.map((box, i) => `AI 候选 ${String(i+1).padStart(2,"0")}：${Number(box.score).toFixed(3)}`);
   return `<div class="reading-guide">
     <h3 class="reading-title">${title}</h3>
-    <p class="reading-next">${record.status === "reviewed" ? (record.empty_review_confirmed ? "报告已签署，复核人已确认本次人工所见与结论留空。" : "报告已签署，请查阅复核人填写的内容。") : next}</p>
+    ${showNext ? `<p class="reading-next">${record.status === "reviewed" ? (record.empty_review_confirmed ? "报告已签署，复核人已确认本次人工所见与结论留空。" : "报告已签署，请查阅复核人填写的内容。") : next}</p>` : ""}
     <details class="model-evidence"><summary>查看模型分数与判断依据</summary>
       <dl>
         <dt>整片筛查</dt><dd>${screening ? `分数 ${Number(screening.score).toPrecision(5)}，提示门槛 ${Number(screening.threshold).toPrecision(5)}。<small>${escapeHTML(screening.model)}</small>` : "本次历史分析未记录整片筛查。"}</dd>

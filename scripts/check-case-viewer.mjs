@@ -100,19 +100,34 @@ export async function checkCaseViewer(page, id) {
   await click('[data-tool="polygon"]');
   // Alternate between opposite corners, as during a four-point clinical outline.
   const corners = [[550,650],[650,740],[650,650],[550,740]];
-  await mark(right, corners);
-  const previewPoints = () => page.$eval(right + " .manual-draft polygon", shape =>
+  const previewPoints = shape => page.$eval(right + " .manual-draft " + shape, shape =>
     Array.from(shape.points, p => ({x:p.x,y:p.y})));
-  const draft = await previewPoints();
+  const saveDisabled = () => page.$eval("#save-annotation", button => button.disabled);
+  for (let count = 1; count <= 3; count++) {
+    await mark(right, [corners[count - 1]]);
+    if (count === 1) await nameInput.fill("附片人工多边形");
+    checkPoints(await previewPoints("polyline"), corners.slice(0, count), 5);
+    assert.equal(await page.$(right + " .manual-draft polygon"), null);
+    assert.equal(await saveDisabled(), true, `Cannot submit a ${count}-point outline`);
+  }
+  assert.equal((await detail()).images[1].annotations.length, 0);
+  await mark(right, [[550,700]]);
+  const firstBoundary = await previewPoints("polygon");
+  assert.equal(firstBoundary.length, 4);
+  assert.equal(await saveDisabled(), false);
+  await mark(right, [[600,690]]);
+  assert.deepEqual(await previewPoints("polygon"), firstBoundary, "Fifth click must leave the four-point boundary intact");
+  await click("#undo-vertex");
+  checkPoints(await previewPoints("polyline"), corners.slice(0,3), 5);
+  assert.equal(await saveDisabled(), true);
+  await mark(right, [corners[3]]);
+  const draft = await previewPoints("polygon");
+  assert.equal(draft.length, 4);
   const area = Math.abs(draft.reduce((sum, p, i) => {
     const next = draft[(i+1) % draft.length];
     return sum + p.x*next.y - next.x*p.y;
   }, 0)) / 2;
   assert.ok(area > 8000 && area < 10000, "Four unordered corners must preview the full region");
-  await click("#undo-vertex");
-  checkPoints(await previewPoints(), corners.slice(0,3), 5);
-  await mark(right, corners.slice(3));
-  await nameInput.fill("附片人工多边形");
   await click("#save-annotation");
   await page.waitForSelector("[data-annotation-id]");
   const polygon = (await detail()).images[1].annotations[0];

@@ -32,7 +32,8 @@ def image_record(image, position):
     marks, measures = image["annotations"], image["measurements"]
     if marks:
         parts.append(table(("人工区域", "形状", "原图顶点（px）", "最后编辑人"),
-                           ((m["label"], "矩形" if m["kind"] == "rectangle" else "多边形",
+                           ((m["label"], "矩形" if m["kind"] == "rectangle" else
+                             ("四边形" if len(m["points"]) == 4 else "多边形"),
                              point_list(m["points"]), m["updated_by"]) for m in marks)))
     if measures:
         parts.append(table(("人工测量", "读数", "原图取点（px）", "记录人"),

@@ -86,6 +86,7 @@ function login() {
       <div class="intro-steps"><span><b>01</b>上传影像</span><span><b>02</b>模型检测</span><span><b>03</b>复核归档</span></div>
     </section>
     <section class="card login-card"><span class="tile-icon">${icon("mark")}</span><p class="eyebrow">WORKSPACE ACCESS</p><h2>登录工作台</h2><p class="sub">使用分配的账号进入影像诊疗与病例档案。</p>
+      <a class="secondary casebook-entry" href="./static/examples.html">免登录查看示例病例 →</a>
       <form id="login-form"><label>账号${usernameField}</label><label>密码<input name="password" type="password" autocomplete="current-password" required placeholder="请输入密码"></label><p class="error" role="alert" hidden></p><button class="primary wide" type="submit">登录工作台 ${icon("arrow")}</button></form>
       ${members.length ? '<p class="credentials">团队试用密码：小写拼音账号后加 <code>sportsHorse</code>，注意大写 H。<br>' + (browserDemo ? '本机浏览器中的四个演示账号共享病例。<a href="./legacy/">查看旧版检测记录</a>' : '四位成员共享就诊记录，复核按登录姓名署名。') + '</p>' : ''}
     </section></div>`;
@@ -194,7 +195,18 @@ async function attachFiles(id, files, projection, quality) {
 }
 
 function createVisit() {
-  page.innerHTML = heading("新建检查", "上传检查影像", "从项目的 84 张球节样片中抽取一张体验诊疗，或上传设备导出的 X 线原片。") + progressBar(0) + `
+  const featured = [
+    {id:16, file:"XR-014.jpg", alias:"16-侧位.jpg", projection:"侧位"},
+    {id:23, file:"XR-027.jpg", alias:"23-LF-正位.jpg", projection:"正位", caption:"左前正位"},
+    {id:56, file:"XR-057.jpg", projection:"正位"},
+    {id:8, file:"XR-083.jpg", projection:"侧位", caption:"右前侧位"},
+  ];
+  const sampleChoices = featured.map(({id, file, alias, projection, caption}) => `
+    <button type="button" class="sample-choice" data-id="${id}" data-sample="${alias || file}" data-projection="${projection}" aria-pressed="false">
+      <img loading="lazy" decoding="async" alt="" src="./api/demo-images/${file}">
+      <span><strong>${id} 号</strong><small>${caption || projection}</small></span>
+    </button>`).join("");
+  page.innerHTML = heading("新建检查", "上传检查影像", "选择下方体验样片或上传 X 线原片，核对影像后开始本次检查。") + progressBar(0) + `
     <form class="card intake" id="visit-form">
       <section class="intake-image"><div class="panel-title sample-header"><div><h2>检查影像</h2><small>首张为分析主图</small></div>
         <button type="button" class="secondary" id="draw-sample">${icon("image")}<span>随机抽取样片</span></button></div>
@@ -207,10 +219,8 @@ function createVisit() {
         </div>
         <div class="file-status">${icon("image")}<span class="file-title" aria-live="polite">尚未选择影像</span>
           <button type="button" class="text-button" id="clear-image" hidden>清除所选影像</button></div>
-        <details id="featured-samples"><summary>推荐病例</summary><div class="sample-picker">
-          <button type="button" class="secondary" data-sample="16-侧位.jpg" data-projection="侧位">16 号侧位</button>
-          <button type="button" class="secondary" data-sample="23-LF-正位.jpg" data-projection="正位">23 号正位</button>
-        </div></details>
+        <section id="featured-samples" aria-labelledby="sample-picker-title"><h3 id="sample-picker-title">选择体验样片</h3>
+          <div class="sample-picker">${sampleChoices}</div></section>
       </section>
       <section class="intake-settings"><h2>检查信息</h2>
         <label>马匹名称 / 编号<input id="horse-name" name="horse_name" maxlength="80" required placeholder="例如：追风 或 H-001"></label>
@@ -218,7 +228,7 @@ function createVisit() {
         <dl class="model-scope"><dt>检查部位</dt><dd>球节</dd><dt>关注病变</dt><dd>疑似骨折</dd></dl>
         ${browserDemo ? '<div class="model-preflight"><button type="button" class="text-button" id="prepare-models">提前准备模型</button><small role="status">首次需下载约 141 MB，可在上传影像前准备。</small></div>' : ""}
         <label class="check"><input type="checkbox" name="quality_confirmed" value="true" required>已核对马匹、方向和影像清晰度</label>
-        ${errorBox}<button class="primary wide" type="submit">上传影像 ${icon("arrow")}</button>
+        ${errorBox}<button class="primary wide" type="submit"><span>上传影像</span> ${icon("arrow")}</button>
       </section>
     </form>
     <footer class="intake-foot"><span>暂时没有影像？ <a id="manual-visit" href="#manual">手动登记就诊</a></span><a href="#dashboard">${icon("book")} 查找历史记录</a></footer>`;
@@ -243,20 +253,30 @@ function createVisit() {
   const recommendations = form.querySelectorAll("[data-sample]");
   const clear = byId("clear-image");
   const title = form.querySelector(".file-title");
-  let catalog, currentSample;
-  let loadingSample = false, fileRevision = 0;
+  let catalog, currentSample, request, suggestedName = "";
+  const horseName = form.elements.horse_name;
+  horseName.addEventListener("input", () => { suggestedName = ""; });
   function refreshSamples() {
     const localFiles = input.files.length > 0 && !currentSample;
-    draw.disabled = loadingSample || localFiles;
+    draw.disabled = Boolean(request) || localFiles;
     draw.querySelector("span").textContent = currentSample ? "换一张样片" : "随机抽取样片";
-    for (const button of recommendations) button.disabled = loadingSample || localFiles;
+    for (const button of recommendations) {
+      const selected = currentSample && (button.dataset.sample === currentSample.filename ||
+        button.querySelector("img").src === new URL(currentSample.url, document.baseURI).href);
+      button.setAttribute("aria-pressed", String(Boolean(selected)));
+    }
     clear.hidden = input.files.length === 0;
-    if (!form.hasAttribute("aria-busy")) form.querySelector('[type="submit"]').disabled = loadingSample;
+    if (!form.hasAttribute("aria-busy")) {
+      const submit = form.querySelector('[type="submit"]');
+      submit.disabled = Boolean(request);
+      submit.querySelector("span").textContent = currentSample ? "用此样片新建检查" : "上传影像";
+    }
   }
   input.addEventListener("change", () => {
-    fileRevision++;
-    loadingSample = false;
-    if (form.elements.horse_name.value === currentSample?.horse_name) form.elements.horse_name.value = "";
+    request?.abort();
+    request = null;
+    if (suggestedName && horseName.value === suggestedName) horseName.value = "";
+    suggestedName = "";
     if (form.elements.projection.value === currentSample?.projection) form.elements.projection.value = "";
     currentSample = null;
     form.elements.quality_confirmed.checked = false;
@@ -268,21 +288,22 @@ function createVisit() {
     input.focus();
   };
   async function loadSample(sample) {
-    if (loadingSample || form.hasAttribute("aria-busy") || (input.files.length && !currentSample)) return;
-    loadingSample = true;
-    const atSelection = fileRevision;
-    const active = () => form.isConnected && fileRevision === atSelection;
+    if (form.hasAttribute("aria-busy") || (!sample && input.files.length && !currentSample)) return;
+    request?.abort();
+    const selectionRequest = new AbortController();
+    request = selectionRequest;
+    const active = () => form.isConnected && request === selectionRequest;
     refreshSamples();
     title.textContent = "正在载入研究样片…";
     try {
       if (!sample) {
-        catalog ??= await api("./api/demo-images");
+        catalog ??= await api("./api/demo-images", {signal:selectionRequest.signal});
         if (!active()) return;
         if (!catalog.length) throw new Error("暂无可用样片，请上传本地影像。");
         const pool = catalog.length > 1 ? catalog.filter(item => item.url !== currentSample?.url) : catalog;
         sample = pool[Math.floor(Math.random() * pool.length)];
       }
-      const response = await fetch(sample.url, {cache:"no-store"});
+      const response = await fetch(sample.url, {signal:selectionRequest.signal});
       if (!response.ok) throw new Error(response.status === 401 ? "登录已过期，请重新登录。" : "样片载入失败，可重试或上传本地影像。");
       const blob = await response.blob();
       if (!active()) return;
@@ -292,14 +313,17 @@ function createVisit() {
       input.dispatchEvent(new Event("change"));
       currentSample = {...sample, url:response.headers.get("Content-Location") || sample.url};
       form.elements.projection.value = sample.projection;
-      if (!form.elements.horse_name.value.trim()) form.elements.horse_name.value = sample.horse_name;
-      title.textContent = "已载入 " + sample.filename + (sample.projection ? "" : " · 请选择投照方向");
+      if (!horseName.value.trim()) {
+        suggestedName = sample.horse_name;
+        horseName.value = suggestedName;
+      }
+      title.textContent = "已载入 " + sample.horse_name + " · " + sample.filename + (sample.projection ? "" : " · 请选择投照方向");
       refreshSamples();
     } catch (error) {
-      if (active()) title.textContent = (currentSample ? "已保留 " + currentSample.filename + "。" : "") + formatError(error);
+      if (active()) title.textContent = (input.files.length ? "已保留 " + input.files[0].name + "。" : "") + formatError(error);
     } finally {
       if (active()) {
-        loadingSample = false;
+        request = null;
         refreshSamples();
       }
     }
@@ -307,7 +331,7 @@ function createVisit() {
   draw.onclick = () => loadSample();
   for (const button of recommendations) button.onclick = () => {
     const {sample: filename, projection} = button.dataset;
-    loadSample({filename, projection, horse_name:"研究样片 " + filename.split("-")[0] + " 号",
+    loadSample({filename, projection, horse_name:"研究样片 " + button.dataset.id + " 号",
       url:"./api/demo-images/" + encodeURIComponent(filename)});
   };
   action(form, "正在上传…", async active => {
@@ -369,7 +393,7 @@ function editVisit(record, saved) {
 function deleteVisits(records, complete) {
   const single = records.length === 1;
   openDialog(`<span class="delete-symbol">${icon("trash")}</span><p class="eyebrow">DELETE RECORDS</p><h2 id="dialog-title">删除 ${records.length} 条就诊记录？</h2>
-    <p class="sub">${single ? escape(records[0].horse_name) + " · " + escape(records[0].id) : escape(records.slice(0,3).map(record=>record.id).join("、")) + (records.length>3?" 等":"")}<br>所选记录的影像、备注、模型结果和复核意见将一起删除。${Object.keys(loginOptions).length ? "删除对所有团队成员生效。" : ""}此操作不可撤销。</p>
+    <p class="sub">${single ? escape(records[0].horse_name) + " · " + escape(records[0].id) : escape(records.slice(0,3).map(record=>record.id).join("、")) + (records.length>3?" 等":"")}<br>所选记录的影像、备注、模型结果和复核意见将一起删除。${browserDemo ? "删除会影响本浏览器中的所有成员。" : Object.keys(loginOptions).length ? "删除对所有团队成员生效。" : ""}此操作不可撤销。</p>
     <form id="delete-form">${errorBox}<div class="dialog-actions"><button class="secondary" type="button" id="cancel-delete" autofocus>取消</button><button class="danger" type="submit" id="confirm-delete">确认删除 ${records.length} 条</button></div></form>`,"cancel-delete");
   const form = byId("delete-form");
   action(form,"正在删除…",async active=>{
@@ -478,8 +502,10 @@ function archive(records) {
     ["clock","待人工复核",records.filter(r=>r.status==="analyzed").length,"已完成模型分析","sand"],
     ["check","归档记录",records.filter(r=>r.archived_at).length,"已完成手动或复核归档","olive"],
   ];
-  const description = Object.keys(loginOptions).length ? "团队共享就诊记录、检查影像和归档报告。" : "集中管理就诊记录、检查影像和归档报告。";
+  const description = browserDemo ? "本浏览器保存的检查与归档报告，同一浏览器内的四位成员可共同查看。" :
+    Object.keys(loginOptions).length ? "连接本服务的团队成员共享就诊记录、检查影像和归档报告。" : "集中管理就诊记录、检查影像和归档报告。";
   page.innerHTML = heading("CLINICAL WORKSPACE","就诊记录看板",description,newLink) + `
+    <aside class="casebook-shelf" aria-label="公开只读报告"><strong>公开示例报告</strong><a href="./static/examples.html#18">18 号 · 球节正位片 →</a><a href="./static/examples.html#75">75 号 · 球节正位片 →</a></aside>
     <div class="metric-grid">${stats.map(([symbol,title,count,note,tone])=>`<div class="metric ${tone}"><span class="metric-icon">${icon(symbol)}</span><span class="metric-title">${title}</span><strong>${count}</strong><small>${note}</small></div>`).join("")}</div>
     <section class="card ledger"><header class="ledger-head"><div><p class="eyebrow">VISIT REGISTRY</p><h2>就诊记录 <span class="count-tag">${records.length}</span></h2></div><div class="tools"><label class="search-field">${icon("search")}<input type="search" id="case-search" placeholder="搜索马匹、编号或备注" aria-label="搜索就诊记录"></label><select id="status-filter" aria-label="筛选记录状态">${Object.entries(stateNames).map(([key,label])=>`<option value="${key}">${label}</option>`).join("")}</select></div></header>
     <div class="selection-bar"><span id="match-count"></span><div class="row-actions"><button type="button" class="text-button" id="refresh-records">刷新记录</button><button type="button" class="text-danger" id="batch-delete" disabled>${icon("trash")} 批量删除</button></div></div>

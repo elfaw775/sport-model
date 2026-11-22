@@ -427,6 +427,14 @@ def create_app(data_dir=None):
     def login_options():
         return TEAM if team_mode else {}
 
+    @api.get("/samples/{filename}", include_in_schema=False)
+    def public_example_film(filename: str):
+        # Only these two published study films are used by the standalone public reports.
+        source = demo_files.get(filename) if filename in {"XR-018.jpg", "XR-079.jpg"} else None
+        if source is None or not source.is_file():
+            raise HTTPException(404, "未找到此公开示例")
+        return Response(source.read_bytes(), media_type="image/jpeg")
+
     @api.get("/api/demo-images", dependencies=[Depends(current_user)])
     def list_demo_images():
         return demo_catalog

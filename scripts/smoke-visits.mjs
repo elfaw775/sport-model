@@ -187,13 +187,14 @@ try {
   const uploadPrimary = async (name, filename, sample = false) => {
     const form = "#visit-form";
     if (sample) {
-      await click("#featured-samples > summary");
       await click(`[data-sample="${filename}"]`);
     } else {
       const picker = await page.waitForSelector(form + ' [name="image"]');
       await picker.uploadFile(fixture(filename));
     }
     await visible("#image-preview");
+    const expectedCTA = sample ? "用此样片新建检查" : "上传影像";
+    assert.equal(await page.$eval(form + ' [type="submit"]', button => button.innerText.trim()), expectedCTA);
     if (!sample) assert.equal(await page.$eval("#draw-sample", button => button.disabled), true);
     await page.locator(form + ' [name="horse_name"]').fill(name);
     await page.select(form + ' [name="projection"]', filename.includes("侧位") ? "侧位" : "正位");
@@ -493,12 +494,25 @@ try {
     return {sample, horse:picked.horse};
   };
   const featuredName = "16-侧位.jpg";
-  await click("#featured-samples > summary");
+  const choices = await page.$$eval("#featured-samples [data-sample]", buttons => buttons.map(button => ({
+    id:button.dataset.id, file:button.dataset.sample, visible:button.getClientRects().length > 0
+  })));
+  assert.deepEqual(choices.map(button => [button.id, button.file]), [
+    ["16",featuredName], ["23","23-LF-正位.jpg"], ["56","XR-057.jpg"], ["8","XR-083.jpg"]
+  ]);
+  assert.ok(choices.every(button => button.visible));
+  for (const file of ["XR-057.jpg","XR-083.jpg"]) {
+    await click(`[data-sample="${file}"]`);
+    await visible(`[data-sample="${file}"][aria-pressed=true]`);
+    assert.equal(await page.$eval("#image-file", input => input.files[0].name), file);
+    assert.equal(await page.$$eval("[data-sample][aria-pressed=true]", buttons => buttons.length), 1);
+  }
   const [featuredResponse] = await Promise.all([
     page.waitForResponse(response => decodeURI(new URL(response.url()).pathname) === new URL("api/demo-images/", base).pathname + featuredName),
     click(`[data-sample="${featuredName}"]`)
   ]);
   await visible("#image-preview");
+  await visible(`[data-sample="${featuredName}"][aria-pressed=true]`);
   const featuredUrl = featuredResponse.headers()["content-location"];
   const featuredIndex = catalog.findIndex(sample => sample.url === featuredUrl);
   assert.ok(featuredIndex >= 0, "Recommended film needs a matching catalog entry");

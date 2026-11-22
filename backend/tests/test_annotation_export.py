@@ -16,7 +16,7 @@ def test_export_saved_regions_from_one_image_and_preserve_original(client):
     image = case_url + "/images/primary"
     url = image + "/annotations.png"
     assert client.get(url).status_code == 409
-    for kind, xy in [("rectangle", [(30, 30), (50, 60)]), ("polygon", [(75, 20), (90, 40), (60, 40)])]:
+    for kind, xy in [("rectangle", [(30, 30), (50, 60)]), ("polygon", [(65, 20), (85, 20), (90, 40), (60, 40)])]:
         created = client.put(image + "/annotations/" + str(uuid4()), json={
             "kind": kind, "label": "复核区域", "revision": 0, "points": [{"x": x, "y": y} for x, y in xy]
         })
@@ -27,7 +27,7 @@ def test_export_saved_regions_from_one_image_and_preserve_original(client):
     with Image.open(io.BytesIO(result.content)) as rendered:
         assert rendered.size == (140, 110)
         assert rendered.getpixel((50, 50)) != (17, 17, 17)  # Right edge of rectangle
-        assert rendered.getpixel((75, 40)) != (17, 17, 17)  # Bottom edge of triangle
+        assert rendered.getpixel((75, 40)) != (17, 17, 17)  # Bottom edge of quadrilateral
         assert rendered.getpixel((100, 85)) == (17, 17, 17)
         legend = json.loads(rendered.info["EQUIVISION.manual_annotations"])
         assert sorted(item["kind"] for item in legend) == ["polygon", "rectangle"]

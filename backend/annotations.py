@@ -27,12 +27,14 @@ class AnnotationEdit(BaseModel):
                 raise HTTPException(422, "矩形需要两个对角点，宽高须大于零")
             xs, ys = zip(*pts)
             pts = [(min(xs), min(ys)), (max(xs), max(ys))]
-        elif len(pts) == 4 and pts != original:
+        elif original is not None and pts == [(p["x"], p["y"]) for p in json.loads(original)]:
+            return original  # A rename retains the saved boundary, including legacy polygons.
+        elif len(pts) == 4:
             pts = largest_quadrilateral(pts)
             if not pts:
                 raise HTTPException(422, "四点须互不重合，并能围成有面积的区域")
-        elif not simple_polygon(pts):
-            raise HTTPException(422, "多边形至少需要三个不同的顶点，围成的区域须有面积且边不能交叉")
+        else:
+            raise HTTPException(422, "画四边形需要恰好四个顶点")
         return json.dumps([{"x": x, "y": y} for x, y in pts], allow_nan=False)
 
 
@@ -96,9 +98,7 @@ def save(database, key, edit, image, actor, now):
     """Caller holds the write lock and has checked image access and signature status."""
     row = database.execute("""SELECT * FROM image_annotations
         WHERE case_number=? AND position=? AND id=?""", key).fetchone()
-    original = None
-    if row is not None and row["kind"] == "polygon" and len(edit.points) == 4:
-        original = [(p["x"], p["y"]) for p in json.loads(row["points"])]
+    original = row["points"] if row is not None and row["kind"] == "polygon" else None
     shape = edit.geometry(image["width"], image["height"], original)
     fields = (edit.kind, edit.label.strip(), shape)
     if row is None and edit.revision == 0:

@@ -730,12 +730,13 @@ def test_annotation_geometry_is_pixel_space_and_bounded(client):
         return {"revision": 0, "kind": "polygon", "label": "人工区域",
                 "points": [{"x": x, "y": y} for x, y in coords]}
     for invalid in ([(1,1),(2,2)], [(1,1),(1,1),(5,6)], [(1,1),(2,2),(3,3)],
+                    [(0,0),(16,0),(10,12)], [(0,0),(18.5,0),(5.5,7),(20,20),(0,18)],
                     [(1,1),(2,2),(3,3),(4,4)], [(1,1),(1,1),(3,0),(1,3)], [(0,0),(32,0),(7,8)]):
         assert client.put(url, json=polygon(invalid)).status_code == 422
     for invalid in (rectangle("  "), rectangle() | {"points": [{"x": 1,"y": 0},{"x": 1,"y": 5}]},
                     rectangle() | {"source": "ai"}):
         assert client.put(url, json=invalid).status_code == 422
-    valid = polygon([(0,0),(18.5,0),(5.5,7),(20,20),(0,18)])
+    valid = polygon([(0,0),(18.5,0),(20,20),(0,18)])
     saved = client.put(url, json=valid).json()["images"][0]["annotations"][0]
     assert saved["points"] == valid["points"] and saved["kind"] == "polygon"
 
@@ -763,17 +764,32 @@ def test_four_point_outline_is_largest_for_every_click_order(client, vertices, e
         assert twice_area == 2*expected_area
 
 
-def test_renaming_legacy_four_point_annotation_preserves_its_boundary(client, tmp_path):
+@pytest.mark.parametrize("vertices", [
+    [(0,0),(20,0),(0,20)],
+    [(0,0),(2,8),(20,0),(0,20)],  # Four points saved in a different simple order.
+    [(0,0),(18,0),(5,7),(20,20),(0,18)],
+])
+def test_renaming_legacy_polygon_preserves_its_boundary(client, tmp_path, vertices):
     login(client)
     case = upload(client).json()
     mark_id = str(uuid4())
     url = case["images"][0]["url"] + "/annotations/" + mark_id
-    old_outline = [{"x": x, "y": y} for x, y in [(0,0),(2,8),(20,0),(0,20)]]
-    body = {"revision": 0, "kind": "polygon", "label": "原名", "points": old_outline}
-    saved = client.put(url, json=body).json()["images"][0]["annotations"][0]
-    assert saved["points"] != old_outline
+    body = {"revision": 0, "kind": "polygon", "label": "原名", "points":
+            [{"x": x, "y": y} for x, y in [(0,0),(20,0),(20,20),(0,20)]]}
+    assert client.put(url, json=body).is_success
+    old_outline = [{"x": x, "y": y} for x, y in vertices]
     with sqlite3.connect(tmp_path / "cases.sqlite3") as database:
         database.execute("UPDATE image_annotations SET points = ? WHERE id = ?", (json.dumps(old_outline), mark_id))
-    renamed = client.put(url, json={**body, "revision": 1, "label": "更正名称"})
-    assert renamed.status_code == 200
-    assert renamed.json()["images"][0]["annotations"][0]["points"] == old_outline
+    rename = {**body, "points": old_outline, "revision": 1, "label": "更正名称"}
+    for _ in range(2):
+        renamed = client.put(url, json=rename)
+        assert renamed.is_success
+        mark, = renamed.json()["images"][0]["annotations"]
+        assert mark["points"] == old_outline and mark["revision"] == 2
+    if len(vertices) != 4:
+        moved = [{"x": 1, "y": 1}, *old_outline[1:]]
+        assert client.put(url, json={**rename, "revision": 2, "points": moved}).status_code == 422
+    response = client.get(case["images"][0]["url"] + "/annotations.png")
+    with Image.open(io.BytesIO(response.content)) as png:
+        legend, = json.loads(png.info["EQUIVISION.manual_annotations"])
+    assert legend["points"] == old_outline and legend["label"] == "更正名称"

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "18",
+    "filename": "18-正位.jpg",
+    "public_filename": "XR-018.jpg",
+    "projection": "正位",
+    "width": 257,
+    "height": 462,
+    "screening": {
+      "model": "DINOv2-Small-refit84@a5ab6ac7783c",
+      "score": 0.9999846241191053,
+      "threshold": 0.17883443932013382,
+      "predicted_positive": true
+    },
+    "model": "YOLO11s-fetlock-640@61286f939c6a",
+    "threshold": 0.2,
+    "detections": [
+      {
+        "x1": 1.1223115813866091,
+        "y1": 24.789030647277833,
+        "x2": 234.11491188306488,
+        "y2": 376.95128173828124,
+        "score": 0.20359396934509277
+      }
+    ],
+    "reference_boxes": [
+      {
+        "x1": 9.698151999999984,
+        "y1": 47.78650800000001,
+        "x2": 248.47171199999997,
+        "y2": 422.033304
+      }
+    ],
+    "image_sha256": "84213e27e8b3e2c36d42afde1d1dbd5404370e0f2ecee427f45f3a9d797146dd"
+  },
+  {
+    "id": "75",
+    "filename": "75-正位 p1骨折.jpg",
+    "public_filename": "XR-079.jpg",
+    "projection": "正位",
+    "width": 632,
+    "height": 946,
+    "screening": {
+      "model": "DINOv2-Small-refit84@a5ab6ac7783c",
+      "score": 0.999810015287317,
+      "threshold": 0.17883443932013382,
+      "predicted_positive": true
+    },
+    "model": "YOLO11s-fetlock-640@61286f939c6a",
+    "threshold": 0.2,
+    "detections": [],
+    "reference_boxes": [
+      {
+        "x1": 132.03333199999997,
+        "y1": 154.744315,
+        "x2": 222.42639599999998,
+        "y2": 335.59586499999995
+      },
+      {
+        "x1": 256.003924,
+        "y1": 300.734346,
+        "x2": 380.265868,
+        "y2": 707.525698
+      }
+    ],
+    "image_sha256": "a85ca23dd1b3cd40bf4def711702469a5aea773ce8cb4208bed8d571ced0855d"
+  }
+]

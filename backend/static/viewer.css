@@ -89,6 +89,7 @@
 .study-viewer[data-tool=rectangle] .film-stage,.study-viewer[data-tool=polygon] .film-stage{cursor:crosshair}
 .manual-marks rect,.manual-marks polygon,.manual-marks polyline{stroke:#fcbd75;stroke-width:2px;fill:#faab4e16;vector-effect:non-scaling-stroke}
 .manual-marks .manual-draft{stroke-dasharray:5 3}
+.manual-draft polyline{fill:none}
 .manual-draft circle{fill:#ffdfae;stroke:none}
 .manual-label{transform:translate(3px,3px);background:#543919ed;color:#ffe0a4;max-width:85%;overflow:hidden;text-overflow:ellipsis}
 .study-viewer.original-only .manual-marks,.study-viewer.original-only .measured-lines,.study-viewer.original-only .detection-boxes,.study-viewer.original-only .evidence-labels{display:none!important}

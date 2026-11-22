@@ -1,4 +1,4 @@
-import {largestQuadrilateral, simplePolygon} from "./static/polygon.js";
+import {largestQuadrilateral} from "./static/polygon.js";
 // Synchronous edits run inside the case store's IndexedDB write transaction.
 function fail(status, message) {
   throw Object.assign(new Error(message), {status});
@@ -28,12 +28,13 @@ function shapePoints(image, {kind, points}, original) {
     return [{x:Math.min(a.x,b.x), y:Math.min(a.y,b.y)}, {x:Math.max(a.x,b.x), y:Math.max(a.y,b.y)}];
   }
   // Keep the original boundary when only renaming a saved annotation.
-  const unchanged = original?.kind === kind && JSON.stringify(original.points) === JSON.stringify(pts);
-  if (kind === "polygon" && pts.length === 4 && !unchanged) {
-    const ring = largestQuadrilateral(pts);
-    if (ring) return ring;
-  } else if (kind === "polygon" && simplePolygon(pts)) return pts;
-  fail(422, "请选择互不重合、能围出面积的顶点；五点以上请沿边界依次取点。");
+  if (kind !== "polygon") fail(422, "请选择矩形或四边形。");
+  if (original?.kind === kind && original.points.length === pts.length &&
+      pts.every((p, i) => p.x === original.points[i].x && p.y === original.points[i].y)) return original.points;
+  if (pts.length !== 4) fail(422, "画四边形需要恰好四个顶点。");
+  const ring = largestQuadrilateral(pts);
+  if (!ring) fail(422, "四点须互不重合，并能围成有面积的区域。");
+  return ring;
 }
 
 function editAnnotation(image, id, method, body, query, actor, now) {
@@ -159,7 +160,8 @@ function reportDocument(record) {
   const film = data.screening;
   const images = data.images.map((im,i) => '<section><h3>' + (i ? "附图 " + i : "主图") + ' · ' + escape(im.filename) + '</h3>' +
     field("投照与尺寸", im.projection + " · " + im.width + " × " + im.height + " px") + field("影像质量",im.quality) +
-    im.annotations.map((mark,n) => field("人工标注 " + (n+1), mark.label + " · " + (mark.kind === "rectangle" ? "矩形" : "多边形") +
+    im.annotations.map((mark,n) => field("人工标注 " + (n+1), mark.label + " · " +
+      (mark.kind === "rectangle" ? "矩形" : mark.points.length === 4 ? "四边形" : "多边形") +
       " · " + coords(mark.points) + " px · " + mark.updated_by)).join("") +
     im.measurements.map((m,n) => field("人工测量 " + (n+1), (m.kind === "angle" ? "角度" : "距离") + " · " + m.value.toFixed(2) +
       " " + m.unit + " · " + coords(m.points) + " px · " + m.created_by)).join("") + '</section>').join("");

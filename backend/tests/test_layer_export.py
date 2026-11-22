@@ -26,7 +26,7 @@ def test_archived_layer_exports(client, monkeypatch):
     case = "/api/cases/" + case_id
     primary = case + "/images/primary"
     annotation = str(uuid4())
-    points = [{"x": 150, "y": 110}, {"x": 190, "y": 170}, {"x": 110, "y": 170}]
+    points = [{"x": 130, "y": 110}, {"x": 170, "y": 110}, {"x": 190, "y": 170}, {"x": 110, "y": 170}]
     saved = client.put(primary + "/annotations/" + annotation, json={
         "kind": "polygon", "label": "人工可疑区域", "points": points, "revision": 0})
     assert saved.is_success, saved.text
@@ -51,8 +51,8 @@ def test_archived_layer_exports(client, monkeypatch):
                 assert entry["area"] == 800 and entry["bbox"] == [20, 50, 20, 40] and entry["segmentation"] == []
                 assert entry["attributes"]["score"] == 0.7
             else:
-                assert entry["area"] == 2400 and entry["bbox"] == [110, 110, 80, 60]
-                assert entry["segmentation"] == [[150, 110, 190, 170, 110, 170]]
+                assert entry["area"] == 3600 and entry["bbox"] == [110, 110, 80, 60]
+                assert entry["segmentation"] == [[110, 170, 130, 110, 170, 110, 190, 170]]
                 assert entry["attributes"]["annotation_id"] == annotation
         png = client.get(base + ".png")
         assert png.is_success and png.headers["content-type"] == "image/png"
