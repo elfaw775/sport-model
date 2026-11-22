@@ -66,6 +66,7 @@ try {
       const status = state.status || "等待模型状态";
       if (status !== lastStatus || state.retry) {
         console.log(`[model ${phase} #${attempt} +${elapsed()}] ${status}`);
+        if (pagesURL && status !== lastStatus) deadline = Date.now() + modelTimeout;
         lastStatus = status;
       }
       if (state.ready) return;

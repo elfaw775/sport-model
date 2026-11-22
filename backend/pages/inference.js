@@ -15,27 +15,51 @@ async function sha256(bytes) {
   return Array.from(hash, byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function fetchChecked(url, check, signal, onRetry) {
+async function fetchChecked(url, check, signal, onRetry, onBytes) {
   for (let attempt = 1; ; attempt++) {
     signal.throwIfAborted();
+    const request = new AbortController();
+    const requestSignal = AbortSignal.any([signal, request.signal]);
+    let idleTimer, received = 0;
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => request.abort(new Error("连续 90 秒未收到数据")), 90000);
+    }
+    resetIdleTimer();
     try {
       const response = await fetch(url, {
         cache: attempt === 1 ? "force-cache" : "reload",
-        signal: AbortSignal.any([signal, AbortSignal.timeout(45000)])
+        signal: requestSignal
       });
       if (!response.ok) throw new Error("HTTP " + response.status);
-      return await check(response);
+      if (!response.body) throw new Error("响应缺少数据");
+      const body = response.body.pipeThrough(new TransformStream({
+        transform(chunk, output) {
+          if (chunk.byteLength) {
+            resetIdleTimer();
+            received += chunk.byteLength;
+            onBytes?.(received);
+          }
+          output.enqueue(chunk);
+        },
+        flush() { clearTimeout(idleTimer); }
+      }), {signal: requestSignal});
+      return await check(new Response(body));
     } catch (error) {
       if (attempt >= 3 || signal.aborted) throw error;
+      onBytes?.(0);
       onRetry(attempt + 1);
-      await new Promise(resolve => setTimeout(resolve, attempt * 300));
+    } finally {
+      clearTimeout(idleTimer);
+      request.abort();
     }
+    await new Promise(resolve => setTimeout(resolve, attempt * 300));
   }
 }
 
 async function loadModelBytes(filename, digest, label) {
   const controller = new AbortController();
-  const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(300000)]);
+  const signal = controller.signal;
   const stage = message => self.postMessage({stage: label + " · " + message});
   try {
     stage("读取分片清单…");
@@ -51,9 +75,14 @@ async function loadModelBytes(filename, digest, label) {
 
     const buffer = new Uint8Array(manifest.bytes);
     const storage = await self.caches?.open("equivision-model-parts-v1").catch(() => null);
-    let nextPart = 0, verified = 0;
-    const progress = () => "已校验 " + (verified / 1048576).toFixed(1) + " / " +
-      (manifest.bytes / 1048576).toFixed(1) + " MiB（" + Math.floor(verified / manifest.bytes * 100) + "%）";
+    let nextPart = 0, verified = 0, lastProgress = 0;
+    const receiving = new Map();
+    const progress = () => {
+      const partial = Array.from(receiving.values()).reduce((sum, n) => sum + n, 0);
+      const checked = "已校验 " + (verified / 1048576).toFixed(1) + " / " +
+        (manifest.bytes / 1048576).toFixed(1) + " MiB（" + Math.floor(verified / manifest.bytes * 100) + "%）";
+      return partial ? checked + "，正在接收 " + (partial / 1048576).toFixed(1) + " MiB" : checked;
+    };
     stage(progress());
     async function downloadParts() {
       while (nextPart < manifest.parts.length) {
@@ -76,9 +105,17 @@ async function loadModelBytes(filename, digest, label) {
           }
         }
         if (!bytes) {
-          bytes = await fetchChecked(url, verify, signal, attempt =>
-            stage(progress() + "，重试第 " + (index + 1) + " 片（" + attempt + "/3）"));
+          bytes = await fetchChecked(url, verify, signal,
+            attempt => stage(progress() + "，重试第 " + (index + 1) + " 片（" + attempt + "/3）"),
+            received => {
+              receiving.set(index, received);
+              if (Date.now() - lastProgress >= 1000) {
+                lastProgress = Date.now();
+                stage(progress());
+              }
+            });
           if (storage) await storage.put(url, new Response(bytes)).catch(() => {});
+          receiving.delete(index);
         }
         signal.throwIfAborted();
         buffer.set(bytes, index * partSize);
