@@ -225,7 +225,9 @@ function createVisit() {
       <section class="intake-settings"><h2>检查信息</h2>
         <label>马匹名称 / 编号<input id="horse-name" name="horse_name" maxlength="80" required placeholder="例如：追风 或 H-001"></label>
         <label>投照方向<select name="projection" required>${projectionOptions}</select></label>
-        <dl class="model-scope"><dt>检查部位</dt><dd>球节</dd><dt>关注病变</dt><dd>疑似骨折</dd></dl>
+        <dl class="model-scope"><dt>检查部位</dt><dd>球节</dd>
+          <dt><label for="lesion-focus">关注病变</label></dt>
+          <dd><select id="lesion-focus" name="lesion_focus"><option value="骨折">骨折</option></select></dd></dl>
         ${browserDemo ? '<div class="model-preflight"><button type="button" class="text-button" id="prepare-models">提前准备模型</button><small role="status">首次需下载约 141 MB，可在上传影像前准备。</small></div>' : ""}
         <label class="check"><input type="checkbox" name="quality_confirmed" value="true" required>已核对马匹、方向和影像清晰度</label>
         ${errorBox}<button class="primary wide" type="submit"><span>上传影像</span> ${icon("arrow")}</button>
