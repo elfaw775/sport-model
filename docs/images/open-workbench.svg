@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="148" height="46" viewBox="0 0 148 46" role="img" aria-labelledby="title">
+  <title id="title">在线试用 / Live demo</title>
+  <rect x=".5" y=".5" width="147" height="45" rx="7" fill="#d9fc83" stroke="#789946"/>
+  <path d="m15 16 10 7-10 7z" fill="#173423"/>
+  <g fill="#173423" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif">
+    <text x="37" y="20" font-size="14" font-weight="700">在线试用</text>
+    <text x="37" y="35" font-size="10" letter-spacing=".8" font-weight="600">LIVE DEMO</text>
+  </g>
+  <path d="M122 27l9-9m-8 0h8v8" fill="none" stroke="#173423" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
