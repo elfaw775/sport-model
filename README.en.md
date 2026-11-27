@@ -1,80 +1,78 @@
-# EQUIVISION · Equine fetlock radiograph workbench
+# EQUIVISION · Equine fetlock X-ray workbench
 
 [简体中文](README.md) · **English**
 
-[Padding study and per-film results](image-study/published/cv84/canvas-round2/README.md#english) · [Research guide](image-study/README.md)
+**[Try the workbench](https://elfaw775.github.io/sport-model/#new)** · **[View report 18](https://elfaw775.github.io/sport-model/static/examples.html#18)** · **[View report 75](https://elfaw775.github.io/sport-model/static/examples.html#75)**
 
-[Open the public clinical workbench](https://elfaw775.github.io/sport-model/) · [Previous YOLO viewer and its history](https://elfaw775.github.io/sport-model/legacy/)
+EQUIVISION is a research workbench for reviewing suspected fractures on sport horse fetlock radiographs. DINOv2 flags films for closer review, YOLO marks candidate regions, and a human reviewer checks the original image before signing a report. The two public reports open immediately without signing in or downloading model weights.
 
-GitHub Pages runs DINOv2 whole-film screening and YOLO localization in the visitor's browser. The 84-film picker, review tools, signatures, reports and archives use the same interface as the Python workbench. Pages cases and uploads are shared by the four demo identities within one browser profile. The Python edition stores team records on the server for cross-device use.
+[![Case 18 in the public report viewer, showing the fetlock radiograph and the model’s candidate region.](docs/images/case-report-18.png)](https://elfaw775.github.io/sport-model/static/examples.html#18)
 
-## How backend edits affect model output
+## Try it with a sample film
 
-The Python workbench handles visits, sign-in, report signing and manual annotations. The same server process loads two ONNX files, verifies their SHA-256 hashes and runs inference on CPU. Editing forms, case logic or saving an annotation does not write model weights. Training and export run separately. [Deployed files and DINO threshold](backend/models) · [Model loader](backend/onnx_models.py)
+**For a quick look**, open **report 18** above to compare a model box with a dataset annotation. In **report 75**, screening flagged the film, yet YOLO returned zero boxes. Turn on the reference layer to see the two annotated lesions.
 
-Changing resizing, padding, input layout, operating thresholds or box filtering can change results with identical weight files. Compare scores, screening calls and boxes on fixed reference films when editing inference. The reader can open numbered AI boxes or return to the original primary film directly from the analysis guidance. [Screening](backend/screening.py) · [Localization](backend/detector.py) · [Regression tests](backend/tests/test_detector.py)
+1. **Sign in.** In the Chinese-language workbench, select `wangyiyi` and enter `wangyiyisportsHorse` (capital **H**). The other demo accounts are `zhushijia`, `alimire` and `liqihang`, each with its username followed by `sportsHorse` as its password.
+2. **Choose a radiograph.** The new examination page offers practice films **16, 23, 56 and 8**. Select a thumbnail, check the projection and confirm image quality, then click **用此样片新建检查** to create a numbered case. You can also draw from the 84-film library or upload a PNG, JPEG or WebP. The first image is the primary view. Additional views can be compared side by side.
+3. **Run the analysis.** Check the primary image and run both models. Start with **16** for a film with two candidate boxes. Then try **23** for a positive whole-film screen with no boxes. The first browser run downloads about **141 MB** of weights and runtime. **提前准备模型** preloads them before a presentation.
+4. **Review and archive.** Inspect the original, measure distances or angles, and optionally add a rectangle or four-point region. Sign the report, then archive the case. A blank review requires a second confirmation. Search the case history by its EV number to reopen the signed report.
 
-[Box-supervised experiment](image-study/published/cv84/box-token/README.md#english) · [Reward experiment and lessons from published methods](image-study/published/cv84/one-step-reward/README.md#english)
+The viewer can export an offline printable report. For a reviewed image with both AI and manual regions, download a combined, AI-only or manual-only overlay as a PNG or as a CVAT COCO 1.0 dataset with the source image and annotations.
 
-## Run the case workbench
+## How the models work
 
-From the repository root, create a Python environment and start FastAPI on the loopback interface.
+| Component | Input and output |
+| --- | --- |
+| **DINOv2 Small · whole-film screening** | A frozen visual encoder and a fitted classifier score the primary radiograph on a 336 × 336 canvas. A score at or above the operating threshold flags the image for review. |
+| **YOLO11s · localization** | The detector runs at 640 × 640 and returns box coordinates and scores. During retraining, 66 rotated annotations were converted to enclosing rectangles using their recorded angles. The deployed box threshold is 0.20. |
 
-```bash
+Each case keeps both model versions, thresholds and outputs alongside the review. The same ONNX weights run in the browser on GitHub Pages and on CPU in the Python service. [Screening model and preprocessing](backend/models/dinov2-fetlock-84.json) · [Detection code](backend/detector.py) · [Label conversion and training](training/README.md)
+
+## What the evaluation showed
+
+- **Screening on 84 project films.** In a matched five-fold study of 68 positive and 16 negative films, DINOv2 correctly classified **82/84**, missing **2/68** positives and flagging **0/16** negatives. The earlier YOLO11s training recipe missed 15 positives and the retrained recipe missed 20. Each film was scored once while held out. The deployed DINO classifier was subsequently fitted on all 84 films. [Per-film predictions](image-study/published/cv84/three-model-oof.csv) · [Study and reproduction guide](image-study/README.md)
+- **Localization on 12 historical holdout films.** At the same box threshold of 0.15 and a matching IoU of at least 0.50, retraining YOLO11s reduced false boxes from **9 to 5**. Both versions located **3 of 12 annotated lesions**. Box precision therefore rose from **25.0% to 37.5%**, while nine lesions remained unlocated. [Detector comparison](training/results/comparison-2026-11-18/README.md)
+- **Limits.** Image height alone correctly classified **81/84** films, and changing the input padding changed some screening decisions. The practice films come from this development collection. Performance on new horses and independently acquired images still requires validation. A qualified reviewer makes the final assessment. [Padding experiments](image-study/published/cv84/canvas-round2/README.md#english)
+
+## Run locally or share cases
+
+The public demo stores uploads, edits and history in **IndexedDB** in the current browser profile. Its four demo accounts share that browser's records. Other devices can open the two published example reports. To share newly created cases across devices, run the Python service on a reachable host with persistent storage. It stores original image bytes, predictions, annotations and reports in **SQLite**, at `var/cases.sqlite3` by default.
+
+Clone the repository and enter its directory.
+
+```sh
+git clone https://github.com/elfaw775/sport-model.git
+cd sport-model
+```
+
+**macOS or Linux, Python 3.12**
+
+```sh
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements.txt
 .venv/bin/python -m uvicorn backend.app:app --host 127.0.0.1 --port 8765
 ```
 
-On Windows, use `.venv\Scripts\python.exe` for the last two commands. Open the local workbench and choose a demo member. The usernames are `wangyiyi`, `zhushijia`, `alimire` and `liqihang`. The local demo password is the username followed by `sportsHorse`. Members share team cases, while the case retains its creator and the report retains its signer. [Open the local workbench](http://127.0.0.1:8765/)
+**Windows, PowerShell and Python 3.12**
 
-The public workbench can initialize both models before uploading. Click **提前准备模型** and keep the tab open for the live demonstration. On first use the browser downloads approximately 126 MB of model weights in 4 MiB chunks and a 15 MB WebAssembly runtime. Progress counts verified chunks. Retrying can reuse cached chunks, and the assembled weights are checked against the model digest. Training hardware can be powered off after deployment. Four selected vertices form the largest simple quadrilateral through all four points. Signed cases with both AI and manual regions offer combined, AI-only and manual-only PNGs and CVAT COCO 1.0 dataset exports with original pixels.
-
-### Review a case
-
-Share the [read-only reports](https://elfaw775.github.io/sport-model/static/examples.html) for cases 18 and 75. These public reports show stored inference and reference regions without a login or model download. The four practice films are separate. Reading a public report creates no case in the browser history. Run `.venv/bin/python scripts/build-example-reports.py --check` to reproduce their evidence.
-
-For a live demonstration, click **随机抽取样片** on the new examination form to draw from the 84 project radiographs. Preview the film or draw another before uploading. Check the projection and image quality, upload to obtain a case number, then run both models, review the findings, sign and archive the report. Four visible film thumbnails offer cases 16, 23, 56 and 8 for repeatable demonstrations. These radiographs were used during model development.
-
-1. Create a visit, enter the horse and projection, upload a PNG, JPEG or WebP and confirm image quality. A visit may also start without images. The first film is the primary view. Later views support side-by-side review. [Example lateral film](training/data/sporthorse_v2/images/test/16-侧位.jpg)
-2. Analyze the primary film. DINOv2 Small returns a whole-film screening result. YOLO11s locates candidate regions. Each has its own threshold and model version. If either inference fails, the original stays available for a retry.
-3. Pan, zoom, rotate or invert the image. Record two-point distances in pixels and three-point angles in degrees. On any view, draw a rectangle or a four-point quadrilateral, name the region and save it as a manual annotation. Toggle the overlay to inspect the original. A PNG export contains numbered outlines at original resolution, with region labels and coordinates embedded as PNG text metadata.
-4. Save draft findings or a conclusion, then sign the report. A deliberately empty report needs explicit confirmation. Changed drafts and annotation versions are checked before signing. Signed reports and manual annotations are read-only. Archiving is a separate action. The dashboard can reopen a case and its signed report.
-
-The four built-in films follow the regular upload and inference path. In the review queue, filter cases by their stored screening and localization results, including positive screens with no boxes. The report checks the displayed case and image evidence again before signing. Open a newly signed report to download an offline, printable HTML copy. Its contents stay tied to the signature even after a later case edit or attachment. Older reports are identified as reconstructions from the available record.
-
-The workbench stores original image bytes, model outputs, individual measurements, annotations and review history in SQLite. The default database is `var/cases.sqlite3`; preserve the configured data directory across restarts. Existing cases retain their original results. A manually archived historic case may still require review.
-
-### Acceptance and deployment
-
-```bash
-.venv/bin/python -m pip install pytest httpx
-.venv/bin/python -m pytest -q backend/tests
-pnpm install --frozen-lockfile
-node scripts/smoke-visits.mjs
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8765
 ```
 
-The Chrome test uses an isolated case database. Set `CHROME_BIN` and `PYTHON` to the browser and Python environment when needed. For a separately hosted service, configure `SPORT_MODEL_DATA_DIR` on persistent storage, HTTPS, non-demo credentials and `SPORT_MODEL_SECURE_COOKIE=1`. A custom single-user installation uses `SPORT_MODEL_USERNAME`, `SPORT_MODEL_PASSWORD` and `SPORT_MODEL_DISPLAY_NAME`. The server hosting the workbench must stay online for other users to reach it.
+[Open the local workbench](http://127.0.0.1:8765/#new) and use the same demo credentials. The commands bind to loopback for local use. For a hosted service, configure HTTPS, non-demo credentials, `SPORT_MODEL_SECURE_COOKIE=1`, and a persistent `SPORT_MODEL_DATA_DIR`. [Service configuration](backend/app.py)
 
-## Models and evaluation
+## Development and contributions
 
-| Component | Operating rule | Verified result |
-|---|---|---|
-| DINOv2 Small whole-film screening | The deployed head was fitted on all 84 films. A score of at least 0.1788344393 flags a film for review. | Separate matched five-fold models correctly classified 82/84 films, missing 2/68 positives with 0/16 false alarms. |
-| Retrained YOLO11s localization | Runs on a 640 × 640 input with rotation-corrected training boxes. Candidate box threshold is 0.20. | In the historical holdout, it located 3/12 annotated lesions and produced two false boxes at this threshold. |
-| CPU deployment | The production DINO preprocessing and ONNX model were compared with the original PyTorch pipeline. | All 25 reference decisions agreed. The maximum absolute score difference was below 0.00000009. |
+| Area | Entry point |
+| --- | --- |
+| Case workflow, viewer and exports | [FastAPI service](backend/app.py) · [Shared viewer](backend/static) · [Browser storage and inference](backend/pages) |
+| Training and reproducibility | [Whole-film experiments](image-study/README.md) · [Detection experiments](training/README.md) |
+| Pages release | [Build script](scripts/build-pages.py) · [Deploy workflow](.github/workflows/deploy.yml) · [Legacy YOLO viewer](https://elfaw775.github.io/sport-model/legacy/) |
 
-The two outputs can disagree. For example, the workbench flagged a left-fore frontal film on whole-film screening even though YOLO returned no candidate boxes. Reported scores are model outputs, and signed findings remain the reviewer's responsibility. The internal dataset is small and acquisition conditions may correlate with labels. In a separate control, film height alone classified 81/84 correctly. See the research guide for padding experiments, complete per-film predictions and reproduction commands. [Image-study guide](image-study/README.md) · [Five-fold comparison](image-study/published/cv84/three-model-summary.json) · [Training history](training/README.md)
+With the Python environment active, run `python -m pip install pytest httpx` and `python -m pytest -q backend/tests`. To exercise the full case workflow in Chrome, install the JavaScript dependencies with `pnpm install --frozen-lockfile` and run `node scripts/smoke-visits.mjs`. Set `CHROME_BIN` and `PYTHON` if needed. The Pages workflow builds and packages the clinical workbench, both models, samples and legacy viewer on pushes to `main`.
 
-## Browser demo and repository layout
+[Open an issue](https://github.com/elfaw775/sport-model/issues) to report a bug or propose a change. A sample film number, browser or Python version, and steps to reproduce help maintainers investigate.
 
-| Path | Contents |
-|---|---|
-| `backend/` | FastAPI, SQLite, the case viewer, report workflow and CPU inference |
-| `app/`, `lib/`, `public/` | Static Next.js site, image processing, browser-side ONNX runtime and models |
-| `image-study/`, `training/` | Whole-film experiments, detection training, evaluations and reproducibility records |
-| `.github/workflows/deploy.yml` | Static-site build and GitHub Pages deployment |
-
-From the repository root, run `pnpm install --frozen-lockfile`, then `pnpm build`. Serve `out/` with a static HTTP server. For a development server use `pnpm dev`; for the browser smoke test use `node scripts/smoke.mjs`. On the macOS configuration requiring the WebAssembly SWC fallback, set `NEXT_TEST_WASM_DIR` to `$PWD/node_modules/@next/swc-wasm-nodejs` when building.
-
-To package both entry points, set `NEXT_PUBLIC_BASE_PATH=/sport-model/legacy` for the Next build, run `python3 scripts/build-pages.py`, then serve `work/pages-build/` over localhost. GitHub Actions publishes its `sport-model/` directory at the original project address. Run `PAGES_SMOKE_URL=http://127.0.0.1:8926/sport-model/ node scripts/smoke-visits.mjs` against the local build or freshly deployed Pages URL in an isolated browser profile.
+**Licensing.** The repository currently has no project-wide license or separate grant for reuse of the radiographs. Check permissions with the maintainers before redistributing project materials. Third-party components retain their own terms. [DINOv2 license](backend/models/DINOv2-LICENSE.txt) · [ONNX Runtime license](backend/pages/ONNXRuntime-LICENSE.txt)
